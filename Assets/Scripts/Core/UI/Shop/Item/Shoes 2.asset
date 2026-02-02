@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25a0ada581d831e499a17f73b42ff568, type: 3}
+  m_Name: Shoes 2
+  m_EditorClassIdentifier: 
+  npcId: 
+  npcName: 
+  shopCategory: 
+  apiUrl: https://api.staging.storims.com/api/v1/TenantProduct/45a26bfc-f2b2-4ca2-ab49-9ee8e9adcfec
+  maxItems: 23
+  requiredBrands: []
+  requiredKeywords: []
+  primaryItemType: 0
+  useBackupAPI: 1
+  backupApiUrl: 

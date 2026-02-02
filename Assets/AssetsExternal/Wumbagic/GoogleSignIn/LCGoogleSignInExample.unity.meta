@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e0701ddfddfd447f5909d8c42f189818
+timeCreated: 1498736883
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 94517
+  packageName: Google Login iOS & Android
+  packageVersion: 3.0
+  assetPath: Assets/AssetsExternal/Wumbagic/GoogleSignIn/LCGoogleSignInExample.unity
+  uploadId: 610176

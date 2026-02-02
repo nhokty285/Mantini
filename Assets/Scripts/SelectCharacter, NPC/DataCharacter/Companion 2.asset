@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4b3a4b641e2109458df28dfc9e52cc8, type: 3}
+  m_Name: Companion 2
+  m_EditorClassIdentifier: 
+  characterName: Male
+  description: "Xin ch\xE0o, m\xECnh l\xE0 Male, r\u1EA5t vui \u0111c g\u1EB7p b\u1EA1n."
+  previewPrefab: {fileID: 125603757700432931, guid: 268a924089e92614daa83525a3e0d0ff, type: 3}
+  characterIcon: {fileID: 21300000, guid: 1c8fe0d92ced15a4ba86c0474d0f3c99, type: 3}
+  gameplayPrefab: {fileID: 607424605589875335, guid: e56eed90cbe27ed4bb2d8c10642f7f50, type: 3}
+  moveSpeed: 5
+  maxHealth: 100

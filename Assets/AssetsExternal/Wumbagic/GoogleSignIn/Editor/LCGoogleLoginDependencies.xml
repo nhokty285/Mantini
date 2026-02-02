@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dependencies>
+    <androidPackages>
+        <androidPackage spec="com.google.android.gms:play-services-auth:20.2.0">
+        </androidPackage>
+        <androidPackage spec="androidx.appcompat:appcompat:1.1.0">
+        </androidPackage>
+    </androidPackages>
+    <iosPods>
+        <iosPod name="GoogleSignIn" version="~> 6.0" />
+    </iosPods>
+</dependencies>

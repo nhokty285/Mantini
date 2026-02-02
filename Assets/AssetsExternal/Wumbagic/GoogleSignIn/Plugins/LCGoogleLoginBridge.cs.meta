@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: ce611cc03411042658bbd28243dba1b8
+timeCreated: 1497470913
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 94517
+  packageName: Google Login iOS & Android
+  packageVersion: 3.0
+  assetPath: Assets/AssetsExternal/Wumbagic/GoogleSignIn/Plugins/LCGoogleLoginBridge.cs
+  uploadId: 610176

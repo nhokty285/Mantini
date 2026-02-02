@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 91c4fb0e5e5914fe29725668b3c9a0a5
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 94517
+  packageName: Google Login iOS & Android
+  packageVersion: 3.0
+  assetPath: Assets/AssetsExternal/Wumbagic/GoogleSignIn/Editor/LCGoogleLoginDependencies.xml
+  uploadId: 610176

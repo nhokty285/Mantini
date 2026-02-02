@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25a0ada581d831e499a17f73b42ff568, type: 3}
+  m_Name: Shoes 1
+  m_EditorClassIdentifier: 
+  npcId: general_merchant
+  npcName: Ngan
+  shopCategory: Hai
+  apiUrl: https://data.storims.c1.hubcom.tech/api/v1/TenantProduct/45A26BFC-F2B2-4CA2-AB49-9EE8E9ADCFEC/23612
+  maxItems: 24
+  requiredBrands: []
+  requiredKeywords: []
+  primaryItemType: 0
+  useBackupAPI: 1
+  backupApiUrl: 
