@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine.Networking;
 
@@ -21,6 +22,7 @@ public class CartImageItem : MonoBehaviour
     private bool isHighlighted = false;
 
     private static CartImageItem currentHighlightedItem;
+    private static readonly HashSet<CartImageItem> _highlighted = new HashSet<CartImageItem>();
 
     public void Setup(CartItem item, Action<CartItem> clickCallback)
     {
@@ -33,13 +35,18 @@ public class CartImageItem : MonoBehaviour
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() =>
             {
-                SelectThisItem(); 
-                onClickCallback?.Invoke(itemData);
                 AudioManager.Instance.PlaySFXOneShot("Button_High");
+                SelectThisItem();
+                onClickCallback?.Invoke(itemData);
             });
         }
 
+
         InitializeHighlight();
+
+        // Restore highlight state khi item được rebuild sau SelectAll
+        if (itemData != null && itemData.isSelectedForCheckout)
+            SetHighlight(true);
 
         // Load image
         LoadImage();
@@ -151,17 +158,16 @@ public class CartImageItem : MonoBehaviour
 
     public void SetHighlight(bool highlight)
     {
-        if (highlightProduct != null)
-        {
-            isHighlighted = highlight;
-            highlightProduct.gameObject.SetActive(isHighlighted);
+        if (highlightProduct == null) return;
 
-            // Reset static reference nếu tắt highlight
-            if (!highlight && currentHighlightedItem == this)
-            {
-                currentHighlightedItem = null;
-            }
-        }
+        isHighlighted = highlight;
+        highlightProduct.gameObject.SetActive(isHighlighted);
+
+        if (highlight) _highlighted.Add(this);
+        else _highlighted.Remove(this);
+
+        if (!highlight && currentHighlightedItem == this)
+            currentHighlightedItem = null;
     }
 
     public bool IsHighlighted()
@@ -169,23 +175,21 @@ public class CartImageItem : MonoBehaviour
         return isHighlighted;
     }
 
-    // Method để clear tất cả highlight
+    // Method để clear tất cả highlight (single hoặc multi)
     public static void ClearAllHighlights()
     {
-        if (currentHighlightedItem != null)
-        {
-            currentHighlightedItem.SetHighlight(false);
-            currentHighlightedItem = null;
-        }
+        var toClean = new List<CartImageItem>(_highlighted);
+        foreach (var item in toClean)
+            item?.SetHighlight(false);
+        // _highlighted đã empty sau khi SetHighlight(false) remove từng item
+        currentHighlightedItem = null;
     }
 
     private void OnDestroy()
     {
-        // Clear reference nếu object này bị destroy
+        _highlighted.Remove(this);
         if (currentHighlightedItem == this)
-        {
             currentHighlightedItem = null;
-        }
     }
 
     private void LoadImage()

@@ -91,7 +91,7 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
 
     public void OnLeaveChat()
     {
-        Debug.Log($"{GetParticipantName()} left the chat");
+        
     }
 
     public bool IsActive()
@@ -102,7 +102,6 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
     public void SetTargetNPC(BaseNPC npc)
     {
         targetNPC = npc;
-        Debug.Log($"✅ NPCChatAdapter target set to: {npc?.GetNPCName()}");
     }
 
     public Sprite GetParticipantIcon()

@@ -91,6 +91,7 @@ public class MultiChatManager : MonoBehaviour
             Debug.LogError("NO PARTICIPANTS!");
             return;
         }
+
         if (AudioManager.Instance != null)
         {
             // Giả sử bạn đã có clip tên "Chat" trong danh sách uiSounds của AudioManager
@@ -118,6 +119,7 @@ public class MultiChatManager : MonoBehaviour
     private IEnumerator ProcessParticipantAsync(IChatParticipant participant, string playerMessage)
     {
         // Typing delay
+
         yield return new WaitForSeconds(Random.Range(0.3f, 1.0f));
 
         // Build prompt với context mới nhất
@@ -428,6 +430,7 @@ Hãy trả lời:";
 
 
     // Hàm này sẽ giả lập NPC đề xuất ngẫu nhiên 2-3 sản phẩm đang có trong shop
+    // Hàm này sẽ giả lập NPC đề xuất ngẫu nhiên 2-3 sản phẩm đang có trong shop
     public void Debug_TestProductSuggestion()
     {
         if (viewModel == null || viewModel.CurrentShopData == null)
@@ -453,9 +456,15 @@ Hãy trả lời:";
 
         suggestionText += ". Bạn thấy sao?";
 
-        // Giả lập NPC gửi tin nhắn
-        AddChatBubble(suggestionText, isPlayer: false, sender: "npc");
+        // 1. Lấy tên từ ViewModel
+        string participantName = viewModel.CurrentNPCName;
+        // ✅ TỐI ƯU: Tìm icon của NPC có tên khớp với participantName
+        Sprite icon = activeParticipants.FirstOrDefault(p => p.GetParticipantName() == participantName)?.GetParticipantIcon();
+
+        // 3. Giả lập NPC gửi tin nhắn (Có kèm Icon)
+        AddChatBubble(suggestionText, isPlayer: false, sender: participantName, icon: icon);
     }
+
 
     public void OpenDialogWithShop()
     {

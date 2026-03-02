@@ -185,6 +185,23 @@ public class NameplateManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Cập nhật text của nameplate cho một target cụ thể
+    /// </summary>
+    public void UpdateNameplateText(Transform target, string newName)
+    {
+        for (int i = 0; i < _activeList.Count; i++)
+        {
+            if (_activeList[i].Target == target)
+            {
+                _activeList[i].UI.Setup(newName);
+                Debug.Log($"[NameplateManager] Updated nameplate text for {target.name} to: {newName}");
+                return;
+            }
+        }
+        Debug.LogWarning($"[NameplateManager] No nameplate found for target: {target.name}");
+    }
+
     // --- CORE LOGIC (Chạy 1 vòng lặp duy nhất) ---
     void LateUpdate()
     {

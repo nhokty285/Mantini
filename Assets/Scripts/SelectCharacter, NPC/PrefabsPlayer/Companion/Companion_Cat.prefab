@@ -194,7 +194,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 1
   m_Interpolate: 1
-  m_Constraints: 80
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!137 &4634755671351996230
 SkinnedMeshRenderer:
@@ -308,7 +308,7 @@ SphereCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Radius: 36.3
-  m_Center: {x: -0.15255217, y: 41.256805, z: 4.7657695}
+  m_Center: {x: -0.15255217, y: 33.4, z: 4.7657695}
 --- !u!1 &736130210811638819
 GameObject:
   m_ObjectHideFlags: 0

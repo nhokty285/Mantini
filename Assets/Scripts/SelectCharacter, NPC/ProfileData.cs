@@ -98,8 +98,9 @@ public class ProfileData : MonoBehaviour
             newAvatarUrl: currentAvatarUrl,
             onSuccess: () => {
                 Debug.Log("Profile cập nhật thành công!");
-                // Tùy chọn: Gọi SyncSelectionToServer() sau
-                // apiService.SyncSelectionToServer();
+                
+                // Đồng bộ companion selection với server
+                apiService.SyncSelectionToServer();
             },
             onError: (err) => Debug.LogError("Lỗi: " + err)
         );

@@ -128,6 +128,8 @@ public class ShopController : MonoBehaviour
         closeShopButton.onClick.AddListener(() =>
         {
             multiChatController.CloseCompanionChat();
+
+
             MainMenuViewModel.OnCloseShopClicked();
             AudioManager.Instance.PlayBGM(openBGM);
             AudioManager.Instance.PlayAmbient(openaAmbient);
@@ -941,7 +943,8 @@ public class ShopController : MonoBehaviour
     {
         if (shopHeaderText != null && MainMenuViewModel.CurrentShopData != null)
         {
-            shopHeaderText.text = $"{MainMenuViewModel.CurrentShopData.shopName} - {MainMenuViewModel.CurrentNPCName}";
+            shopHeaderText.text = $"{MainMenuViewModel.CurrentShopData.shopName}";
+            // {MainMenuViewModel.CurrentNPCName}
         }
     }
 

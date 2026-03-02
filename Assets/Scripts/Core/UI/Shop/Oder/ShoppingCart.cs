@@ -205,15 +205,33 @@ public class ShoppingCart : MonoBehaviour
 
     public void ClearCart()
     {
-        cartItems.Clear();
-        NotifyInventoryUpdated();
+        PopupManager.Instance.ShowPopup(
+            "Xác nhận",
+            "Bạn có chắc muốn loại bỏ vật phẩm này?",
+            () =>
+            {
+                cartItems.Clear();
+                NotifyInventoryUpdated();
+            },
+            "Đồng ý"
+        );
     }
 
-    // ✅ THÊM: Clear only unpaid items
-    public void ClearUnpaidItems()
+    // ✅ THÊM: Clear only 1 selected unpaid item
+    public void ClearUnpaidItems(CartItem targetItem)
     {
-        cartItems.RemoveAll(item => !item.isPaid);
-        NotifyInventoryUpdated();
+        if (targetItem == null || targetItem.isPaid) return;
+
+        PopupManager.Instance.ShowPopup(
+            "Xác nhận",
+            "Bạn có chắc muốn loại bỏ vật phẩm này?",
+            () =>
+            {
+                cartItems.Remove(targetItem);
+                NotifyInventoryUpdated();
+            },
+            "Đồng ý"
+        );
     }
 
     private float CalculateTotalAmount()
@@ -240,7 +258,7 @@ public class ShoppingCart : MonoBehaviour
         var selected = GetUnpaidItems().FindAll(i => i.isSelectedForCheckout);
         if (selected.Count == 0)
         {
-            Debug.LogWarning("No selected items to checkout");
+            PopupManager.Instance.ShowPopup("Thông báo", "Giỏ hàng của bạn đang trống!", null, "Đóng");
             return;
         }
 
@@ -343,11 +361,13 @@ public class ShoppingCart : MonoBehaviour
                 Debug.Log("Gửi đơn hàng thành công!");
                 var result = JsonConvert.DeserializeObject<RetailOrderResult>(request.downloadHandler.text);
                 OnOrderSuccess(result);
+
             }
             else
             {
-                Debug.LogError($"Gửi đơn hàng thất bại: {request.error}");
+           
                 OnOrderFailed(request.downloadHandler.text);
+                
             }
         }
     }
@@ -363,6 +383,8 @@ public class ShoppingCart : MonoBehaviour
     private void OnOrderSuccess(RetailOrderResult order)
     {
         Debug.Log($"Đặt hàng thành công! Mã đơn: {order.retailOrderNumber}");
+        PopupManager.Instance.ShowPopup("Thông báo", "Thanh toán thành công", null, "Đóng");
+
         var selected = GetUnpaidItems().FindAll(i => i.isSelectedForCheckout);
         foreach (var it in selected)
             it.MarkAsPaid();
@@ -373,6 +395,7 @@ public class ShoppingCart : MonoBehaviour
     private void OnOrderFailed(string message)
     {
         Debug.LogError("Đặt hàng thất bại: " + message);
+        PopupManager.Instance.ShowPopup("Lỗi", message, null, "Đóng");
     }
 
     public void SelectItemForCheckout(string productId, string size, bool selected)

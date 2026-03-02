@@ -89,12 +89,12 @@ public class PlayerCharacterSelection : MonoBehaviour
 
     void Update()
     {
-        HandleSwipeInput();
+            HandleSwipeInput();                     
     }
 
     void HandleSwipeInput()
     {
-        if (Input.touchCount > 0)
+        if (Input.touchCount > 0 && playerCharacterPanel.activeInHierarchy)
         {
             Touch touch = Input.GetTouch(0);
 

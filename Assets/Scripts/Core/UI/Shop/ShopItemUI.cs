@@ -44,15 +44,15 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
         // Setup UI
         nameText.text = shopItem.itemName;
         priceText.text = $"{shopItem.price:N0} VND";
-       if(shopItem.regularPrice > shopItem.price)
+        if(shopItem.regularPrice > shopItem.price)
         {
-            regularPriceText.text = $"{shopItem.regularPrice:N0} VND";
             regularPriceText.gameObject.SetActive(true);
+            regularPriceText.text = $"{shopItem.regularPrice:N0} VND";
         }
         else
         {
             regularPriceText.gameObject.SetActive(false);
-        }
+        }   
         descriptionText.text = shopItem.description;
 
         SetupItemIcon(shopItem);

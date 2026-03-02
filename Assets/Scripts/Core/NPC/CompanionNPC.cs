@@ -221,6 +221,33 @@ public class CompanionNPC : BaseNPC, IChatParticipant
 
     }
 
+    /*  void FixedUpdate()
+      {
+          if (!shouldFollowPlayer || playerTransform == null)
+          {
+              UpdateAnimationSpeed(0f);
+              HandleIdleEmotes(false);
+              return;
+          }
+
+          float distance = Vector3.Distance(transform.position, playerTransform.position);
+          bool shouldMove = distance > followDistance;
+
+          if (shouldMove)
+          {
+              FollowPlayer();
+          }
+          else
+          {
+              // đứng yên
+              currentVelocity = Vector3.zero;
+          }
+
+          float planarSpeed = currentVelocity.magnitude;
+          UpdateAnimationSpeed(planarSpeed);
+          HandleIdleEmotes(planarSpeed <= 0.05f);
+      }*/
+
     void FixedUpdate()
     {
         if (!shouldFollowPlayer || playerTransform == null)
@@ -230,23 +257,37 @@ public class CompanionNPC : BaseNPC, IChatParticipant
             return;
         }
 
+        // 1. Tính khoảng cách
         float distance = Vector3.Distance(transform.position, playerTransform.position);
-        bool shouldMove = distance > followDistance;
 
-        if (shouldMove)
+        // 🛠 SỬA TẠI ĐÂY: Thêm sai số (Epsilon) 0.05f vào khoảng cách dừng
+        // Điều này giúp cắt đứt SmoothDamp trước khi nó bị kẹt ở mức tiệm cận
+        bool isCloseEnough = distance <= (followDistance + 0.05f);
+
+        if (!isCloseEnough)
         {
             FollowPlayer();
         }
         else
         {
-            // đứng yên
+            // Đã vào vùng đệm -> Ép vận tốc về 0 lập tức để cắt đứt di chuyển
             currentVelocity = Vector3.zero;
         }
 
+        // 2. Tính toán Speed truyền vào Animator
         float planarSpeed = currentVelocity.magnitude;
+
+        // Ép tốc độ Animator về 0 tuyệt đối nếu đã tới gần hoặc vận tốc quá nhỏ
+        if (isCloseEnough || planarSpeed < 0.05f)
+        {
+            planarSpeed = 0f;
+        }
+
         UpdateAnimationSpeed(planarSpeed);
-        HandleIdleEmotes(planarSpeed <= 0.05f);
+        HandleIdleEmotes(planarSpeed == 0f); // Tự tin check bằng 0f vì ta đã ép ở trên
     }
+
+
 
     #region Movement
 
@@ -299,10 +340,27 @@ public class CompanionNPC : BaseNPC, IChatParticipant
 
     #region Animator – locomotion & idle emote
 
-    private void UpdateAnimationSpeed(float speed)
+    /*private void UpdateAnimationSpeed(float speed)
     {
         if (npcAnimator == null) return;
         npcAnimator.SetFloat(speedHash, speed, 0.1f, Time.deltaTime);
+    }
+*/
+
+    private void UpdateAnimationSpeed(float speed)
+    {
+        if (npcAnimator == null) return;
+
+        // 🛠 QUAN TRỌNG: Xóa bỏ quán tính (damp time) của Animator khi cần dừng hẳn
+        if (speed == 0f)
+        {
+            npcAnimator.SetFloat(speedHash, 0f);
+        }
+        else
+        {
+            // Vẫn giữ độ mượt khi tăng tốc Walk -> Run
+            npcAnimator.SetFloat(speedHash, speed, 0.1f, Time.deltaTime);
+        }
     }
 
     private void ResetIdleTimer()

@@ -105,7 +105,6 @@ public class CartUI : MonoBehaviour
         selectAllToCartButton?.onClick.AddListener(()=> 
         {
             OnSelectAllToCartClicked();
-
         });
         addSelectedToCartButton?.onClick.AddListener(OnAddSelectedToCartClicked);
         cartButton?.onClick.AddListener(() =>
@@ -125,9 +124,20 @@ public class CartUI : MonoBehaviour
             ShoppingCart.Instance.OnCartCountChanged += UpdateCartCount;
             ShoppingCart.Instance.OnUnpaidItemsUpdated += OnUnpaidItemsUpdated;
             ShoppingCart.Instance.OnPaidItemsUpdated += OnPaidItemsUpdated;
-
         }
-        buyButton?.onClick.AddListener(OnCheckoutClicked);
+        buyButton?.onClick.AddListener(()=> {
+
+            // Gọi Popup thay vì gọi hàm mua
+            PopupManager.Instance.ShowPopup(
+                "Xác nhận mua",
+                "Bạn có chắc chắn muốn mua vật phẩm này?",
+                () => {
+                    // Khi bấm "Đồng ý" trên Popup thì mới chạy hàm này
+                    OnCheckoutClicked();
+                }
+            );
+            
+        });
         backButton?.onClick.AddListener(() =>
         {
             CloseCheckOut();
@@ -195,6 +205,7 @@ public class CartUI : MonoBehaviour
                     UpdateCartDisplay(ShoppingCart.Instance.GetPaidItems());
                 break;
             case InventoryTab.Future3:
+                break;
             case InventoryTab.Future4:
                 UpdateCartDisplay(new List<CartItem>());
                 break;
@@ -215,8 +226,6 @@ public class CartUI : MonoBehaviour
         if (cartCountText != null) cartCountText.text = count.ToString();
         if (cartCountBadge != null) cartCountBadge.SetActive(count > 0);
     }
-
-  
 
     private void OnUnpaidItemsUpdated(List<CartItem> items)
     {

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿/*using UnityEngine;
 using System.Collections.Generic;
 
 public class MobileOcclusionHandler : MonoBehaviour
@@ -202,3 +202,4 @@ public class MobileOcclusionHandler : MonoBehaviour
         originalMaterials.Clear();
     }
 }
+*/

@@ -383,7 +383,7 @@ public class ShopAPIManager : MonoBehaviour
             }
         }
     }
-
+   
 
 
     private IEnumerator TryBackupAPI(NPCAPIConfig config, System.Action<List<ShopItem>> onSuccess, System.Action<string> onError)
@@ -440,6 +440,7 @@ public class ShopAPIManager : MonoBehaviour
             shopItem.itemName = SanitizeString(apiItem.title);
             shopItem.itemID = apiItem.id;
             shopItem.price = Mathf.RoundToInt(apiItem.price);
+            shopItem.regularPrice = Mathf.RoundToInt(apiItem.regularPrice);
             shopItem.description = $"Brand: {SanitizeString(apiItem.brandName)}\nCategory: {config.shopCategory}\nReviews: {apiItem.totalReviews} ({apiItem.reviewStatFiveScale}★)";
 
             // Set image URL for later loading

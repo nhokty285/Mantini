@@ -124,6 +124,7 @@ public class ProductDetailUI : MonoBehaviour
     [SerializeField] private Button addToCartButton;
     [SerializeField] private Button buyNowButton;
     [SerializeField] private Button closeDetailButton;
+    [SerializeField] private Button deleteButton;
 
     [Header("Image Gallery")]
     [SerializeField] private Transform imageScrollContent;
@@ -134,6 +135,7 @@ public class ProductDetailUI : MonoBehaviour
     // State
     private List<GameObject> imagePages = new List<GameObject>();
     private ProductDetail currentDetail;
+    private CartItem currentCartItem; // Reference để delete
     private string currentSelectedSize = "";
     private string currentVariantId = "";
     private string _lastSelectedSize = "";
@@ -148,9 +150,22 @@ public class ProductDetailUI : MonoBehaviour
 
     private void InitializeUI()
     {
-        addToCartButton?.onClick.AddListener(OnAddToCartClicked);
+        //addToCartButton?.onClick.AddListener(OnAddToCartClicked);
+        addToCartButton.onClick.AddListener(() =>
+        {
+            // Gọi Popup thay vì gọi hàm mua
+            PopupManager.Instance.ShowPopup(
+                "Xác nhận",
+                "Bạn có muốn thêm vật phẩm này vào giỏ hàng không?",
+                () => {
+                    // Khi bấm "Đồng ý" trên Popup thì mới chạy hàm này
+                    OnAddToCartClicked();
+                }
+            );
+        });
         closeDetailButton?.onClick.AddListener(CloseProductDetail);
-        sizeDropdown?.onValueChanged.AddListener(OnSizeChanged);
+        sizeDropdown.onValueChanged.RemoveAllListeners();
+        sizeDropdown.onValueChanged.AddListener(OnSizeChanged);
 
         if (productDetailPanel != null) productDetailPanel.SetActive(false);
     }
@@ -175,11 +190,15 @@ public class ProductDetailUI : MonoBehaviour
     }
 
     // 2. Gọi khi xem hàng chưa mua (Từ Shop) - CÓ GỌI API SHOP
-    public void ShowUnpaidProductDetail(string customId,string preSelectedSize = "")
+    public void ShowUnpaidProductDetail(string customId, string preSelectedSize = "")
     {
         Debug.Log($"[ProductDetail] Fetching shop item: {customId}");
         OpenPanel();
         _lastSelectedSize = preSelectedSize;
+
+        // Lưu CartItem để dùng cho nút Delete
+        currentCartItem = ShoppingCart.Instance?.GetUnpaidItems()
+            .Find(i => i.customId == customId && i.selectedSize == preSelectedSize);
         string detailUrl = $"https://data.storims.c1.hubcom.tech/api/v1/TenantProduct/45A26BFC-F2B2-4CA2-AB49-9EE8E9ADCFEC/{customId}";
 
         APIClient.Instance.GetFull(detailUrl,
@@ -248,9 +267,10 @@ public class ProductDetailUI : MonoBehaviour
     // Setup UI cho hàng ĐÃ MUA (Khóa nút mua, hiện size đã chọn)
     private void SetupPaidItemUI()
     {
-        // Ẩn nút mua
+        // Ẩn nút mua và nút xóa
         if (addToCartButton != null) addToCartButton.gameObject.SetActive(false);
         if (buyNowButton != null) buyNowButton.gameObject.SetActive(false);
+        if (deleteButton != null) deleteButton.gameObject.SetActive(false);
 
         // Khóa dropdown size và chỉ hiện size đã mua
         if (sizeDropdown != null)
@@ -271,29 +291,40 @@ public class ProductDetailUI : MonoBehaviour
         if (addToCartButton != null) addToCartButton.gameObject.SetActive(true);
         if (buyNowButton != null) buyNowButton.gameObject.SetActive(true);
 
-        // Load danh sách size từ dữ liệu gốc
+        // Wire nút Delete — closure capture currentCartItem
+        if (deleteButton != null)
+        {
+            deleteButton.gameObject.SetActive(currentCartItem != null);
+            deleteButton.onClick.RemoveAllListeners();
+            deleteButton.onClick.AddListener(() =>
+            {
+                ShoppingCart.Instance.ClearUnpaidItems(currentCartItem);
+            });
+        }
+
         if (sizeDropdown != null)
         {
             sizeDropdown.interactable = true;
             sizeDropdown.ClearOptions();
-            List<string> sizeOptions = new List<string> { "Chọn size..." };
 
-            var shopItem = currentDetail.originalShopItem;
-            if (shopItem != null && shopItem.attributeGroups != null)
+            // 1. Tìm nhóm attribute đầu tiên có dữ liệu (Size, Perfume, Color...)
+            var targetGroup = currentDetail.originalShopItem?.attributeGroups?.FirstOrDefault(g => g.attributes != null && g.attributes.Count > 0);
+
+            // 2. Tạo text mặc định dựa trên tên nhóm (VD: "Chọn Size", "Chọn Perfume")
+            string defaultText = targetGroup != null ? $"{targetGroup.name}" : "Size";
+            List<string> options = new List<string> { defaultText };
+
+            // 3. Add dữ liệu nếu tìm thấy group
+            if (targetGroup != null)
             {
-                var sizeGroup = shopItem.attributeGroups.FirstOrDefault(g => g.name.ToLower().Contains("size"));
-                if (sizeGroup?.attributes != null)
-                {
-                    foreach (var attr in sizeGroup.attributes)
-                        sizeOptions.Add(attr.name);
-                }
+                foreach (var attr in targetGroup.attributes) options.Add(attr.name);
             }
-            sizeDropdown.AddOptions(sizeOptions);
 
-            SizeCustomer(sizeOptions);
+            sizeDropdown.AddOptions(options);
+            SizeCustomer(options); // (Lưu ý: Bạn cần update logic hàm này để check theo defaultText mới)
         }
 
-        UpdateButtonsState(); // Disable nút mua cho đến khi chọn size
+        UpdateButtonsState();
     }
 
     private void SizeCustomer(List<string> sizeOptions)
@@ -523,24 +554,7 @@ public class ProductDetailUI : MonoBehaviour
 
     private void OnSizeChanged(int index)
     {
-        /*  if (currentDetail.isPaidItem) return; // Hàng đã mua không đổi size
-
-          if (index > 0 && sizeDropdown != null)
-          {
-              currentSelectedSize = sizeDropdown.options[index].text;
-              currentVariantId = GetVariantIdForSize(currentSelectedSize);
-              Debug.Log($"Selected Size: {currentSelectedSize}, VariantID: {currentVariantId}");
-          }
-          else
-          {
-              currentSelectedSize = "";
-              currentVariantId = "";
-          }
-          UpdateButtonsState();*/
-
-        // ✅ BLOCK AUTO-SELECT CALLBACK
- 
-        // Logic player chọn bình thường
+        AudioManager.Instance.PlaySFXOneShot("Button_High");
         if (currentDetail.isPaidItem) return;
         if (index > 0 && sizeDropdown != null)
         {

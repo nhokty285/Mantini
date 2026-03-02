@@ -133,6 +133,12 @@ public class VendorNPC : BaseNPC, IChatParticipant
     {
         Debug.Log($"Vendor {npcName}: Player left range");
         isCustomerNearby = false;
+
+        if (MainMenuView.Instance != null)
+        {
+            // Gọi SetNPCInteraction với isNear = false để kích hoạt logic Remove trong ShopController
+            MainMenuView.Instance.SetNPCInteraction(false, null, null, this);
+        }
     }
 
     public override void ProcessInteraction()
@@ -202,7 +208,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
 
         // Tạo dynamic shop data
         dynamicShopData = ScriptableObject.CreateInstance<ShopData>();
-        dynamicShopData.shopName = $"{vendorConfig.npcName}'s {vendorConfig.shopCategory} Store";
+        dynamicShopData.shopName = $"{vendorConfig.npcName}-{vendorConfig.shopCategory} Store";
 
         SetDynamicItems(dynamicShopData, shopItems);
         isShopDataLoaded = true;
