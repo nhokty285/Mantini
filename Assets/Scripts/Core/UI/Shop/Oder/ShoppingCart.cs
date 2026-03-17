@@ -253,7 +253,7 @@ public class ShoppingCart : MonoBehaviour
     }
 
     ///
-    public void ProcessCheckout()
+    public void ProcessCheckout(string oderTypeID ="COD")
     {
         var selected = GetUnpaidItems().FindAll(i => i.isSelectedForCheckout);
         if (selected.Count == 0)
@@ -270,7 +270,7 @@ public class ShoppingCart : MonoBehaviour
 
         var request = new RetailOrderRequest
         {
-            orderTypeId = "COD",
+            orderTypeId = oderTypeID,
             departmentId = "62bc4cb7-51c9-4e03-662b-09a9e145dda7",
             buyerName = cartUI.customerNameInput.text.Trim(),
             buyerPhone = cartUI.customerPhoneInput.text.Trim(),
@@ -545,7 +545,6 @@ public class ShoppingCart : MonoBehaviour
             err => Debug.LogError("Load inventory failed: " + err)
         );
     }
-
 
     // ShoppingCart.cs
     public void RefreshOwnedFromServer()

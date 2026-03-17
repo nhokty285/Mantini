@@ -267,7 +267,6 @@ public class CompanionSelection : MonoBehaviour
         if (npcDescriptionText)
             npcDescriptionText.text = companionData.description;
     }
-
     #endregion
 
     /* #region Confirmation Popup

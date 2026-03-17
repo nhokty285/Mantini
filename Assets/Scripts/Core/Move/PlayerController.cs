@@ -29,7 +29,7 @@ public class PlayerController : MonoBehaviour
 
     // Input & cache
     Vector2 moveInput;
-    Animator anim;
+    [SerializeField] Animator anim;
     Rigidbody rb;
     float lastIdleTime;
     bool wasMoving = false;

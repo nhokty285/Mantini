@@ -2,17 +2,43 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System;
 
 
 public class ProfileData : MonoBehaviour
 {
     [SerializeField] private TMP_InputField nameField, usernameField, mailField, phoneField;
-    [SerializeField] private PlayerApiService apiService; // Drag PlayerApiService GameObject
     [SerializeField] private RawImage avatarPreview;
 
-    private string currentAvatarUrl; // lưu file:///path hoặc persistent path
-    
-    //Test show profile at awaken
+    /// <summary>Fires khi avatar sprite thay đổi (pick mới hoặc load từ server).</summary>
+    public event Action<Sprite> OnAvatarChanged;
+
+    /// <summary>Sprite avatar đã cache, dùng chung cho các UI khác (Chat, HUD...).</summary>
+    public Sprite AvatarSprite { get; private set; }
+
+    private PlayerApiService apiService;
+    private string currentAvatarUrl;
+
+    /// <summary>
+    /// Gọi từ Scene 2 để trỏ ProfileData sang UI mới thay vì UI Scene 1.
+    /// </summary>
+    public void RebindUI(TMP_InputField name, TMP_InputField username, TMP_InputField mail, TMP_InputField phone, RawImage avatar)
+    {
+        nameField     = name;
+        usernameField = username;
+        mailField     = mail;
+        phoneField    = phone;
+        if (avatar != null) avatarPreview = avatar;
+    }
+
+    private void Awake()
+    {
+        // Tìm PlayerApiService dù nó ở Scene 1 (DontDestroyOnLoad) hay Scene 2
+        apiService = FindAnyObjectByType<PlayerApiService>();
+        if (apiService == null)
+            Debug.LogError("[ProfileData] Không tìm thấy PlayerApiService!");
+    }
+
     private void Start()
     {
         LoadProfile();
@@ -46,10 +72,14 @@ public class ProfileData : MonoBehaviour
             yield return req.SendWebRequest();
             if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
             {
-                avatarPreview.texture = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
+                var tex = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
+                avatarPreview.texture = tex;
+                AvatarSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                OnAvatarChanged?.Invoke(AvatarSprite);
             }
         }
     }
+
     public void OnClickPickAvatar()
     {
         // Gọi thư viện ảnh
@@ -79,8 +109,11 @@ public class ProfileData : MonoBehaviour
                 yield break;
             }
 
-            avatarPreview.texture = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
+            var tex = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
+            avatarPreview.texture = tex;
             currentAvatarUrl = url;
+            AvatarSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            OnAvatarChanged?.Invoke(AvatarSprite);
         }
     }
     public void SaveProfile()
@@ -98,9 +131,19 @@ public class ProfileData : MonoBehaviour
             newAvatarUrl: currentAvatarUrl,
             onSuccess: () => {
                 Debug.Log("Profile cập nhật thành công!");
-                
+
                 // Đồng bộ companion selection với server
                 apiService.SyncSelectionToServer();
+
+                // Thông báo restart để cập nhật thay đổi
+                PopupManager.Instance.ShowPopup(
+                    "Thông báo",
+                    "Game sẽ khởi động lại để cập nhật thay đổi.",
+                    () => 
+                    { 
+                        LevelLoader.Instance.LoadLevel("MapTest2");
+                    }
+                );
             },
             onError: (err) => Debug.LogError("Lỗi: " + err)
         );

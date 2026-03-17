@@ -28,6 +28,7 @@ public class NPCDialogueSystem : MonoBehaviour
     [SerializeField] private float delayBeforeAutoOpen = 0.5f; // Delay trước khi auto-open shop
 
     // Internal state
+    private PlayerController _playerController;
     private BaseNPC currentNPC;
     private List<DialogueEntry> currentDialogueSequence = new List<DialogueEntry>();
     private int currentDialogueIndex = 0;
@@ -46,11 +47,13 @@ public class NPCDialogueSystem : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
     }
 
     private void Start()
     {
         InitializeUI();
+
     }
 
     /// <summary>
@@ -123,6 +126,8 @@ public class NPCDialogueSystem : MonoBehaviour
     private IEnumerator ShowDialoguePanel()
     {
         dialoguePanel.SetActive(true);
+        _playerController ??= FindFirstObjectByType<PlayerController>();
+        _playerController?.SetCanMove(false);
         // Fade in
         yield return StartCoroutine(FadeCanvasGroup(dialoguePanelCanvasGroup, 0f, 1f, fadeDuration));
 

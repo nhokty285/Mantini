@@ -36,6 +36,14 @@ public class CartUI : MonoBehaviour
     public Button buyButton;
     public Button backButton;
 
+    [Header("Payment Method")]
+    public GameObject paymentMethodPanel;   // Object chứa codButton + bankButton
+    public Button codButton;                // Thanh toán khi nhận hàng
+    public Button bankButton;               // Chuyển khoản ngân hàng
+    public Button changePaymentButton;      // Button nằm trong selectedPaymentText để mở lại panel
+    public TextMeshProUGUI selectedPaymentText; // Hiển thị phương thức đang chọn
+    private string selectedPaymentMethod = "COD";
+
     [Header("Inventory Tabs")]
     [SerializeField] private Button unpaidTab; // Tab 1: Chưa thanh toán
     [SerializeField] private Button paidTab; // Tab 2: Đã thanh toán
@@ -45,6 +53,8 @@ public class CartUI : MonoBehaviour
     private enum InventoryTab { Unpaid, Paid, Future3, Future4 }
     private InventoryTab currentTab = InventoryTab.Unpaid;
     private CartItem selectedItem = null;
+
+    private PlayerController _playerController;
 
     private CartItem lastClickedItem = null;
     private float lastClickTime = 0f;
@@ -62,7 +72,6 @@ public class CartUI : MonoBehaviour
         SetupEventListeners();
         SetupTabSystem();
         InitializeUI();
-
     }
 
     // Trong CartUI.cs - Thêm vào cuối Update() hoặc LateUpdate()
@@ -105,6 +114,7 @@ public class CartUI : MonoBehaviour
         selectAllToCartButton?.onClick.AddListener(()=> 
         {
             OnSelectAllToCartClicked();
+
         });
         addSelectedToCartButton?.onClick.AddListener(OnAddSelectedToCartClicked);
         cartButton?.onClick.AddListener(() =>
@@ -125,6 +135,10 @@ public class CartUI : MonoBehaviour
             ShoppingCart.Instance.OnUnpaidItemsUpdated += OnUnpaidItemsUpdated;
             ShoppingCart.Instance.OnPaidItemsUpdated += OnPaidItemsUpdated;
         }
+        codButton?.onClick.AddListener(() => SetPaymentMethod("COD"));
+        bankButton?.onClick.AddListener(() => SetPaymentMethod("BANK_TRANSFER"));
+        changePaymentButton?.onClick.AddListener(OpenPaymentMethodPanel);
+
         buyButton?.onClick.AddListener(()=> {
 
             // Gọi Popup thay vì gọi hàm mua
@@ -357,29 +371,70 @@ public class CartUI : MonoBehaviour
             bool isActive = !cartPanel.activeSelf;
             cartPanel.SetActive(isActive);
             if (isActive) RefreshCurrentTabContent();
+            _playerController ??= FindFirstObjectByType<PlayerController>();
+            _playerController?.SetCanMove(!isActive);
         }
     }
 
     private void CloseCartPanel()
     {
         if (cartPanel != null) cartPanel.SetActive(false);
+        _playerController ??= FindFirstObjectByType<PlayerController>();
+        _playerController?.SetCanMove(true);
     }   
 
     private void InputInfomation()
     {
         if (customerInfoPanel != null)
             customerInfoPanel.SetActive(true);
+        // Hiện panel chọn phương thức, ẩn nút đổi
+        if (paymentMethodPanel != null) paymentMethodPanel.SetActive(true);
+        if (changePaymentButton != null) changePaymentButton.gameObject.SetActive(false);
+        selectedPaymentMethod = "COD";
+        if (selectedPaymentText != null) selectedPaymentText.text = "";
     }
     private void CloseCheckOut()
     {
         if (customerInfoPanel != null)
             customerInfoPanel.SetActive(false);
     }
+    private void SetPaymentMethod(string method)
+    {
+        selectedPaymentMethod = method;
+        if (selectedPaymentText != null)
+            selectedPaymentText.text = method == "COD" ? "COD" : "Bank";
+
+        // Ẩn panel chọn, hiện nút đổi
+        if (paymentMethodPanel != null) paymentMethodPanel.SetActive(false);
+        if (changePaymentButton != null) changePaymentButton.gameObject.SetActive(true);
+    }
+
+    private void OpenPaymentMethodPanel()
+    {
+        if (paymentMethodPanel != null) paymentMethodPanel.SetActive(true);
+        if (changePaymentButton != null) changePaymentButton.gameObject.SetActive(false);
+        UpdatePaymentButtonVisuals();
+    }
+
+    private void UpdatePaymentButtonVisuals()
+    {
+        SetPaymentButtonColor(codButton, selectedPaymentMethod == "COD");
+        SetPaymentButtonColor(bankButton, selectedPaymentMethod == "BANK_TRANSFER");
+    }
+
+    private void SetPaymentButtonColor(Button btn, bool isSelected)
+    {
+        if (btn == null) return;
+        var label = btn.GetComponentInChildren<TextMeshProUGUI>();
+        if (label != null)
+            label.color = isSelected ? Color.white : new Color(0.4f, 0.4f, 0.4f, 1f);
+    }
+
     private void OnCheckoutClicked()
     {
         if (currentTab == InventoryTab.Unpaid && ShoppingCart.Instance != null)
         {
-            ShoppingCart.Instance.ProcessCheckout();
+            ShoppingCart.Instance.ProcessCheckout(selectedPaymentMethod);
         }
         customerInfoPanel.SetActive(false);
     }

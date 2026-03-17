@@ -58,7 +58,7 @@ public class LevelLoader : MonoBehaviour
             currentProgress = Mathf.MoveTowards(currentProgress, targetProgress, 3f * Time.deltaTime);
 
             if (progressBar != null)  progressBar.value = currentProgress;
-            if (progressText!= null)  progressText.text = $"Loading... {(int)(currentProgress * 100)}%";
+            if (progressText!= null)  progressText.text = $"Loading {(int)(currentProgress * 100)}%";
 
             // Logic kiểm tra điều kiện để kết thúc
             // Chỉ chuyển cảnh khi: Load xong (0.9) VÀ Đã chạy đủ thời gian tối thiểu (để ko bị nháy màn hình)

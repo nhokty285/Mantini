@@ -22,6 +22,7 @@ public class MultiChatManager : MonoBehaviour
     [SerializeField] private Button sendChatButton;
     [SerializeField] private Button quickChatButton;
 
+    [Header("ParticipantContainer")]
     [SerializeField] private Transform chatParticipantsContainer;
     [SerializeField] private GameObject participantItemPrefab;
     [SerializeField] private DialogueAudioSync audioSync;
@@ -34,6 +35,7 @@ public class MultiChatManager : MonoBehaviour
     [SerializeField] private CompanionNPC assignedCompanion;
     [SerializeField] private MainMenuViewModel viewModel;
     private bool chatOpenedWithShop = false;
+    private Sprite _playerSprite;
 
     [Header("Debug / Testing")]
     [SerializeField] private bool testProductSuggestions = true; // Bật cái này để test
@@ -52,6 +54,14 @@ public class MultiChatManager : MonoBehaviour
         SetupInitialState();
 
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+        // Cache avatar sprite từ ProfileData (DontDestroyOnLoad từ Scene 1)
+        var profileData = FindAnyObjectByType<ProfileData>();
+        if (profileData != null)
+        {
+            _playerSprite = profileData.AvatarSprite; // có thể null nếu API chưa xong
+            profileData.OnAvatarChanged += sprite => _playerSprite = sprite;
+        }
     }
 
     public void AddParticipant(IChatParticipant participant) 
@@ -101,7 +111,7 @@ public class MultiChatManager : MonoBehaviour
         if (string.IsNullOrWhiteSpace(message)) return;
 
         // 1. Hiển thị tin Player
-        AddChatBubble(message, isPlayer: true, sender: "Player", icon: null);
+        AddChatBubble(message, isPlayer: true, sender: "Player", icon: _playerSprite);
         AddToSharedContext("Player", message);
 
         // ✅ 2. PARALLEL RACE - Không quy định trước/sau
@@ -192,8 +202,18 @@ public class MultiChatManager : MonoBehaviour
                 break;
         }
 
+        // Inject product context nếu đang xem sản phẩm cụ thể
+        string productBlock = "";
+        if (_productContext != null)
+        {
+            productBlock = $"[SẢN PHẨM ĐANG XEM]\n" +
+                           $"Tên: {_productContext.title}\n" +
+                           $"Giá: {_productContext.price:N0} VND\n" +
+                           $"Brand: {_productContext.brandName}\n\n";
+        }
+
         // ✅ PROMPT HOÀN CHỈNH
-        return $@"{sharedContext}
+        return $@"{productBlock}{sharedContext}
 
 [VAI TRÒ]
 {role}
@@ -527,6 +547,92 @@ Hãy trả lời:";
             companionChatPanel.SetActive(false);
             ClearChatHistory();
     }
+
+    #region Product Context
+    private ProductDetail _productContext;
+
+    private Transform _originalChatParent;
+    private int _originalSiblingIndex;
+
+    // RectTransform override khi companionChatScroll hiện trong ProductDetailUI
+    [Header("Product Detail Chat Layout")]
+    [SerializeField] private float productDetailScrollPosY = 0f;
+    [SerializeField] private float productDetailScrollHeight = 300f;
+
+    // Lưu giá trị gốc để restore
+    private float _originalScrollPosY;
+    private float _originalScrollHeight;
+
+    public void SetProductContext(ProductDetail detail)
+    {
+        _productContext = detail;
+    }
+
+    public void ClearProductContext()
+    {
+        _productContext = null;
+    }
+
+    public void ReparentChatPanelTo(Transform anchor)
+    {
+        if (companionChatPanel == null || anchor == null) return;
+
+        _originalChatParent = companionChatPanel.transform.parent;
+        _originalSiblingIndex = companionChatPanel.transform.GetSiblingIndex();
+        companionChatPanel.transform.SetParent(anchor, false);
+
+        // Lưu và áp dụng RectTransform mới cho companionChatScroll
+        if (companionChatScroll != null)
+        {
+            RectTransform rt = companionChatScroll.GetComponent<RectTransform>();
+            _originalScrollPosY = rt.anchoredPosition.y;
+            _originalScrollHeight = rt.sizeDelta.y;
+
+            rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, productDetailScrollPosY);
+            rt.sizeDelta = new Vector2(rt.sizeDelta.x, productDetailScrollHeight);
+        }
+    }
+
+    public void RestoreChatPanel()
+    {
+        if (_originalChatParent == null) return;
+
+        companionChatPanel.transform.SetParent(_originalChatParent, false);
+        companionChatPanel.transform.SetSiblingIndex(_originalSiblingIndex);
+        _originalChatParent = null;
+
+        // Khôi phục RectTransform gốc của companionChatScroll
+        if (companionChatScroll != null)
+        {
+            RectTransform rt = companionChatScroll.GetComponent<RectTransform>();
+            rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, _originalScrollPosY);
+            rt.sizeDelta = new Vector2(rt.sizeDelta.x, _originalScrollHeight);
+        }
+    }
+
+    public void ShowProductWelcome()
+    {
+        if (_productContext == null || activeParticipants.Count == 0) return;
+
+        foreach (var participant in activeParticipants)
+        {
+            if (!participant.IsActive()) continue;
+
+            string message = participant.GetParticipantType() switch
+            {
+                ChatParticipantType.VendorNPC =>
+                    $"Bạn đang xem [{_productContext.title}] — {_productContext.price:N0} VND. Bạn cần tư vấn gì không?",
+                ChatParticipantType.Companion =>
+                    $"Ồ [{_productContext.title}] này trông ổn đó! Mình thấy hợp với bạn đấy~",
+                _ => $"{participant.GetParticipantName()} chào bạn."
+            };
+
+            AddChatBubble(message, isPlayer: false,
+                sender: participant.GetParticipantName(),
+                icon: participant.GetParticipantIcon());
+        }
+    }
+    #endregion
 
     #region Save and Load Chat History
     [System.Serializable]

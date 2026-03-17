@@ -256,7 +256,8 @@ public class PlayerCharacterSelection : MonoBehaviour
     }
     void SetCharacterBrightness(GameObject character, bool isCenter)
     {
-        RawImage[] imgs = character.GetComponentsInChildren<RawImage>(true);
+        RawImage[] imgs = character
+            .GetComponentsInChildren<RawImage>(true);
         foreach (var img in imgs)
         {
             Color c = img.color;

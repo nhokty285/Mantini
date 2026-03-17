@@ -140,11 +140,19 @@ public class ProductDetailUI : MonoBehaviour
     private string currentVariantId = "";
     private string _lastSelectedSize = "";
     [SerializeField] private CarouselIndicator carouselIndicator;
+
+    [Header("Chat Integration")]
+    [SerializeField] private RectTransform chatAnchor;
+
+    private MultiChatManager _chatManager;
+    private PlayerController _playerController;
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
 
+        _chatManager = FindAnyObjectByType<MultiChatManager>();
         InitializeUI();
     }
 
@@ -209,6 +217,10 @@ public class ProductDetailUI : MonoBehaviour
 
                 PopulateCommonUI();
                 SetupUnpaidItemUI(); // Setup dropdown, buttons cho việc mua hàng
+
+                _chatManager?.SetProductContext(currentDetail);
+                _chatManager?.ReparentChatPanelTo(chatAnchor);
+                _chatManager?.ShowProductWelcome();
             },
             error => {
                 Debug.LogError($"[ProductDetail] Failed to load detail: {error}");
@@ -224,6 +236,8 @@ public class ProductDetailUI : MonoBehaviour
     private void OpenPanel()
     {
         if (productDetailPanel != null) productDetailPanel.SetActive(true);
+        _playerController ??= FindFirstObjectByType<PlayerController>();
+        _playerController?.SetCanMove(false);
     }
 
     // Hiển thị các thông tin chung (Tên, giá, ảnh, mô tả)
@@ -608,8 +622,13 @@ public class ProductDetailUI : MonoBehaviour
         // ✅ STOP TẤT CẢ COROUTINES (AN TOÀN 100%)
         StopAllCoroutines();
 
+        _chatManager?.ClearProductContext();
+        _chatManager?.RestoreChatPanel();
+
         if (productDetailPanel != null)
             productDetailPanel.SetActive(false);
+        _playerController ??= FindFirstObjectByType<PlayerController>();
+        _playerController?.SetCanMove(true);
 
 
         //currentSelectedSize = "";
