@@ -61,7 +61,8 @@ public class ShopController : MonoBehaviour
     [SerializeField] private float rightPosition_4 = 590f;    // Vị trí 3
     [SerializeField] private float leftPosition_1 = 151f;
     [SerializeField] private float rightPosition_2 = 690f;
-    [SerializeField] private float positionY = 94f;
+    [SerializeField] private float positionY_first = 23f;
+    [SerializeField] private float positionY_between = 94f;
     [SerializeField] private float positionY_Center = -130f;
 
     // Cache các vị trí cố định
@@ -507,25 +508,25 @@ public class ShopController : MonoBehaviour
 
         // Slot 0: Far Left (Lớp dưới cùng)
         fixedPositions["penta_left_far"] = new CarouselPosition(
-            new Vector3(leftPosition_1, positionY, 0f),
+            new Vector3(leftPosition_1, positionY_first, 0f),
             sideScale * 0.8f, sideAlpha * 0.5f, false, 0
         );
 
         // Slot 1: Far Right (Lớp dưới cùng)
         fixedPositions["penta_right_far"] = new CarouselPosition(
-            new Vector3(rightPosition_2, positionY, 0f),
+            new Vector3(rightPosition_2, positionY_first, 0f),
             sideScale * 0.8f, sideAlpha * 0.5f, false, 1
         );
 
         // Slot 2: Near Left (Lớp giữa)
         fixedPositions["penta_left_near"] = new CarouselPosition(
-            new Vector3(leftPosition_3, positionY, 0f),
+            new Vector3(leftPosition_3, positionY_between, 0f),
             sideScale, sideAlpha, false, 2
         );
 
         // Slot 3: Near Right (Lớp giữa)
         fixedPositions["penta_right_near"] = new CarouselPosition(
-            new Vector3(rightPosition_4, positionY, 0f),
+            new Vector3(rightPosition_4, positionY_between, 0f),
             sideScale, sideAlpha, false, 3
         );
 
@@ -998,10 +999,13 @@ public class ShopController : MonoBehaviour
                 shopPanel.SetActive(MainMenuViewModel.IsShopVisible);
                 Debug.Log($"IsShopVisible changed to: {MainMenuViewModel.IsShopVisible}");
                 // ✅ Tắt/bật di chuyển player
+                if (playerController == null)
+                    playerController = FindFirstObjectByType<PlayerController>();
+
                 if (playerController != null)
-                {
                     playerController.SetCanMove(!MainMenuViewModel.IsShopVisible);
-                }
+                else
+                    Debug.LogWarning("[ShopController] PlayerController not found! Player movement not updated.");
 
                 closeShopButton.gameObject.SetActive(MainMenuViewModel.IsShopVisible);
 
@@ -1435,8 +1439,13 @@ public class ShopController : MonoBehaviour
             case nameof(MainMenuViewModel.IsShopVisible):
                 shopPanel.SetActive(MainMenuViewModel.IsShopVisible);
 
+                if (playerController == null)
+                    playerController = FindFirstObjectByType<PlayerController>();
+
                 if (playerController != null)
                     playerController.SetCanMove(!MainMenuViewModel.IsShopVisible);
+                else
+                    Debug.LogWarning("[ShopController] PlayerController not found! Player movement not updated.");
 
                 closeShopButton.gameObject.SetActive(MainMenuViewModel.IsShopVisible);
                 if (playerImage != null)

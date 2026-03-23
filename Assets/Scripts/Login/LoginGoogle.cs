@@ -44,6 +44,32 @@ public class LoginController : MonoBehaviour
         await PlayerAccountService.Instance.StartSignInAsync();
     }
 
+    /*    private async Task SignInWithUnityAsync(string accessToken)
+        {
+            try
+            {
+                await AuthenticationService.Instance.SignInWithUnityAsync(accessToken);
+                Debug.Log("SignIn is successful.");
+
+                playerInfo = AuthenticationService.Instance.PlayerInfo;
+
+                var name = await AuthenticationService.Instance.GetPlayerNameAsync();
+
+                playerProfile.playerInfo = playerInfo;
+                playerProfile.Name = name;
+
+                OnSignedIn?.Invoke(playerProfile);
+            }
+            catch (AuthenticationException ex)
+            {
+                Debug.LogException(ex);
+            }
+            catch (RequestFailedException ex)
+            {
+                Debug.LogException(ex);
+            }
+        }*/
+
     private async Task SignInWithUnityAsync(string accessToken)
     {
         try
@@ -53,7 +79,18 @@ public class LoginController : MonoBehaviour
 
             playerInfo = AuthenticationService.Instance.PlayerInfo;
 
-            var name = await AuthenticationService.Instance.GetPlayerNameAsync();
+            string name;
+            try
+            {
+                // Ưu tiên: auto-gen nếu chưa có name
+                name = await AuthenticationService.Instance.GetPlayerNameAsync(true);
+            }
+            catch (RequestFailedException)  // Bắt riêng 500 server error
+            {
+                // Fallback siêu an toàn: dùng PlayerId ngắn gọn
+                name = $"Player_{playerInfo.Id.Substring(playerInfo.Id.Length - 8)}";
+                Debug.LogWarning("Server name fail, dùng fallback: " + name);
+            }
 
             playerProfile.playerInfo = playerInfo;
             playerProfile.Name = name;
@@ -61,10 +98,6 @@ public class LoginController : MonoBehaviour
             OnSignedIn?.Invoke(playerProfile);
         }
         catch (AuthenticationException ex)
-        {
-            Debug.LogException(ex);
-        }
-        catch (RequestFailedException ex)
         {
             Debug.LogException(ex);
         }

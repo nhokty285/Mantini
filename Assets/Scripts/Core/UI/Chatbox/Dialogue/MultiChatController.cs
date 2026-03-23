@@ -577,17 +577,26 @@ Hãy trả lời:";
     {
         if (companionChatPanel == null || anchor == null) return;
 
-        _originalChatParent = companionChatPanel.transform.parent;
-        _originalSiblingIndex = companionChatPanel.transform.GetSiblingIndex();
+        // Chỉ lưu parent gốc 1 lần — tránh overwrite khi chuyển sản phẩm mà chưa đóng panel
+        if (_originalChatParent == null)
+        {
+            _originalChatParent = companionChatPanel.transform.parent;
+            _originalSiblingIndex = companionChatPanel.transform.GetSiblingIndex();
+
+            if (companionChatScroll != null)
+            {
+                RectTransform rt = companionChatScroll.GetComponent<RectTransform>();
+                _originalScrollPosY = rt.anchoredPosition.y;
+                _originalScrollHeight = rt.sizeDelta.y;
+            }
+        }
+
         companionChatPanel.transform.SetParent(anchor, false);
 
-        // Lưu và áp dụng RectTransform mới cho companionChatScroll
+        // Áp dụng RectTransform mới cho companionChatScroll
         if (companionChatScroll != null)
         {
             RectTransform rt = companionChatScroll.GetComponent<RectTransform>();
-            _originalScrollPosY = rt.anchoredPosition.y;
-            _originalScrollHeight = rt.sizeDelta.y;
-
             rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, productDetailScrollPosY);
             rt.sizeDelta = new Vector2(rt.sizeDelta.x, productDetailScrollHeight);
         }

@@ -309,23 +309,13 @@ public class CartUI : MonoBehaviour
     // ✅ MỚI: Gọi ProductDetailUI để hiển thị thông tin
     private void ShowProductDetailInMainUI(CartItem item)
     {
-        Debug.Log($"Opening Product Detail for: {item.productName}");
-        if (ProductDetailUI.Instance != null)
-        {
-            // Tạo APIProductItem giả lập chỉ chứa customId để ProductDetailUI fetch dữ liệu đầy đủ
-            APIProductItem apiItem = new APIProductItem();
-            apiItem.customId = item.customId;
-
-            ProductDetailUI.Instance.ShowProductDetail(apiItem);
-        }
-        else
+        if (ProductDetailUI.Instance == null)
         {
             Debug.LogError("ProductDetailUI Instance not found!");
+            return;
         }
 
         Debug.Log($"Opening Detail for: {item.productName} (Paid: {item.isPaid})");
-
-        if (ProductDetailUI.Instance == null) return;
 
         if (item.isPaid)
         {

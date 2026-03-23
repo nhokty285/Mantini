@@ -81,6 +81,7 @@ public class ShopController_1 : MonoBehaviour
         {
             multiChatController?.CloseCompanionChat();
             MainMenuViewModel.OnCloseShopClicked();
+            playerController.SetCanMove(true);
         });
     }
 

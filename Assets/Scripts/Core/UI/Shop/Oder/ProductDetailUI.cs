@@ -145,7 +145,7 @@ public class ProductDetailUI : MonoBehaviour
     [SerializeField] private RectTransform chatAnchor;
 
     private MultiChatManager _chatManager;
-    private PlayerController _playerController;
+    [SerializeField] private PlayerController _playerController;
 
     private void Awake()
     {
@@ -153,6 +153,7 @@ public class ProductDetailUI : MonoBehaviour
         else Destroy(gameObject);
 
         _chatManager = FindAnyObjectByType<MultiChatManager>();
+        _playerController ??= FindFirstObjectByType<PlayerController>();
         InitializeUI();
     }
 
@@ -236,7 +237,9 @@ public class ProductDetailUI : MonoBehaviour
     private void OpenPanel()
     {
         if (productDetailPanel != null) productDetailPanel.SetActive(true);
-        _playerController ??= FindFirstObjectByType<PlayerController>();
+
+        if (_playerController == null)
+            Debug.LogWarning("[ProductDetailUI] PlayerController not found! Player movement not locked.");
         _playerController?.SetCanMove(false);
     }
 
@@ -628,6 +631,9 @@ public class ProductDetailUI : MonoBehaviour
         if (productDetailPanel != null)
             productDetailPanel.SetActive(false);
         _playerController ??= FindFirstObjectByType<PlayerController>();
+
+        if (_playerController == null)
+            Debug.LogWarning("[ProductDetailUI] PlayerController not found! Player movement not restored.");
         _playerController?.SetCanMove(true);
 
 
