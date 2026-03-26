@@ -20,8 +20,6 @@ public class PlayerProfileToggle : MonoBehaviour
 
     [SerializeField] private ProfileData profileData;
 
-    private PlayerController _playerController;
-
     private void Start()
     {
         // Tìm ProfileData persist từ Scene 1 (DontDestroyOnLoad)
@@ -52,25 +50,39 @@ public class PlayerProfileToggle : MonoBehaviour
             saveButton.onClick.AddListener(() => { profileData.SaveProfile(); ClosePanel(); });
 
         profilePanel.gameObject.SetActive(false);
+
+        PlayerController.OnMovementStateChanged += OnMovementStateChanged;
+        if (avatarButton != null)
+            avatarButton.interactable = PlayerController.Instance == null || true;
+    }
+
+    private void OnDestroy()
+    {
+        PlayerController.OnMovementStateChanged -= OnMovementStateChanged;
+    }
+
+    private void OnMovementStateChanged(bool canMove)
+    {
+        if (avatarButton != null)
+            avatarButton.interactable = canMove;
     }
 
     public void TogglePanel()
     {
         if (profilePanel == null) return;
 
-        bool willOpen = !profilePanel.activeSelf;
-        profilePanel.SetActive(willOpen);
-        _playerController ??= FindFirstObjectByType<PlayerController>();
-        _playerController?.SetCanMove(!willOpen);
+        /*    bool willOpen = !profilePanel.activeSelf;
+            profilePanel.SetActive(willOpen);
+            PlayerController.Instance?.SetCanMove(!willOpen);*/
 
-        if (willOpen)
-            profileData?.LoadProfile();
+        profilePanel.SetActive(true);
+        PlayerController.Instance?.SetCanMove(false);
+        profileData?.LoadProfile();
     }
 
     public void ClosePanel()
     {
         profilePanel?.SetActive(false);
-        _playerController ??= FindFirstObjectByType<PlayerController>();
-        _playerController?.SetCanMove(true);
+        PlayerController.Instance?.SetCanMove(true);
     }
 }

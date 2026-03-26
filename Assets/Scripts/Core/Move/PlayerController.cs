@@ -5,6 +5,8 @@ using UnityEngine.EventSystems;
 
 public class PlayerController : MonoBehaviour
 {
+    public static PlayerController Instance { get; private set; }
+
     [Header("Movement")]
     [SerializeField] float moveSpeed = 8f;
     [SerializeField][Range(0, 20)] float rotationSpeed = 10f;
@@ -22,6 +24,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Control State")]
     [SerializeField] private bool canMove = true;
+    private int _lockCount = 0;
         
     // ✅ THÊM: Reference đến Cinemachine Input Controller
     [Header("Cinemachine Control")]
@@ -38,6 +41,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 _cachedInputDirection;
     private void Awake()
     {
+        Instance = this;
         Application.targetFrameRate = 120;
     }
     void Start()
@@ -60,23 +64,32 @@ public class PlayerController : MonoBehaviour
 
     public void OnMove(InputAction.CallbackContext ctx) => moveInput = ctx.ReadValue<Vector2>();
 
-    // ✅ THAY ĐỔI: Tắt cả player movement VÀ camera input
+    public static event System.Action<bool> OnMovementStateChanged;
+
+    // ✅ Counter-based: nhiều panel có thể lock đồng thời, chỉ unlock khi tất cả đều close
     public void SetCanMove(bool canMove)
     {
-        this.canMove = canMove;
+        if (!canMove)
+            _lockCount++;
+        else
+            _lockCount = Mathf.Max(0, _lockCount - 1);
 
-        // ✅ Tắt/bật Cinemachine input controller
+        bool shouldMove = _lockCount == 0;
+        this.canMove = shouldMove;
+
         if (inputAxisController != null)
         {
-            inputAxisController.enabled = canMove;
-            Debug.Log($"[PlayerController] InputAxisController.enabled = {canMove}");
+            inputAxisController.enabled = shouldMove;
+            Debug.Log($"[PlayerController] InputAxisController.enabled = {shouldMove} (lockCount={_lockCount})");
         }
-        // Reset input ngay khi tắt để dừng di chuyển
-        if (canMove)
+
+        if (shouldMove)
         {
             moveInput = Vector2.zero;
             anim.SetBool("isMoving", false);
         }
+
+        OnMovementStateChanged?.Invoke(shouldMove);
     }
 
     /*  void FixedUpdate()

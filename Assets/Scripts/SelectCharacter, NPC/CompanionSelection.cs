@@ -38,7 +38,7 @@ public class CompanionSelection : MonoBehaviour
     public Button dialogueContinueButton;
         
     [Header("UI Resources")]
-    public Sprite normalSprite;   // Kéo ảnh trạng thái thường vào đây
+    public Sprite normalSprite;   // Kéo ảnh trạng thái thường vào đây  
     public Sprite selectedSprite; // Kéo ảnh trạng thái được chọn (sáng lên) vào đây
 
     // State management

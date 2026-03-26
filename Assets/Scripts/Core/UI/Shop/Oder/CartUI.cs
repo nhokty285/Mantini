@@ -54,8 +54,6 @@ public class CartUI : MonoBehaviour
     private InventoryTab currentTab = InventoryTab.Unpaid;
     private CartItem selectedItem = null;
 
-    private PlayerController _playerController;
-
     private CartItem lastClickedItem = null;
     private float lastClickTime = 0f;
     private const float doubleClickThreshold = 1f;
@@ -66,7 +64,7 @@ public class CartUI : MonoBehaviour
 
     [Header("Auto Refresh")]
     public bool autoUpdateTotalAmount = true;
-
+    public GameObject shopController; // Reference đến ShopController để gọi API khi cần
     private void Start()
     {
         SetupEventListeners();
@@ -361,16 +359,22 @@ public class CartUI : MonoBehaviour
             bool isActive = !cartPanel.activeSelf;
             cartPanel.SetActive(isActive);
             if (isActive) RefreshCurrentTabContent();
-            _playerController ??= FindFirstObjectByType<PlayerController>();
-            _playerController?.SetCanMove(!isActive);
+            PlayerController.Instance?.SetCanMove(!isActive);
         }
     }
 
     private void CloseCartPanel()
     {
-        if (cartPanel != null) cartPanel.SetActive(false);
-        _playerController ??= FindFirstObjectByType<PlayerController>();
-        _playerController?.SetCanMove(true);
+        if (!shopController.activeInHierarchy && cartPanel.activeInHierarchy)
+        {
+            cartPanel.SetActive(false);
+            PlayerController.Instance?.SetCanMove(true);
+        }
+        else
+        {
+            cartPanel.SetActive(false);
+        }
+  
     }   
 
     private void InputInfomation()

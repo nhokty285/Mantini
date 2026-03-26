@@ -190,6 +190,7 @@ public class CompanionNPC : BaseNPC, IChatParticipant
     [SerializeField] private float smoothTime = 0.2f;
     [SerializeField] private float rotationSpeed = 8f;
     [SerializeField] private bool shouldFollowPlayer = true;
+    [SerializeField] private float teleportDistance = 10f; // Dịch chuyển về gần player nếu xa hơn khoảng này
 
     [Header("Idle Variations")]
     [SerializeField] private float minIdleTime = 3f;
@@ -260,6 +261,13 @@ public class CompanionNPC : BaseNPC, IChatParticipant
         // 1. Tính khoảng cách
         float distance = Vector3.Distance(transform.position, playerTransform.position);
 
+        // Teleport về gần player nếu bị stuck / đi quá xa
+        if (distance > teleportDistance)
+        {
+          TeleportNearPlayer();
+            return;
+        }
+
         // 🛠 SỬA TẠI ĐÂY: Thêm sai số (Epsilon) 0.05f vào khoảng cách dừng
         // Điều này giúp cắt đứt SmoothDamp trước khi nó bị kẹt ở mức tiệm cận
         bool isCloseEnough = distance <= (followDistance + 0.05f);
@@ -301,6 +309,27 @@ public class CompanionNPC : BaseNPC, IChatParticipant
             playerTransform = player.transform;
             isFollowing = true;
         }
+    }
+
+    private void TeleportNearPlayer()
+    {
+        // Dịch chuyển ngay về sau lưng player (offset ngược chiều mà player đang nhìn)
+        Vector3 offset = -playerTransform.forward * followDistance;
+        offset.y = 0f;
+        transform.position = playerTransform.position + offset;
+
+        // Reset velocity để tránh jitter sau khi teleport
+        currentVelocity = Vector3.zero;
+
+        // Quay mặt về phía player ngay lập tức
+        Vector3 lookDir = playerTransform.position - transform.position;
+        lookDir.y = 0f;
+        if (lookDir.sqrMagnitude > 0.001f)
+            transform.rotation = Quaternion.LookRotation(lookDir);
+
+        // Đảm bảo animation không bị kẹt ở trạng thái chạy
+        UpdateAnimationSpeed(0f);
+        Debug.Log($"[{npcName}] Teleported back to player (was too far).");
     }
 
     private void FollowPlayer()

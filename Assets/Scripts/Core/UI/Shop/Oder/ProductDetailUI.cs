@@ -145,7 +145,6 @@ public class ProductDetailUI : MonoBehaviour
     [SerializeField] private RectTransform chatAnchor;
 
     private MultiChatManager _chatManager;
-    [SerializeField] private PlayerController _playerController;
 
     private void Awake()
     {
@@ -153,7 +152,6 @@ public class ProductDetailUI : MonoBehaviour
         else Destroy(gameObject);
 
         _chatManager = FindAnyObjectByType<MultiChatManager>();
-        _playerController ??= FindFirstObjectByType<PlayerController>();
         InitializeUI();
     }
 
@@ -238,9 +236,7 @@ public class ProductDetailUI : MonoBehaviour
     {
         if (productDetailPanel != null) productDetailPanel.SetActive(true);
 
-        if (_playerController == null)
-            Debug.LogWarning("[ProductDetailUI] PlayerController not found! Player movement not locked.");
-        _playerController?.SetCanMove(false);
+        PlayerController.Instance?.SetCanMove(false);
     }
 
     // Hiển thị các thông tin chung (Tên, giá, ảnh, mô tả)
@@ -630,11 +626,7 @@ public class ProductDetailUI : MonoBehaviour
 
         if (productDetailPanel != null)
             productDetailPanel.SetActive(false);
-        _playerController ??= FindFirstObjectByType<PlayerController>();
-
-        if (_playerController == null)
-            Debug.LogWarning("[ProductDetailUI] PlayerController not found! Player movement not restored.");
-        _playerController?.SetCanMove(true);
+        PlayerController.Instance?.SetCanMove(true);
 
 
         //currentSelectedSize = "";

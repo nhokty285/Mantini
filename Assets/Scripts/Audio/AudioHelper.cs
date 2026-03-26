@@ -13,6 +13,7 @@ public class AudioHelper : MonoBehaviour
         soundButton.onClick.AddListener(() =>
         {
             soundPopup.SetActive(true);
+            PlayerController.Instance?.SetCanMove(false);
             AudioManager.Instance.PlaySFXOneShot("Button");
         });
     }
@@ -20,6 +21,7 @@ public class AudioHelper : MonoBehaviour
     {
         if (soundPopup != null)
             soundPopup.SetActive(false);
+        PlayerController.Instance?.SetCanMove(true);
         AudioManager.Instance.PlaySFXOneShot("Close");
     }
     public void UI_PlayBgmSound(AudioClip audioClip)
