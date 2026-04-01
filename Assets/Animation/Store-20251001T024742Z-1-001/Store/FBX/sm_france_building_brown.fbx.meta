@@ -3,7 +3,17 @@ guid: a30abb0194e6c8b409dfa4acb1c7ee9a
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_france_building_brown
+    second: {fileID: 2100000, guid: 85e49cae0b1e3b94bb9bb90d389e9970, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_france_dormer_brown
+    second: {fileID: 2100000, guid: 07fdcc2278e79e549bf63cab022d9598, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
