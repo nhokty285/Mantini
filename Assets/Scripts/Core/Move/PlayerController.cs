@@ -126,21 +126,20 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Tính toán hướng nhưng CHƯA di chuyển nhân vật
         if (canMove && cameraTransform != null)
-        {
             _cachedInputDirection = CalculateCameraRelativeMovement();
-        }
         else
-        {
             _cachedInputDirection = Vector3.zero;
-        }
 
-        // Xử lý Animation ở đây để hình ảnh phản hồi ngay lập tức với ngón tay
-        // Người chơi thấy nhân vật bắt đầu chạy NGAY, dù vật lý thực tế chưa chạy
-        float inputSpeed = _cachedInputDirection.magnitude;
-        anim.SetFloat("moveSpeed", inputSpeed, 0.1f, Time.deltaTime);
-        HandleIdleAnimations(inputSpeed > 0.01f);
+        float rawMagnitude = _cachedInputDirection.magnitude;
+        bool isMoving = rawMagnitude > 0.01f;
+
+        // ✅ Dùng giá trị binary: 0 (đứng) hoặc 1 (chạy full speed)
+        // Thay vì dùng rawMagnitude vốn phụ thuộc joystick depth
+        float animSpeed = isMoving ? 1f : 0f;
+        anim.SetFloat("moveSpeed", animSpeed, 0.1f, Time.deltaTime);
+
+        HandleIdleAnimations(isMoving);
     }
 
     void FixedUpdate()
