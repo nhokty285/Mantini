@@ -39304,7 +39304,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -41107,8 +41107,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_RenderShadows: 1
-  m_RequiresDepthTextureOption: 2
-  m_RequiresOpaqueTextureOption: 2
+  m_RequiresDepthTextureOption: 0
+  m_RequiresOpaqueTextureOption: 0
   m_CameraType: 0
   m_Cameras: []
   m_RendererIndex: -1
@@ -108796,8 +108796,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 57, y: -120}
-  m_SizeDelta: {x: 663, y: 1947}
+  m_AnchoredPosition: {x: 91, y: -131}
+  m_SizeDelta: {x: 504, y: 1977}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &4487320859965470136
 GameObject:
@@ -113409,6 +113409,9 @@ MonoBehaviour:
     npcImage: {fileID: 21300000, guid: 5c3a76233aa99eb41abe1671c6dba1a1, type: 3}
     displayDuration: 2
     sfxOnStart: {fileID: 8300000, guid: 6daa72f7ef209db4cbab45e3eeaf6de0, type: 3}
+    imageLayout:
+      anchoredPosition: {x: 8, y: -131}
+      size: {x: 573, y: 1944}
   - speakerName: Glass
     dialogueText: "Ch\xE0o m\u1EEBng b\u1EA1n \u0111\u1EBFn v\u1EDBi c\u1EEDa h\xE0ng
       m\u1EAFt k\xEDnh , t\xF4i c\xF3 th\u1EC3 gi\xFAp g\xEC \u0111\u01B0\u1EE3c
@@ -113416,12 +113419,18 @@ MonoBehaviour:
     npcImage: {fileID: 21300000, guid: 5c3a76233aa99eb41abe1671c6dba1a1, type: 3}
     displayDuration: 2.5
     sfxOnStart: {fileID: 8300000, guid: 958fad3758d723148b51a32ef13a877f, type: 3}
+    imageLayout:
+      anchoredPosition: {x: 8, y: -131}
+      size: {x: 573, y: 1944}
   - speakerName: Glass
     dialogueText: "H\xF4m nay, ch\xFAng t\xF4i v\u1EEBa nh\u1EADp \u0111\u01B0\u1EE3c
       1 s\u1ED1 h\xE0ng t\u1ED1t , m\u1EDDi b\u1EA1n xem qua"
     npcImage: {fileID: 21300000, guid: 5c3a76233aa99eb41abe1671c6dba1a1, type: 3}
     displayDuration: 2
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 8, y: -131}
+      size: {x: 573, y: 1944}
   enableAIChat: 0
   aiPersonality: 
   npcAnimator: {fileID: 1366091699706664265}
@@ -115205,6 +115214,9 @@ MonoBehaviour:
     npcImage: {fileID: 21300000, guid: 4d9593eee57f69b43a2469295eaa3458, type: 3}
     displayDuration: 2
     sfxOnStart: {fileID: 8300000, guid: 94c6f21025d83d640b15ba5ddfbd67d6, type: 3}
+    imageLayout:
+      anchoredPosition: {x: 8, y: -131}
+      size: {x: 513, y: 1938}
   - speakerName: Leather
     dialogueText: "Ch\xE0o m\u1EEBng b\u1EA1n \u0111\u1EBFn v\u1EDBi c\u1EEDa h\xE0ng
       \u0111\u1ED3 da, t\xF4i c\xF3 th\u1EC3 gi\xFAp g\xEC \u0111\u01B0\u1EE3c cho
@@ -115212,12 +115224,18 @@ MonoBehaviour:
     npcImage: {fileID: 21300000, guid: 4d9593eee57f69b43a2469295eaa3458, type: 3}
     displayDuration: 2.5
     sfxOnStart: {fileID: 8300000, guid: 5007cd57efc6192488250f7488cbf487, type: 3}
+    imageLayout:
+      anchoredPosition: {x: 8, y: -131}
+      size: {x: 513, y: 1938}
   - speakerName: Leather
     dialogueText: "H\xF4m nay, ch\xFAng t\xF4i v\u1EEBa nh\u1EADp \u0111\u01B0\u1EE3c
       1 s\u1ED1 h\xE0ng t\u1ED1t , m\u1EDDi b\u1EA1n xem qua"
     npcImage: {fileID: 21300000, guid: 4d9593eee57f69b43a2469295eaa3458, type: 3}
     displayDuration: 2
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 8, y: -131}
+      size: {x: 513, y: 1938}
   enableAIChat: 0
   aiPersonality: 
   npcAnimator: {fileID: 5857738792311465438}
@@ -115367,18 +115385,27 @@ MonoBehaviour:
     npcImage: {fileID: 21300000, guid: 9b3687c5432f64945a405edb0660ec70, type: 3}
     displayDuration: 2
     sfxOnStart: {fileID: 8300000, guid: 921f7a2fbe44caa46bb1f953abdc8995, type: 3}
+    imageLayout:
+      anchoredPosition: {x: 91, y: -131}
+      size: {x: 663, y: 1947}
   - speakerName: Shoes
     dialogueText: "Ch\xE0o m\u1EEBng b\u1EA1n \u0111\u1EBFn v\u1EDBi c\u1EEDa h\xE0ng
       gi\xE0y  , t\xF4i c\xF3 th\u1EC3 gi\xFAp g\xEC \u0111\u01B0\u1EE3c cho b\u1EA1n"
     npcImage: {fileID: 21300000, guid: 9b3687c5432f64945a405edb0660ec70, type: 3}
     displayDuration: 2.5
     sfxOnStart: {fileID: 8300000, guid: ef2ee81c1d6111f42a20e8e280448a3c, type: 3}
+    imageLayout:
+      anchoredPosition: {x: 91, y: -131}
+      size: {x: 663, y: 1947}
   - speakerName: Shoes
     dialogueText: "H\xF4m nay, ch\xFAng t\xF4i v\u1EEBa nh\u1EADp \u0111\u01B0\u1EE3c
       1 s\u1ED1 h\xE0ng t\u1ED1t , m\u1EDDi b\u1EA1n xem qua"
     npcImage: {fileID: 21300000, guid: 9b3687c5432f64945a405edb0660ec70, type: 3}
     displayDuration: 2
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 91, y: -131}
+      size: {x: 663, y: 1947}
   enableAIChat: 0
   aiPersonality: 
   npcAnimator: {fileID: 5866666021862407878}
@@ -120492,6 +120519,9 @@ MonoBehaviour:
     npcImage: {fileID: 21300000, guid: 172a211940510854eaad98f55dfa50e3, type: 3}
     displayDuration: 2
     sfxOnStart: {fileID: 8300000, guid: cd06b18ba2dee1e4c9b0ffc383be033a, type: 3}
+    imageLayout:
+      anchoredPosition: {x: 8, y: -131}
+      size: {x: 504, y: 1977}
   - speakerName: Normal
     dialogueText: "Ch\xE0o m\u1EEBng b\u1EA1n \u0111\u1EBFn v\u1EDBi c\u1EEDa h\xE0ng
       t\u1EA1p h\xF3a  , t\xF4i c\xF3 th\u1EC3 gi\xFAp g\xEC \u0111\u01B0\u1EE3c
@@ -120499,12 +120529,18 @@ MonoBehaviour:
     npcImage: {fileID: 21300000, guid: 172a211940510854eaad98f55dfa50e3, type: 3}
     displayDuration: 2.5
     sfxOnStart: {fileID: 8300000, guid: 8658021294a8f38418712caa125cc974, type: 3}
+    imageLayout:
+      anchoredPosition: {x: 8, y: -131}
+      size: {x: 504, y: 1977}
   - speakerName: Normal
     dialogueText: "H\xF4m nay, ch\xFAng t\xF4i v\u1EEBa nh\u1EADp \u0111\u01B0\u1EE3c
       1 s\u1ED1 h\xE0ng t\u1ED1t , m\u1EDDi b\u1EA1n xem qua"
     npcImage: {fileID: 21300000, guid: 172a211940510854eaad98f55dfa50e3, type: 3}
     displayDuration: 2
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 8, y: -131}
+      size: {x: 504, y: 1977}
   enableAIChat: 1
   aiPersonality: 
   npcAnimator: {fileID: 87480767407793152}
@@ -121463,7 +121499,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 5c3a76233aa99eb41abe1671c6dba1a1, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -127343,6 +127379,9 @@ MonoBehaviour:
     npcImage: {fileID: 21300000, guid: 2e9cd8cc6d3cd154aa64f22e8a3e4615, type: 3}
     displayDuration: 2
     sfxOnStart: {fileID: 8300000, guid: 151d3c9cfa5c3fb4eacc47de4dedac5e, type: 3}
+    imageLayout:
+      anchoredPosition: {x: 91, y: -131}
+      size: {x: 573, y: 2007}
   - speakerName: Perfume
     dialogueText: "Ch\xE0o m\u1EEBng b\u1EA1n \u0111\u1EBFn v\u1EDBi c\u1EEDa h\xE0ng
       n\u01B0\u1EDBc hoa  , t\xF4i c\xF3 th\u1EC3 gi\xFAp g\xEC \u0111\u01B0\u1EE3c
@@ -127350,12 +127389,18 @@ MonoBehaviour:
     npcImage: {fileID: 21300000, guid: 2e9cd8cc6d3cd154aa64f22e8a3e4615, type: 3}
     displayDuration: 2.5
     sfxOnStart: {fileID: 8300000, guid: 4624036e487109a409c057f9191d5a85, type: 3}
+    imageLayout:
+      anchoredPosition: {x: 91, y: -131}
+      size: {x: 573, y: 2007}
   - speakerName: Perfume
     dialogueText: "H\xF4m nay, ch\xFAng t\xF4i v\u1EEBa nh\u1EADp \u0111\u01B0\u1EE3c
       1 s\u1ED1 h\xE0ng t\u1ED1t , m\u1EDDi b\u1EA1n xem qua"
     npcImage: {fileID: 21300000, guid: 2e9cd8cc6d3cd154aa64f22e8a3e4615, type: 3}
     displayDuration: 2
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 91, y: -131}
+      size: {x: 573, y: 2007}
   enableAIChat: 0
   aiPersonality: 
   npcAnimator: {fileID: 8840519045490929954}

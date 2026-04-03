@@ -31,6 +31,8 @@ public class VendorNPC : BaseNPC, IChatParticipant
     [Header("Vendor Dialogue Config")]
     [SerializeField] private bool customDialogueEnabled = true;
 
+    [Header("Vendor Image Layout")]
+     private ImageLayout myLayout = ImageLayout.Default;
 
     private void Start()
     {
@@ -294,7 +296,8 @@ public class VendorNPC : BaseNPC, IChatParticipant
             npcName,
             $"Xin chào! Tôi là {npcName}.",
             vendorImage,
-            0f
+            0f,
+            myLayout
         ));
 
         // Introduction
@@ -302,7 +305,8 @@ public class VendorNPC : BaseNPC, IChatParticipant
             npcName,
             $"Mình bán những sản phẩm {shopCategory} rất chất lượng.",
             vendorImage,
-            0f
+            0f,
+            myLayout
         ));
 
         // Call to action
@@ -310,7 +314,8 @@ public class VendorNPC : BaseNPC, IChatParticipant
             npcName,
             "Bạn muốn xem hàng của mình không?",
             vendorImage,
-            0f
+            0f,
+            myLayout
         ));
 
         return defaultDialogue;

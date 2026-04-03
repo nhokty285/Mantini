@@ -8,6 +8,8 @@ using TMPro;
 /// Hệ thống quản lý dialogue cho các NPC khác nhau
 /// Tự động mở shop sau khi dialogue kết thúc
 /// </summary>
+
+
 public class NPCDialogueSystem : MonoBehaviour
 {
     [Header("📍 Singleton")]
@@ -149,11 +151,23 @@ public class NPCDialogueSystem : MonoBehaviour
         // Update UI
         npcNameText.text = entry.speakerName;
 
-        // Update image nếu có
-        if (npcImageDisplay != null && entry.npcImage != null)
+        // Swap sprite + apply RectTransform theo từng entry
+        if (npcImageDisplay != null)
         {
-            npcImageDisplay.sprite = entry.npcImage;
-            npcImageDisplay.enabled = true;
+            if (entry.npcImage != null)
+            {
+                npcImageDisplay.sprite = entry.npcImage;
+                npcImageDisplay.enabled = true;
+
+                // ✅ Apply RectTransform từ imageLayout
+                RectTransform rt = npcImageDisplay.rectTransform;
+                rt.anchoredPosition = entry.imageLayout.anchoredPosition;
+                rt.sizeDelta = entry.imageLayout.size;
+            }
+            else
+            {
+                npcImageDisplay.enabled = false;
+            }
         }
         /* // Reset dialogue text
          dialogueText.text = "";
@@ -337,11 +351,16 @@ public class DialogueEntry
     public float displayDuration = 0f; // 0 = chờ input, >0 = auto-next sau n giây
     public AudioClip sfxOnStart;
 
-    public DialogueEntry(string name, string text, Sprite image = null, float duration = 0f)
+    // ✅ THÊM: Layout riêng cho từng image
+    public ImageLayout imageLayout = ImageLayout.Default;
+
+    public DialogueEntry(string name, string text, Sprite image = null, float duration = 0f, ImageLayout? layout = null)
     {
         speakerName = name;
         dialogueText = text;
         npcImage = image;
         displayDuration = duration;
+        imageLayout = layout ?? ImageLayout.Default;
     }
 }
+
