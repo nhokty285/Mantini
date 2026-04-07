@@ -59,6 +59,8 @@ public class RetailOrderRequest
     public string recipientCountryId; // Thêm field này
     public string recipientCountryName; // Thêm field này
     public List<string> tenantCustomerCouponIds; // Thêm field này
+
+    public int? orderSource = 0;
 }
 
 [System.Serializable]

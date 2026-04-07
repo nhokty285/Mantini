@@ -32,7 +32,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
     [SerializeField] private bool customDialogueEnabled = true;
 
     [Header("Vendor Image Layout")]
-     private ImageLayout myLayout = ImageLayout.Default;
+    [SerializeField] private ImageLayout myLayout = ImageLayout.Default;
 
     private void Start()
     {
