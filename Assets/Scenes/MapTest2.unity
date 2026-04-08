@@ -3108,9 +3108,9 @@ RectTransform:
   - {fileID: 1514776962}
   m_Father: {fileID: 552692384}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 486.2621, y: -160}
   m_SizeDelta: {x: 904.5242, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &80809869
@@ -5379,7 +5379,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &154948916
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7357,7 +7357,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -0.000019073486}
   m_SizeDelta: {x: 0, y: 38.5778}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &264474902
@@ -17016,7 +17016,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1209101073}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.5302339
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -22944,9 +22944,9 @@ RectTransform:
   - {fileID: 394507835}
   m_Father: {fileID: 552692384}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 486.2621, y: -1351.6713}
   m_SizeDelta: {x: 904.5242, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &960954394
@@ -31046,9 +31046,9 @@ RectTransform:
   - {fileID: 1955087920}
   m_Father: {fileID: 552692384}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 486.2621, y: -498.20563}
   m_SizeDelta: {x: 904.5242, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1328639378
@@ -32324,9 +32324,9 @@ RectTransform:
   - {fileID: 1395038374}
   m_Father: {fileID: 552692384}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 486.2621, y: -924.9384}
   m_SizeDelta: {x: 904.5242, y: 635.26}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1382051184
@@ -38281,9 +38281,9 @@ RectTransform:
   - {fileID: 412317508}
   m_Father: {fileID: 552692384}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 486.2621, y: -329.1028}
   m_SizeDelta: {x: 904.5242, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1552602158
@@ -44360,7 +44360,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 912695433}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.03352289
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -127392,7 +127392,7 @@ MonoBehaviour:
     displayDuration: 2
     sfxOnStart: {fileID: 8300000, guid: 151d3c9cfa5c3fb4eacc47de4dedac5e, type: 3}
     imageLayout:
-      anchoredPosition: {x: 91, y: -131}
+      anchoredPosition: {x: 22.5, y: -242}
       size: {x: 573, y: 2007}
   - speakerName: Perfume
     dialogueText: "Ch\xE0o m\u1EEBng b\u1EA1n \u0111\u1EBFn v\u1EDBi c\u1EEDa h\xE0ng
@@ -127402,7 +127402,7 @@ MonoBehaviour:
     displayDuration: 2.5
     sfxOnStart: {fileID: 8300000, guid: 4624036e487109a409c057f9191d5a85, type: 3}
     imageLayout:
-      anchoredPosition: {x: 91, y: -131}
+      anchoredPosition: {x: 22.5, y: -242}
       size: {x: 573, y: 2007}
   - speakerName: Perfume
     dialogueText: "H\xF4m nay, ch\xFAng t\xF4i v\u1EEBa nh\u1EADp \u0111\u01B0\u1EE3c
@@ -127411,12 +127411,12 @@ MonoBehaviour:
     displayDuration: 2
     sfxOnStart: {fileID: 0}
     imageLayout:
-      anchoredPosition: {x: 91, y: -131}
+      anchoredPosition: {x: 22.5, y: -242}
       size: {x: 573, y: 2007}
   enableAIChat: 0
   aiPersonality: 
-  npcAnimator: {fileID: 8840519045490929954}
-  interactionIndicator: {fileID: 4418757166816701948}
+  npcAnimator: {fileID: 0}
+  interactionIndicator: {fileID: 0}
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: af120be00dad31040bc27d654894ce89, type: 3}

@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
+using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 public class CartImageItem : MonoBehaviour
 {
@@ -36,7 +37,7 @@ public class CartImageItem : MonoBehaviour
             button.onClick.AddListener(() =>
             {
                 AudioManager.Instance.PlaySFXOneShot("Button_High");
-                SelectThisItem();
+                //SelectThisItem();
                 onClickCallback?.Invoke(itemData);
             });
         }
@@ -55,6 +56,8 @@ public class CartImageItem : MonoBehaviour
         // ✅ THÊM: Cập nhật visual indicator
         UpdateAddedToCartIndicator();
     }
+
+
 
     // ✅ THÊM: Method cập nhật visual indicator
     private void UpdateAddedToCartIndicator()
@@ -154,6 +157,18 @@ public class CartImageItem : MonoBehaviour
 
         // Cập nhật reference
         currentHighlightedItem = this;
+    }
+
+    public void ToggleHighlightMultiSelect()
+    {
+        bool newState = !isHighlighted;
+        // Gọi SetHighlight trực tiếp, KHÔNG qua SelectThisItem()
+        // SetHighlight không đụng đến currentHighlightedItem của item khác
+        SetHighlight(newState);
+
+        // Đồng bộ isSelectedForCheckout theo trạng thái highlight
+        if (itemData != null)
+            itemData.isSelectedForCheckout = newState;
     }
 
     public void SetHighlight(bool highlight)
