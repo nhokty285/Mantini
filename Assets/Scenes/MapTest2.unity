@@ -7357,7 +7357,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.0000076293945}
+  m_AnchoredPosition: {x: 0, y: -0.000015258789}
   m_SizeDelta: {x: 0, y: 38.5778}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &264474902
@@ -127417,8 +127417,8 @@ MonoBehaviour:
       size: {x: 573, y: 2007}
   enableAIChat: 0
   aiPersonality: 
-  npcAnimator: {fileID: 0}
-  interactionIndicator: {fileID: 0}
+  npcAnimator: {fileID: 8840519045490929954}
+  interactionIndicator: {fileID: 4418757166816701948}
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: af120be00dad31040bc27d654894ce89, type: 3}
@@ -127426,7 +127426,7 @@ MonoBehaviour:
   vendorImage: {fileID: 21300000, guid: 2e9cd8cc6d3cd154aa64f22e8a3e4615, type: 3}
   vendorIcon: {fileID: 21300000, guid: af120be00dad31040bc27d654894ce89, type: 3}
   shopCategory: General
-  nameTagUI: {fileID: 0}
+  nameTagUI: {fileID: 2332315361778101227}
   customDialogueEnabled: 1
   myLayout:
     anchoredPosition: {x: 0, y: 0}
