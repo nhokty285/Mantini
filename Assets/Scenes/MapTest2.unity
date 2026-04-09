@@ -7357,7 +7357,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.000019073486}
+  m_AnchoredPosition: {x: 0, y: -0.0000076293945}
   m_SizeDelta: {x: 0, y: 38.5778}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &264474902
@@ -34583,6 +34583,8 @@ MonoBehaviour:
   cartImageItemPrefab: {fileID: 330007471796472935, guid: 7a955c1c0605a2c4ab8235ded2959591, type: 3}
   autoUpdateTotalAmount: 1
   shopController: {fileID: 1833123062}
+  selectZone: {fileID: 1465583047}
+  isSelectMode: 0
 --- !u!114 &1454406661
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -145,7 +145,11 @@ public class CartUI : MonoBehaviour
             OnSelectAllToCartClicked();
 
         });
-        addSelectedToCartButton?.onClick.AddListener(OnAddSelectedToCartClicked);
+        addSelectedToCartButton?.onClick.AddListener(()=>
+        {
+            OnAddSelectedToCartClicked();
+            moreObject?.SetActive(false);   
+        });
         cartButton?.onClick.AddListener(() =>
         {
             ToggleCartPanel();
