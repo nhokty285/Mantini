@@ -154,7 +154,6 @@ public class CartUI : MonoBehaviour
         addSelectedToCartButton?.onClick.AddListener(()=>
         {
             OnAddSelectedToCartClicked();
-            moreObject.SetActive(false);
         });
       
         cartButton?.onClick.AddListener(() =>
@@ -534,11 +533,15 @@ public class CartUI : MonoBehaviour
         if (trigger.triggers == null)
             trigger.triggers = new List<EventTrigger.Entry>();
 
+        System.Func<bool> isSelected = () =>
+            EventSystem.current != null &&
+            EventSystem.current.currentSelectedGameObject == button.gameObject;
+
         AddEvent(trigger, EventTriggerType.PointerDown, _ => icon.SetActive(true));
-        AddEvent(trigger, EventTriggerType.PointerUp, _ => icon.SetActive(false));
-        AddEvent(trigger, EventTriggerType.PointerExit, _ => icon.SetActive(false));
-        AddEvent(trigger, EventTriggerType.Deselect, _ => icon.SetActive(false));
+        AddEvent(trigger, EventTriggerType.PointerUp, _ => icon.SetActive(isSelected()));
+        AddEvent(trigger, EventTriggerType.PointerExit, _ => icon.SetActive(isSelected()));
         AddEvent(trigger, EventTriggerType.Select, _ => icon.SetActive(true));
+        AddEvent(trigger, EventTriggerType.Deselect, _ => icon.SetActive(false));
     }
 
     private void AddEvent(EventTrigger trigger, EventTriggerType type, UnityEngine.Events.UnityAction<BaseEventData> action)
