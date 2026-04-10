@@ -11,7 +11,10 @@ public class CartUI : MonoBehaviour
     [SerializeField] private Button moreButton;
     [SerializeField] private Button selectAllToCartButton;
     [SerializeField] private Button addSelectedToCartButton;
-    [SerializeField] private GameObject[] buttonIcons;
+
+    [Header("Button State Icons")]
+    [SerializeField] private GameObject selectAllButtonIcon;
+    [SerializeField] private GameObject addSelectedButtonIcon;
 
     [Header("Cart Button")]
     [SerializeField] private Button cartButton;
@@ -74,6 +77,9 @@ public class CartUI : MonoBehaviour
         SetupEventListeners();
         SetupTabSystem();
         InitializeUI();
+
+        BindIconToButtonState(selectAllToCartButton, selectAllButtonIcon);
+        BindIconToButtonState(addSelectedToCartButton, addSelectedButtonIcon);
     }
 
     // Trong CartUI.cs - Thêm vào cuối Update() hoặc LateUpdate()
@@ -144,14 +150,13 @@ public class CartUI : MonoBehaviour
         {
             OnSelectAllToCartClicked();
         });
-        RegisterButtonIcon(selectAllToCartButton, buttonIcons[0]);
 
         addSelectedToCartButton?.onClick.AddListener(()=>
         {
             OnAddSelectedToCartClicked();
             moreObject.SetActive(false);
         });
-        RegisterButtonIcon(addSelectedToCartButton, buttonIcons[1]);
+      
         cartButton?.onClick.AddListener(() =>
         {
             ToggleCartPanel();
@@ -222,7 +227,6 @@ public class CartUI : MonoBehaviour
                     item.isSelectedForCheckout = false;
             }
         }
-        buttonIcons[0]?.SetActive(isSelectMode);
 
     }
 
@@ -520,22 +524,28 @@ public class CartUI : MonoBehaviour
         customerInfoPanel.SetActive(false);
     }
 
-    private void RegisterButtonIcon(Button btn, GameObject icon, System.Func<bool> selectedCondition = null)
+    private void BindIconToButtonState(Button button, GameObject icon)
     {
-        if (btn == null || icon == null) return;
+        if (button == null || icon == null) return;
 
         icon.SetActive(false);
 
-        var trigger = btn.GetComponent<EventTrigger>() ?? btn.gameObject.AddComponent<EventTrigger>();
+        var trigger = button.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
+        if (trigger.triggers == null)
+            trigger.triggers = new List<EventTrigger.Entry>();
 
-        var down = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
-        down.callback.AddListener((_) => icon.SetActive(true)); // Pressed → bật
+        AddEvent(trigger, EventTriggerType.PointerDown, _ => icon.SetActive(true));
+        AddEvent(trigger, EventTriggerType.PointerUp, _ => icon.SetActive(false));
+        AddEvent(trigger, EventTriggerType.PointerExit, _ => icon.SetActive(false));
+        AddEvent(trigger, EventTriggerType.Deselect, _ => icon.SetActive(false));
+        AddEvent(trigger, EventTriggerType.Select, _ => icon.SetActive(true));
+    }
 
-        var up = new EventTrigger.Entry { eventID = EventTriggerType.PointerUp };
-        up.callback.AddListener((_) => icon.SetActive(selectedCondition?.Invoke() ?? false)); // PointerUp đọc isSelectMode CŨ
-
-        trigger.triggers.Add(down);
-        trigger.triggers.Add(up);
+    private void AddEvent(EventTrigger trigger, EventTriggerType type, UnityEngine.Events.UnityAction<BaseEventData> action)
+    {
+        var entry = new EventTrigger.Entry { eventID = type };
+        entry.callback.AddListener(action);
+        trigger.triggers.Add(entry);
     }
 
 }

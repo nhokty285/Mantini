@@ -30222,7 +30222,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1285669855
 RectTransform:
   m_ObjectHideFlags: 0
@@ -34718,9 +34718,8 @@ MonoBehaviour:
   moreButton: {fileID: 2015760577}
   selectAllToCartButton: {fileID: 2071467424}
   addSelectedToCartButton: {fileID: 243659735}
-  buttonIcons:
-  - {fileID: 1951726521}
-  - {fileID: 1285669854}
+  selectAllButtonIcon: {fileID: 1951726521}
+  addSelectedButtonIcon: {fileID: 1285669854}
   cartButton: {fileID: 341189582}
   cartCountText: {fileID: 1498955761}
   cartCountBadge: {fileID: 12270808}
@@ -47309,7 +47308,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1951726522
 RectTransform:
   m_ObjectHideFlags: 0
