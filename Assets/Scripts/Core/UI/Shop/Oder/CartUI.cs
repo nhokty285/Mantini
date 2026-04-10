@@ -143,12 +143,11 @@ public class CartUI : MonoBehaviour
         selectAllToCartButton?.onClick.AddListener(()=> 
         {
             OnSelectAllToCartClicked();
-
         });
         addSelectedToCartButton?.onClick.AddListener(()=>
         {
             OnAddSelectedToCartClicked();
-            moreObject?.SetActive(false);   
+            moreObject.SetActive(false);
         });
         cartButton?.onClick.AddListener(() =>
         {
@@ -157,8 +156,7 @@ public class CartUI : MonoBehaviour
         });
         moreButton?.onClick.AddListener(() =>
         {
-            if (moreObject != null)
-                moreObject.SetActive(!moreObject.activeSelf);
+            MoreOtion();
         });
         checkoutButton?.onClick.AddListener(InputInfomation);
         continueShopButton?.onClick.AddListener(CloseCartPanel);
@@ -189,6 +187,12 @@ public class CartUI : MonoBehaviour
         {
             CloseCheckOut();
         });
+    }
+
+    private void MoreOtion()
+    {
+        if (moreObject != null)
+            moreObject.SetActive(!moreObject.activeSelf);
     }
 
     /*  private bool allSelectedCache = false;
