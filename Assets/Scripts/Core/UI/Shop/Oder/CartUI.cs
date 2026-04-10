@@ -110,6 +110,7 @@ public class CartUI : MonoBehaviour
             if (ShoppingCart.Instance != null)
                 foreach (var item in ShoppingCart.Instance.GetUnpaidItems())
                     item.isSelectedForCheckout = false;
+
         }
     }
 
@@ -142,15 +143,15 @@ public class CartUI : MonoBehaviour
         selectAllToCartButton?.onClick.AddListener(()=> 
         {
             OnSelectAllToCartClicked();
-            RegisterButtonIcon(selectAllToCartButton, buttonIcons[0], () => isSelectMode);
         });
+        RegisterButtonIcon(selectAllToCartButton, buttonIcons[0]);
+
         addSelectedToCartButton?.onClick.AddListener(()=>
         {
             OnAddSelectedToCartClicked();
             moreObject.SetActive(false);
-            RegisterButtonIcon(addSelectedToCartButton, buttonIcons[1], () => isSelectMode);
-
         });
+        RegisterButtonIcon(addSelectedToCartButton, buttonIcons[1]);
         cartButton?.onClick.AddListener(() =>
         {
             ToggleCartPanel();
@@ -212,7 +213,6 @@ public class CartUI : MonoBehaviour
     {
         isSelectMode = !isSelectMode;
 
-
         if (!isSelectMode)
         {
             CartImageItem.ClearAllHighlights();
@@ -222,9 +222,8 @@ public class CartUI : MonoBehaviour
                     item.isSelectedForCheckout = false;
             }
         }
+        buttonIcons[0]?.SetActive(isSelectMode);
 
-        if (buttonIcons.Length > 0 && buttonIcons[0] != null)
-            buttonIcons[0].SetActive(isSelectMode);
     }
 
 
@@ -525,16 +524,17 @@ public class CartUI : MonoBehaviour
     {
         if (btn == null || icon == null) return;
 
-        icon.SetActive(false); // Khởi tạo ẩn
+        icon.SetActive(false);
 
         var trigger = btn.GetComponent<EventTrigger>() ?? btn.gameObject.AddComponent<EventTrigger>();
 
         var down = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
-        down.callback.AddListener((_) => icon.SetActive(true));
-        trigger.triggers.Add(down);
+        down.callback.AddListener((_) => icon.SetActive(true)); // Pressed → bật
 
         var up = new EventTrigger.Entry { eventID = EventTriggerType.PointerUp };
-        up.callback.AddListener((_) => icon.SetActive(selectedCondition?.Invoke() ?? false));
+        up.callback.AddListener((_) => icon.SetActive(selectedCondition?.Invoke() ?? false)); // PointerUp đọc isSelectMode CŨ
+
+        trigger.triggers.Add(down);
         trigger.triggers.Add(up);
     }
 
