@@ -1,11 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Networking;
 using UnityEngine.UI;
-using static MainMenuViewModel;
 
 public class CartUI : MonoBehaviour
 {
@@ -13,6 +11,7 @@ public class CartUI : MonoBehaviour
     [SerializeField] private Button moreButton;
     [SerializeField] private Button selectAllToCartButton;
     [SerializeField] private Button addSelectedToCartButton;
+    [SerializeField] private GameObject[] buttonIcons;
 
     [Header("Cart Button")]
     [SerializeField] private Button cartButton;
@@ -143,11 +142,14 @@ public class CartUI : MonoBehaviour
         selectAllToCartButton?.onClick.AddListener(()=> 
         {
             OnSelectAllToCartClicked();
+            RegisterButtonIcon(selectAllToCartButton, buttonIcons[0], () => isSelectMode);
         });
         addSelectedToCartButton?.onClick.AddListener(()=>
         {
             OnAddSelectedToCartClicked();
             moreObject.SetActive(false);
+            RegisterButtonIcon(addSelectedToCartButton, buttonIcons[1], () => isSelectMode);
+
         });
         cartButton?.onClick.AddListener(() =>
         {
@@ -156,7 +158,8 @@ public class CartUI : MonoBehaviour
         });
         moreButton?.onClick.AddListener(() =>
         {
-            MoreOtion();
+            if (moreObject != null)
+                moreObject.SetActive(!moreObject.activeSelf);
         });
         checkoutButton?.onClick.AddListener(InputInfomation);
         continueShopButton?.onClick.AddListener(CloseCartPanel);
@@ -191,8 +194,7 @@ public class CartUI : MonoBehaviour
 
     private void MoreOtion()
     {
-        if (moreObject != null)
-            moreObject.SetActive(!moreObject.activeSelf);
+       
     }
 
     /*  private bool allSelectedCache = false;
@@ -210,6 +212,7 @@ public class CartUI : MonoBehaviour
     {
         isSelectMode = !isSelectMode;
 
+
         if (!isSelectMode)
         {
             CartImageItem.ClearAllHighlights();
@@ -219,7 +222,12 @@ public class CartUI : MonoBehaviour
                     item.isSelectedForCheckout = false;
             }
         }
+
+        if (buttonIcons.Length > 0 && buttonIcons[0] != null)
+            buttonIcons[0].SetActive(isSelectMode);
     }
+
+
 
     private void SetupTabSystem()
     {
@@ -415,6 +423,9 @@ public class CartUI : MonoBehaviour
          UpdateTotalAmount();
          RefreshAllCartIndicators();*/
 
+
+   
+
         if (ShoppingCart.Instance == null) return;
         UpdateTotalAmount();
     }
@@ -510,6 +521,22 @@ public class CartUI : MonoBehaviour
         customerInfoPanel.SetActive(false);
     }
 
+    private void RegisterButtonIcon(Button btn, GameObject icon, System.Func<bool> selectedCondition = null)
+    {
+        if (btn == null || icon == null) return;
+
+        icon.SetActive(false); // Khởi tạo ẩn
+
+        var trigger = btn.GetComponent<EventTrigger>() ?? btn.gameObject.AddComponent<EventTrigger>();
+
+        var down = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
+        down.callback.AddListener((_) => icon.SetActive(true));
+        trigger.triggers.Add(down);
+
+        var up = new EventTrigger.Entry { eventID = EventTriggerType.PointerUp };
+        up.callback.AddListener((_) => icon.SetActive(selectedCondition?.Invoke() ?? false));
+        trigger.triggers.Add(up);
+    }
 
 }
 
