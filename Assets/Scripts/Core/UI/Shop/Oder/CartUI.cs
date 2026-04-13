@@ -112,11 +112,6 @@ public class CartUI : MonoBehaviour
             // Click ra ngoài vùng → tắt mode, clear hết
             isSelectMode = false;
             CartImageItem.ClearAllHighlights();
-
-            if (ShoppingCart.Instance != null)
-                foreach (var item in ShoppingCart.Instance.GetUnpaidItems())
-                    item.isSelectedForCheckout = false;
-
         }
     }
 
@@ -215,16 +210,8 @@ public class CartUI : MonoBehaviour
         if (!isSelectMode)
         {
             CartImageItem.ClearAllHighlights();
-            if (ShoppingCart.Instance != null)
-            {
-                foreach (var item in ShoppingCart.Instance.GetUnpaidItems())
-                    item.isSelectedForCheckout = false;
-            }
-        }
-      
+        }     
     }
-
-
 
     private void SetupTabSystem()
     {
@@ -418,10 +405,7 @@ public class CartUI : MonoBehaviour
         /* if (selectedItem == null || ShoppingCart.Instance == null) return;
          ShoppingCart.Instance.SelectItemForCheckout(selectedItem.productId, selectedItem.selectedSize, true);
          UpdateTotalAmount();
-         RefreshAllCartIndicators();*/
-
-
-   
+         RefreshAllCartIndicators();*/   
 
         if (selectedItem == null || ShoppingCart.Instance == null) return;
         ShoppingCart.Instance.SelectItemForCheckout(selectedItem.productId, selectedItem.selectedSize, true);
