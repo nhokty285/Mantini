@@ -197,11 +197,6 @@ public class CartUI : MonoBehaviour
         });
     }
 
-    private void MoreOtion()
-    {
-       
-    }
-
     /*  private bool allSelectedCache = false;
       private void OnSelectAllToCartClicked()
       {
@@ -226,7 +221,7 @@ public class CartUI : MonoBehaviour
                     item.isSelectedForCheckout = false;
             }
         }
-
+      
     }
 
 
@@ -428,8 +423,10 @@ public class CartUI : MonoBehaviour
 
    
 
-        if (ShoppingCart.Instance == null) return;
+        if (selectedItem == null || ShoppingCart.Instance == null) return;
+        ShoppingCart.Instance.SelectItemForCheckout(selectedItem.productId, selectedItem.selectedSize, true);
         UpdateTotalAmount();
+        RefreshAllCartIndicators();
     }
 
     private void UpdateTotalAmount()
