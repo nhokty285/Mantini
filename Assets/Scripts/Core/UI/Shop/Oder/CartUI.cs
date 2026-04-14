@@ -111,7 +111,7 @@ public class CartUI : MonoBehaviour
             // Click ra ngoài vùng → tắt mode, clear hết
             isSelectMode = false;
             CartImageItem.ClearAllHighlights();
-        }
+        } 
     }
 
     private bool IsPointerOverCartItem()
