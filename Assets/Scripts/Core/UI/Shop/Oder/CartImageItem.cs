@@ -144,7 +144,7 @@ public class CartImageItem : MonoBehaviour
         }
     }
 
-    private void SelectThisItem()
+    public void SelectThisItem()
     {
         // Tắt highlight của item trước đó (nếu có)
         if (currentHighlightedItem != null && currentHighlightedItem != this)

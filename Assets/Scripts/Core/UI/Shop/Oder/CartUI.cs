@@ -95,7 +95,6 @@ public class CartUI : MonoBehaviour
             }
         }*/
 
-        if (!isSelectMode) return; // ← early exit, không làm gì khi tắt mode
         if (!cartPanel.activeSelf) return;
         if (!Input.GetMouseButtonDown(0)) return;
 
@@ -353,6 +352,18 @@ public class CartUI : MonoBehaviour
             lastClickedItem = null;
             return; // Không chạy logic double-click bên dưới
         }
+
+        // ✅ THÊM: Single highlight khi ngoài selectMode
+        foreach (Transform child in cartItemsContainer)
+        {
+            var cell = child.GetComponent<CartImageItem>();
+            if (cell != null && cell.GetCurrentItem() == item)
+            {
+                cell.SelectThisItem();  // Single highlight, tự clear item trước đó
+                break;
+            }
+        }
+
         // Logic click: 1 click để chọn, 2 click để xem chi tiết
         if (lastClickedItem == item && (currentTime - lastClickTime) < doubleClickThreshold)
         {
