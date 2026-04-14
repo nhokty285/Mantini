@@ -3335,7 +3335,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 66395638}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.74281466
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -34718,6 +34718,7 @@ MonoBehaviour:
   moreButton: {fileID: 2015760577}
   selectAllToCartButton: {fileID: 2071467424}
   addSelectedToCartButton: {fileID: 243659735}
+  closeMoreButton: {fileID: 1045961430}
   selectAllButtonIcon: {fileID: 1951726521}
   addSelectedButtonIcon: {fileID: 1285669854}
   cartButton: {fileID: 341189582}

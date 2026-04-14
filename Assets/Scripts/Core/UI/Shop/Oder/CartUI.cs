@@ -11,6 +11,7 @@ public class CartUI : MonoBehaviour
     [SerializeField] private Button moreButton;
     [SerializeField] private Button selectAllToCartButton;
     [SerializeField] private Button addSelectedToCartButton;
+    [SerializeField] private Button closeMoreButton;
 
     [Header("Button State Icons")]
     [SerializeField] private GameObject selectAllButtonIcon;
@@ -158,7 +159,12 @@ public class CartUI : MonoBehaviour
         moreButton?.onClick.AddListener(() =>
         {
             if (moreObject != null)
-                moreObject.SetActive(!moreObject.activeSelf);
+                moreObject.SetActive(true);
+        });
+        closeMoreButton?.onClick.AddListener(() =>
+        {
+            if (moreObject != null)
+                moreObject.SetActive(false);
         });
         checkoutButton?.onClick.AddListener(InputInfomation);
         continueShopButton?.onClick.AddListener(CloseCartPanel);
