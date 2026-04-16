@@ -46,8 +46,8 @@ public class CartImageItem : MonoBehaviour
         InitializeHighlight();
 
         // Restore highlight state khi item được rebuild sau SelectAll
-        if (itemData != null && itemData.isSelectedForCheckout)
-            SetHighlight(true);
+   /*     if (itemData != null && itemData.isSelectedForCheckout)
+            SetHighlight(true);*/
 
         // Load image
         LoadImage();

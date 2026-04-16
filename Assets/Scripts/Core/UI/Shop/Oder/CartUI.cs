@@ -467,12 +467,18 @@ public class CartUI : MonoBehaviour
 
     private void UpdateTotalAmount()
     {
-        if (totalAmountText != null && ShoppingCart.Instance != null)
+        /*if (totalAmountText != null && ShoppingCart.Instance != null)
         {
             float total = ShoppingCart.Instance.TotalAmount;
             var select = ShoppingCart.Instance.GetUnpaidItems().FindAll(i => i.isSelectedForCheckout);
             totalAmountText.text = $"Tổng: {select.Count:0 món} \n {total:N0} VND";
-        }
+        }*/
+
+
+        if (totalAmountText == null || ShoppingCart.Instance == null) return;
+        float total = ShoppingCart.Instance.TotalAmount; // đã tính đúng trong ShoppingCart
+        int count = ShoppingCart.Instance.GetSelectedCheckoutCount(); // thêm 1 property O(n) trong ShoppingCart
+        totalAmountText.text = $"Tổng: {count} món\n{total:N0} VND";
     }
 
     private void ToggleCartPanel()

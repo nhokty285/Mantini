@@ -102,6 +102,8 @@ public class ShoppingCart : MonoBehaviour
     public event System.Action<List<CartItem>> OnPaidItemsUpdated;
     public int UnpaidItemCount => cartItems.FindAll(item => !item.isPaid).Count;
     public int PaidItemCount => cartItems.FindAll(item => item.isPaid).Count;
+    public int GetSelectedCheckoutCount() =>
+    cartItems.Count(i => !i.isPaid && i.isSelectedForCheckout);
 
     public PlayerApiService playerApi;
 
