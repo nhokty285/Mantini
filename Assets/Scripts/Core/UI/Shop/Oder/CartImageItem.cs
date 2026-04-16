@@ -161,15 +161,19 @@ public class CartImageItem : MonoBehaviour
 
     public void ToggleHighlightMultiSelect()
     {
-        bool newState = !isHighlighted;
+        
         // Gọi SetHighlight trực tiếp, KHÔNG qua SelectThisItem()
         // SetHighlight không đụng đến currentHighlightedItem của item khác
-        SetHighlight(newState);
-
-        // Đồng bộ isSelectedForCheckout theo trạng thái highlight
-        if (itemData != null)
-            itemData.isSelectedForCheckout = newState;
+        SetHighlight(!isHighlighted);
     }
+
+    public void SetHighlightVisual(bool value)
+    {
+        SetHighlight(value);
+    }
+
+    // ✅ THÊM: để CartUI đọc list pending
+    public static IReadOnlyCollection<CartImageItem> GetHighlightedItems() => _highlighted;
 
     public void SetHighlight(bool highlight)
     {
@@ -206,6 +210,7 @@ public class CartImageItem : MonoBehaviour
         if (currentHighlightedItem == this)
             currentHighlightedItem = null;
     }
+
 
     private void LoadImage()
     {

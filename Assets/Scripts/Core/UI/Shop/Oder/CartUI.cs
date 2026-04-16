@@ -73,6 +73,7 @@ public class CartUI : MonoBehaviour
     [SerializeField] private RectTransform selectZone;
     [SerializeField] public bool isSelectMode = false;     // 🆕 THÊM: track chế độ chọn thủ công
 
+
     private void Start()
     {
         SetupEventListeners();
@@ -178,7 +179,14 @@ public class CartUI : MonoBehaviour
         bankButton?.onClick.AddListener(() => SetPaymentMethod("BANK_TRANSFER"));
         changePaymentButton?.onClick.AddListener(OpenPaymentMethodPanel);
 
-        buyButton?.onClick.AddListener(()=> {
+        buyButton?.onClick.AddListener(()=> 
+        {
+            string error = ValidateCheckout();
+            if (error != null)
+            {
+                PopupManager.Instance.ShowPopup("Thông tin chưa hợp lệ", error, null);
+                return;
+            }
 
             // Gọi Popup thay vì gọi hàm mua
             PopupManager.Instance.ShowPopup(
@@ -197,25 +205,23 @@ public class CartUI : MonoBehaviour
         });
     }
 
-    /*  private bool allSelectedCache = false;
-      private void OnSelectAllToCartClicked()
-      {
-          if (ShoppingCart.Instance == null) return;
-          allSelectedCache = !allSelectedCache;
-          ShoppingCart.Instance.SelectAllUnpaidItems(allSelectedCache);
-          UpdateTotalAmount();
-      }*/
-
-    // SAU (mới):
-
     private void OnSelectAllToCartClicked()
     {
-        isSelectMode = !isSelectMode;
+        /*        isSelectMode = !isSelectMode;
 
-        if (!isSelectMode)
-        {
-            CartImageItem.ClearAllHighlights();
-        }     
+                if (!isSelectMode)
+                {
+                    CartImageItem.ClearAllHighlights();
+                }     */
+
+        isSelectMode = !isSelectMode;
+        selectedItem = null;
+        CartImageItem.ClearAllHighlights();
+
+        if (isSelectMode)
+            ShoppingCart.Instance?.ClearCheckoutSelection(); // reset state cũ khi bắt đầu lượt mới
+
+        UpdateTotalAmount();
     }
 
     private void SetupTabSystem()
@@ -340,24 +346,39 @@ public class CartUI : MonoBehaviour
     private void OnItemClicked(CartItem item)
     {
         float currentTime = Time.time;
-        selectedItem = item;
+
         // 🆕 Nếu đang trong chế độ multi-select
         if (isSelectMode)
         {
-            // Tìm CartImageItem tương ứng và toggle highlight (multi, không tắt item khác)
+            /* // Tìm CartImageItem tương ứng và toggle highlight (multi, không tắt item khác)
+             foreach (Transform child in cartItemsContainer)
+             {
+                 var cell = child.GetComponent<CartImageItem>();
+                 if (cell != null && cell.GetCurrentItem() == item)
+                 {
+                     cell.ToggleHighlightMultiSelect(); // ← dùng method mới, không clear item khác
+                     break;
+                 }
+             }
+             // Reset double-click để không vô tình mở detail
+             lastClickedItem = null;
+             return; // Không chạy logic double-click bên dưới*/
+
+            // Visual toggle — CartImageItem tự quản lý _highlighted set
             foreach (Transform child in cartItemsContainer)
             {
                 var cell = child.GetComponent<CartImageItem>();
                 if (cell != null && cell.GetCurrentItem() == item)
                 {
-                    cell.ToggleHighlightMultiSelect(); // ← dùng method mới, không clear item khác
-                    break;
+                    cell.ToggleHighlightMultiSelect(); // toggle highlight + tự add/remove _highlighted
+                    break; // O(1) trung bình khi tìm thấy sớm
                 }
             }
-            // Reset double-click để không vô tình mở detail
             lastClickedItem = null;
-            return; // Không chạy logic double-click bên dưới
+            return;
         }
+
+        selectedItem = item;
 
         // ✅ THÊM: Single highlight khi ngoài selectMode
         foreach (Transform child in cartItemsContainer)
@@ -419,15 +440,29 @@ public class CartUI : MonoBehaviour
 
     private void OnAddSelectedToCartClicked()
     {
-        /* if (selectedItem == null || ShoppingCart.Instance == null) return;
-         ShoppingCart.Instance.SelectItemForCheckout(selectedItem.productId, selectedItem.selectedSize, true);
-         UpdateTotalAmount();
-         RefreshAllCartIndicators();*/   
+        /*
+                if (selectedItem == null || ShoppingCart.Instance == null) return;
+                ShoppingCart.Instance.SelectItemForCheckout(selectedItem.productId, selectedItem.selectedSize, true);
+                UpdateTotalAmount();
+                RefreshAllCartIndicators();*/
 
-        if (selectedItem == null || ShoppingCart.Instance == null) return;
-        ShoppingCart.Instance.SelectItemForCheckout(selectedItem.productId, selectedItem.selectedSize, true);
-        UpdateTotalAmount();
-        RefreshAllCartIndicators();
+        if(ShoppingCart.Instance == null) return;
+
+        // Lấy đúng các item đang highlight — O(k), k = số item đang chọn
+        var highlighted = CartImageItem.GetHighlightedItems();
+        if (highlighted.Count == 0) return;
+
+        // Commit sang checkout trong 1 pass
+        var selectedSet = new HashSet<CartItem>();
+        foreach (var cell in highlighted)
+            selectedSet.Add(cell.GetCurrentItem());
+
+        ShoppingCart.Instance.SetCheckoutSelection(selectedSet);
+
+        // Thoát select mode, xóa visual
+        isSelectMode = false;
+        selectedItem = null;
+        CartImageItem.ClearAllHighlights();
     }
 
     private void UpdateTotalAmount()
@@ -472,14 +507,27 @@ public class CartUI : MonoBehaviour
         // Hiện panel chọn phương thức, ẩn nút đổi
         if (paymentMethodPanel != null) paymentMethodPanel.SetActive(true);
         if (changePaymentButton != null) changePaymentButton.gameObject.SetActive(false);
-        selectedPaymentMethod = "COD";
+        selectedPaymentMethod = "";
         if (selectedPaymentText != null) selectedPaymentText.text = "";
     }
+
+    private string ValidateCheckout()
+    {
+        if (string.IsNullOrWhiteSpace(customerNameInput?.text)) return "Vui lòng nhập họ tên.";
+        if (string.IsNullOrWhiteSpace(customerPhoneInput?.text)) return "Vui lòng nhập số điện thoại.";
+        if (customerPhoneInput.text.Trim().Length < 10) return "Số điện thoại phải có ít nhất 10 số.";
+        if (string.IsNullOrWhiteSpace(customerAddressInput?.text)) return "Vui lòng nhập địa chỉ giao hàng.";
+        if (string.IsNullOrWhiteSpace(selectedPaymentMethod)) return "Vui lòng chọn hình thức thanh toán.";
+        return null;
+    }
+
     private void CloseCheckOut()
     {
         if (customerInfoPanel != null)
             customerInfoPanel.SetActive(false);
     }
+
+
     private void SetPaymentMethod(string method)
     {
         selectedPaymentMethod = method;

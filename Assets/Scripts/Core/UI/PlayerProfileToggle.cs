@@ -17,8 +17,9 @@ public class PlayerProfileToggle : MonoBehaviour
     [Header("Scene 2 Profile Panel")]
     [SerializeField] private GameObject profilePanel;
 
-
     [SerializeField] private ProfileData profileData;
+
+    private CanvasGroup _avatarCG;
 
     private void Start()
     {
@@ -51,6 +52,7 @@ public class PlayerProfileToggle : MonoBehaviour
 
         profilePanel.gameObject.SetActive(false);
 
+        _avatarCG = avatarButton.gameObject.AddComponent<CanvasGroup>();
         PlayerController.OnMovementStateChanged += OnMovementStateChanged;
         if (avatarButton != null)
             avatarButton.interactable = PlayerController.Instance == null || true;
@@ -63,8 +65,8 @@ public class PlayerProfileToggle : MonoBehaviour
 
     private void OnMovementStateChanged(bool canMove)
     {
-        if (avatarButton != null)
-            avatarButton.interactable = canMove;
+        if (_avatarCG != null)
+            _avatarCG.blocksRaycasts = canMove;
     }
 
     public void TogglePanel()

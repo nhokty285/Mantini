@@ -236,6 +236,23 @@ public class ShoppingCart : MonoBehaviour
         );
     }
 
+    public void ClearCheckoutSelection()
+    {
+        foreach (var it in cartItems)
+            if (!it.isPaid) it.isSelectedForCheckout = false;
+        NotifyInventoryUpdated();
+    }
+
+    public void SetCheckoutSelection(HashSet<CartItem> selectedSet)
+    {
+        foreach (var it in cartItems)
+        {
+            if (it.isPaid) continue;
+            it.isSelectedForCheckout = selectedSet.Contains(it); // HashSet.Contains = O(1)
+        }
+        NotifyInventoryUpdated();
+    }
+
     private float CalculateTotalAmount()
     {
         float total = 0f;
