@@ -40,6 +40,8 @@ public class AudioManager : MonoBehaviour
     private Coroutine bgmCrossfadeCoroutine;
     private AudioClip currentBGM;
 
+    private Dictionary<string, AudioClip> _clipLookup;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -86,6 +88,8 @@ public class AudioManager : MonoBehaviour
             typewriterSource.loop = false;
             typewriterSource.volume = sfxVolume * 0.25f * masterVolume;
         }
+        BuildClipLookup();
+
         isInitialized = true;
         Debug.Log("[AudioManager] ✅ Initialized with " + sfxPoolSize + " SFX sources");
     }
@@ -186,15 +190,18 @@ public class AudioManager : MonoBehaviour
 
     public void StopSFX(AudioClip clip)
     {
-        foreach (var source in sfxPool)
-        {
-            // Kiểm tra xem source có đang phát clip này không
-            if (source.isPlaying && source.clip == clip)
-            {
-                source.Stop();
-                // Nếu muốn chỉ tắt 1 cái thì thêm break; còn muốn tắt hết thì bỏ break;
-            }
-        }
+        /*  foreach (var source in sfxPool)
+          {
+              // Kiểm tra xem source có đang phát clip này không
+              if (source.isPlaying && source.clip == clip)
+              {
+                  source.Stop();
+                  // Nếu muốn chỉ tắt 1 cái thì thêm break; còn muốn tắt hết thì bỏ break;
+              }
+          }*/
+        for (int i = 0; i < sfxPool.Count; i++)
+            if (sfxPool[i].isPlaying && sfxPool[i].clip == clip)
+                sfxPool[i].Stop();
     }
     public void PlaySFXOneShot(string clipName)
     {
@@ -294,9 +301,17 @@ public class AudioManager : MonoBehaviour
 
     public void SetSFXVolume(float volume)
     {
-        sfxVolume = Mathf.Clamp01(volume);
+        /*sfxVolume = Mathf.Clamp01(volume);
         foreach (var source in sfxPool)
             source.volume = sfxVolume * masterVolume;
+        SaveVolumeSettings();*/
+
+        float clamped = Mathf.Clamp01(volume);
+        if (Mathf.Approximately(sfxVolume, clamped)) return; // ✅ skip nếu không đổi
+        sfxVolume = clamped;
+        float final = sfxVolume * masterVolume;
+        for (int i = 0; i < sfxPool.Count; i++)   // ✅ index loop nhanh hơn foreach trên List
+            sfxPool[i].volume = final;
         SaveVolumeSettings();
     }
 
@@ -337,17 +352,25 @@ public class AudioManager : MonoBehaviour
 
     #region UTILITY METHODS
     // ===== UTILITY =====
-    private AudioClip FindClipByName(string name, AudioClip[] clips)
-    {
-        foreach (var clip in clips)
-        {
-            if (clip.name == name)
-                return clip;
-        }
+    /* private AudioClip FindClipByName(string name, AudioClip[] clips)
+     {
+         foreach (var clip in clips)
+         {
+             if (clip.name == name)
+                 return clip;
+         }
 
+         Debug.LogWarning("[AudioManager] Clip not found: " + name);
+         return null;
+     }*/
+    private AudioClip FindClipByName(string name, AudioClip[] _unused = null)
+    {
+        if (_clipLookup != null && _clipLookup.TryGetValue(name, out var clip))
+            return clip;
         Debug.LogWarning("[AudioManager] Clip not found: " + name);
         return null;
     }
+
 
     private void SaveVolumeSettings()
     {
@@ -373,7 +396,22 @@ public class AudioManager : MonoBehaviour
     }
     #endregion
 
-
+    private void BuildClipLookup()
+    {
+        _clipLookup = new Dictionary<string, AudioClip>(
+            (uiSounds?.Length ?? 0) + (feedbackSounds?.Length ?? 0) + (shopThemes?.Length ?? 0)
+        );
+        void Register(AudioClip[] arr)
+        {
+            if (arr == null) return;
+            foreach (var c in arr)
+                if (c != null && !_clipLookup.ContainsKey(c.name))
+                    _clipLookup[c.name] = c;
+        }
+        Register(uiSounds);
+        Register(feedbackSounds);
+        Register(shopThemes);
+    }
 
     public float GetMasterVolume() => masterVolume;
     public float GetBGMVolume() => bgmVolume;

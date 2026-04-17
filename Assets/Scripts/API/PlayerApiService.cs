@@ -92,11 +92,11 @@ public class PlayerApiService : MonoBehaviour
                 return;
             }
 
-            var companionIds = new List<string>
+         /*   var companionIds = new List<string>
         {          
             companionData.characterName
         };
-            string characterId = characterData.characterName;
+            string characterId = characterData.characterName;*/
 
             var payload = new PlayerUpdatePayload
             {
@@ -105,12 +105,11 @@ public class PlayerApiService : MonoBehaviour
                 mail = current.mail,
                 phone = current.phone,
                 avatar_url = current.avatar_url,
-                companion_ids = companionIds.ToArray(),
+                companion_ids = new[] { companionData.characterName },
                 avatar_id = current.avatar_id
             };
 
-            var putJson = JsonUtility.ToJson(payload);
-            APIClient.Instance.PutJsonFull(playerMeUrl, putJson,
+            APIClient.Instance.PutJsonFull(playerMeUrl, JsonUtility.ToJson(payload),
                 _ => Debug.Log("[PlayerSelectionSync] Successfully synced selection"),
                 err => Debug.LogError("[PlayerSelectionSync] Failed to sync: " + err)
             );
@@ -328,30 +327,25 @@ public class PlayerApiService : MonoBehaviour
         }
 
         // Convert CartItem sang InventoryItem format mới
-        List<InventoryItem> inventoryItems = new List<InventoryItem>();
-
-        foreach (var cartItem in items)
+        var inventoryItems = new InventoryItem[items.Count];
+        for (int i = 0; i < items.Count; i++)
         {
-            var gameItem = new GameItemData
+            var c = items[i];
+            inventoryItems[i] = new InventoryItem
             {
-               // item_id = cartItem.productId,
-                name = cartItem.productName,
-                description = $"{cartItem.brandName} - {cartItem.selectedSize}",
-                image_url = cartItem.imageUrl,
-                type = "product", // hoặc category phù hợp
-                external_id = cartItem.productId
+                game_item = new GameItemData
+                {
+                    name = c.productName,
+                    description = $"{c.brandName} - {c.selectedSize}",
+                    image_url = c.imageUrl,
+                    type = "product",
+                    external_id = c.productId
+                },
+                quantity = c.quantity
             };
-
-            var invItem = new InventoryItem
-            {
-                game_item = gameItem,
-                quantity = cartItem.quantity
-            };
-
-            inventoryItems.Add(invItem);
         }
 
-        var payload = new InventoryPayload { inventory = inventoryItems.ToArray() };
+        var payload = new InventoryPayload { inventory = inventoryItems };
         // string json = JsonUtility.ToJson(payload);
         // ✅ Dùng Newtonsoft.Json
         var settings = new JsonSerializerSettings
