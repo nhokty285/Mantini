@@ -487,6 +487,7 @@ public class CartUI : MonoBehaviour
         {
             bool isActive = !cartPanel.activeSelf;
             cartPanel.SetActive(isActive);
+            this.enabled = isActive;
             if (isActive) RefreshCurrentTabContent();
             PlayerController.Instance?.SetCanMove(!isActive);
         }

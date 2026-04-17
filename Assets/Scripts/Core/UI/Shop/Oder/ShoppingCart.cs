@@ -100,13 +100,21 @@ public class ShoppingCart : MonoBehaviour
 
     public event System.Action<List<CartItem>> OnUnpaidItemsUpdated;
     public event System.Action<List<CartItem>> OnPaidItemsUpdated;
-    public int UnpaidItemCount => cartItems.FindAll(item => !item.isPaid).Count;
-    public int PaidItemCount => cartItems.FindAll(item => item.isPaid).Count;
+/*    public int UnpaidItemCount => cartItems.FindAll(item => !item.isPaid).Count;
+    public int PaidItemCount => cartItems.FindAll(item => item.isPaid).Count;*/
+
+    private int _unpaidCount;
+    private int _paidCount;
+
+    public int UnpaidItemCount => _unpaidCount;
+    public int PaidItemCount => _paidCount;
     public int GetSelectedCheckoutCount() =>
     cartItems.Count(i => !i.isPaid && i.isSelectedForCheckout);
 
     public PlayerApiService playerApi;
 
+    private readonly List<CartItem> _cachedUnpaid = new();
+    private readonly List<CartItem> _cachedPaid = new();
     private void Awake()
     {
         if (Instance == null)
@@ -267,10 +275,25 @@ public class ShoppingCart : MonoBehaviour
     // ✅ THÊM: Notify all tabs
     private void NotifyInventoryUpdated()
     {
-        OnCartCountChanged?.Invoke(ItemCount);
-        OnCartUpdated?.Invoke(new List<CartItem>(cartItems));
-        OnUnpaidItemsUpdated?.Invoke(GetUnpaidItems());
-        OnPaidItemsUpdated?.Invoke(GetPaidItems());
+        _cachedUnpaid.Clear();
+        _cachedPaid.Clear();
+        foreach (var it in cartItems)
+        {
+            if (it.isPaid) _cachedPaid.Add(it);
+            else _cachedUnpaid.Add(it);
+        }
+
+        _unpaidCount = _cachedUnpaid.Count;
+        _paidCount = _cachedPaid.Count;
+
+        OnCartCountChanged?.Invoke(cartItems.Count);
+        OnUnpaidItemsUpdated?.Invoke(_cachedUnpaid);
+        OnPaidItemsUpdated?.Invoke(_cachedPaid);
+
+        /*  OnCartCountChanged?.Invoke(ItemCount);
+          OnCartUpdated?.Invoke(new List<CartItem>(cartItems));
+          OnUnpaidItemsUpdated?.Invoke(GetUnpaidItems());
+          OnPaidItemsUpdated?.Invoke(GetPaidItems());*/
     }
 
     ///
@@ -576,68 +599,173 @@ public class ShoppingCart : MonoBehaviour
         }, err => Debug.LogError($"Load inventory failed: {err}"));
     }
 
+    /*   private IEnumerator EnrichAndAddRange(List<InventoryItem> items)
+       {
+           foreach (var it in items)
+           {
+               var gi = it.game_item; // có external_id, name, image_url...
+                                      // Tách customId/size nếu cần: external_id có thể là "customId@Size 42"
+               var ext = gi.external_id ?? "";
+               var parts = ext.Split('@');
+               var customId = parts[0];
+               var sizeName = parts.Length > 1 ? parts[1] : "";
+
+               // Gọi chi tiết sản phẩm theo customId để lấy title/brand/price/image (nếu muốn override)
+               string detailUrl = $"https://data.storims.c1.hubcom.tech/api/v1/TenantProduct/45A26BFC-F2B2-4CA2-AB49-9EE8E9ADCFEC/{customId}";
+               string productJson = null; string error = null;
+               APIClient.Instance.GetFull(detailUrl, j => productJson = j, e => error = e);
+               while (productJson == null && error == null) yield return null;
+
+               // Map sang CartItem hiển thị trong túi
+               var cartItem = new CartItem
+               {
+                   gameItemId = gi.item_id,
+                   customId = customId,
+                   productId = ext,                // lưu external_id để đối soát
+                   productName = gi.name,
+                   brandName = "",                 // có thể điền từ productJson
+                   price = 0,                      // có thể điền từ productJson/gi.price
+                   selectedSize = sizeName,
+                   imageUrl = gi.image_url,
+                   quantity = it.quantity,
+                   isPaid = true,
+                   purchaseDate = DateTime.Now
+               };
+               // --- LOGIC TÁCH BRAND & SIZE TỪ DESCRIPTION CỦA BACKEND ---
+               // Backend trả về: "Jeep - Size 36"
+               string desc = gi.description ?? "";
+               if (desc.Contains("-"))
+               {
+                   var part = desc.Split(new[] { '-' }, System.StringSplitOptions.RemoveEmptyEntries);
+                   if (part.Length >= 2)
+                   {
+                       cartItem.brandName = part[0].Trim();      // "Jeep"
+                       cartItem.selectedSize = part[1].Trim();   // "Size 36"
+                   }
+                   else
+                   {
+                       cartItem.brandName = desc; // Fallback
+                       cartItem.selectedSize = "";
+                   }
+               }
+               else
+               {
+                   // Trường hợp không có dấu gạch ngang
+                   cartItem.brandName = "";
+                   cartItem.selectedSize = desc;
+               }
+               // ----------------------------------------------------------
+               cartItems.Add(cartItem);
+           }
+           NotifyInventoryUpdated();
+       }
+   */
+
+    // ShoppingCart.cs - EnrichAndAddRange() SAU KHI FIX
     private IEnumerator EnrichAndAddRange(List<InventoryItem> items)
     {
-        foreach (var it in items)
+        if (items == null || items.Count == 0)
         {
-            var gi = it.game_item; // có external_id, name, image_url...
-                                   // Tách customId/size nếu cần: external_id có thể là "customId@Size 42"
+            NotifyInventoryUpdated();
+            yield break;
+        }
+
+        // Mảng chứa kết quả — index tương ứng với items[i]
+        var results = new CartItem[items.Count];
+        int pendingCount = items.Count; // đếm ngược còn bao nhiêu chưa xong
+
+        // ✅ Bắn TẤT CẢ request cùng lúc
+        for (int i = 0; i < items.Count; i++)
+        {
+            int capturedIndex = i; // BẮT BUỘC capture index — closure trong C# sẽ dùng i cuối nếu không
+            var it = items[capturedIndex];
+            var gi = it.game_item;
             var ext = gi.external_id ?? "";
             var parts = ext.Split('@');
             var customId = parts[0];
             var sizeName = parts.Length > 1 ? parts[1] : "";
-
-            // Gọi chi tiết sản phẩm theo customId để lấy title/brand/price/image (nếu muốn override)
             string detailUrl = $"https://data.storims.c1.hubcom.tech/api/v1/TenantProduct/45A26BFC-F2B2-4CA2-AB49-9EE8E9ADCFEC/{customId}";
-            string productJson = null; string error = null;
-            APIClient.Instance.GetFull(detailUrl, j => productJson = j, e => error = e);
-            while (productJson == null && error == null) yield return null;
 
-            // Map sang CartItem hiển thị trong túi
-            var cartItem = new CartItem
+            // Mỗi item chạy coroutine riêng — không block nhau
+            StartCoroutine(FetchSingleItem(it, detailUrl, customId, sizeName, cartItem =>
             {
-                gameItemId = gi.item_id,
-                customId = customId,
-                productId = ext,                // lưu external_id để đối soát
-                productName = gi.name,
-                brandName = "",                 // có thể điền từ productJson
-                price = 0,                      // có thể điền từ productJson/gi.price
-                selectedSize = sizeName,
-                imageUrl = gi.image_url,
-                quantity = it.quantity,
-                isPaid = true,
-                purchaseDate = DateTime.Now
-            };
-            // --- LOGIC TÁCH BRAND & SIZE TỪ DESCRIPTION CỦA BACKEND ---
-            // Backend trả về: "Jeep - Size 36"
-            string desc = gi.description ?? "";
-            if (desc.Contains("-"))
+                results[capturedIndex] = cartItem; // lưu vào đúng slot
+                pendingCount--;                    // đánh dấu xong 1 item
+            }));
+        }
+
+        // ✅ Chỉ chờ 1 lần duy nhất đến khi TẤT CẢ xong
+        yield return new WaitUntil(() => pendingCount == 0);
+
+        // ✅ Thêm vào cart — chỉ 1 lần
+        foreach (var cartItem in results)
+            if (cartItem != null) cartItems.Add(cartItem);
+
+        NotifyInventoryUpdated(); // vẫn 1 lần như cũ ✅
+    }
+
+    // Helper coroutine — xử lý 1 item độc lập
+    private IEnumerator FetchSingleItem(
+        InventoryItem it,
+        string detailUrl,
+        string customId,
+        string sizeName,
+        System.Action<CartItem> onDone)
+    {
+        var gi = it.game_item;
+        string productJson = null;
+        string error = null;
+
+        APIClient.Instance.GetFull(detailUrl, j => productJson = j, e => error = e);
+
+        // Chỉ chặn coroutine NÀY, không ảnh hưởng các coroutine khác
+        while (productJson == null && error == null) yield return null;
+
+        if (error != null)
+        {
+            Debug.LogWarning($"[EnrichAndAddRange] Failed to fetch {customId}: {error}");
+            onDone(null); // vẫn gọi để pendingCount--
+            yield break;
+        }
+
+        var cartItem = new CartItem
+        {
+            gameItemId = gi.item_id,
+            customId = customId,
+            productId = gi.external_id ?? "",
+            productName = gi.name,
+            selectedSize = sizeName,
+            imageUrl = gi.image_url,
+            quantity = it.quantity,
+            isPaid = true,
+            purchaseDate = DateTime.Now
+        };
+
+        // Tách brand & size từ description — giữ nguyên logic cũ
+        string desc = gi.description ?? "";
+        if (desc.Contains("-"))
+        {
+            var descParts = desc.Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+            if (descParts.Length >= 2)
             {
-                var part = desc.Split(new[] { '-' }, System.StringSplitOptions.RemoveEmptyEntries);
-                if (part.Length >= 2)
-                {
-                    cartItem.brandName = part[0].Trim();      // "Jeep"
-                    cartItem.selectedSize = part[1].Trim();   // "Size 36"
-                }
-                else
-                {
-                    cartItem.brandName = desc; // Fallback
-                    cartItem.selectedSize = "";
-                }
+                cartItem.brandName = descParts[0].Trim();
+                cartItem.selectedSize = descParts[1].Trim();
             }
             else
             {
-                // Trường hợp không có dấu gạch ngang
-                cartItem.brandName = "";
-                cartItem.selectedSize = desc;
+                cartItem.brandName = desc;
+                cartItem.selectedSize = "";
             }
-            // ----------------------------------------------------------
-            cartItems.Add(cartItem);
         }
-        NotifyInventoryUpdated();
+        else
+        {
+            cartItem.brandName = "";
+            cartItem.selectedSize = desc;
+        }
+
+        onDone(cartItem); // ✅ báo hoàn thành
     }
 
-    // ShoppingCart.cs
     /*  public void DeleteOwnedItemById(string itemId)
       {
           string url = $"https://data.mantini-game.c1.hubcom.tech/api/v1/game/player/me/inventory/{itemId}";
