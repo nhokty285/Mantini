@@ -73,6 +73,8 @@ public class CartUI : MonoBehaviour
     [SerializeField] private RectTransform selectZone;
     [SerializeField] public bool isSelectMode = false;     // 🆕 THÊM: track chế độ chọn thủ công
 
+    [SerializeField] private int number;
+
     private void Start()
     {
         SetupEventListeners();
