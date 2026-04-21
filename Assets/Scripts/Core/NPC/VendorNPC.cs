@@ -362,7 +362,8 @@ public class VendorNPC : BaseNPC, IChatParticipant
     }
     public override string ProcessMessage(string message, string sender)
     {
-        return message;
+        GetAIResponse(message);
+        return null;
     }
     // Getter cho shop data
     public ShopData GetShopData() => dynamicShopData ?? defaultShopData;
