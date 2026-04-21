@@ -1,5 +1,6 @@
 ﻿// BaseNPC.cs
 using OpenAI;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -35,7 +36,6 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
     public System.Action<bool, string, BaseNPC> OnPlayerInteraction;
     protected bool isPlayerNearby = false;
     protected Transform playerTransform;
-
 
     // Abstract methods - bắt buộc implement ở child classes
     public abstract void InitializeNPCData();
@@ -138,20 +138,17 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
 
         string baseResponse = GetDefaultResponse();
 
-        // Thêm context nếu player chat từ xa
-     /*   if (!isPlayerNearby)
-        {
-            baseResponse = AddRemoteContext(baseResponse);
-        }*/
-
         return GetDefaultResponse();
     }
 
 
-  /*  private string AddRemoteContext(string response)
-    {
-        return $"(Qua radio) {response}";
-    }*/
+
+
+
+    /*  private string AddRemoteContext(string response)
+      {
+          return $"(Qua radio) {response}";
+      }*/
 
     protected abstract string GetDefaultResponse();
 

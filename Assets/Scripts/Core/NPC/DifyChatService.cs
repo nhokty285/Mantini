@@ -8,13 +8,11 @@ using UnityEngine.Networking;
 public class DifyChatService : MonoBehaviour
 {
     private const string BASE_URL = "https://dify.staging.storims.com/v1";
-    private const string API_KEY = "YOUR_API_KEY_HERE"; // ⚠️ Nên để server-side khi release
 
     [Serializable]
     private class ChatRequest
     {
         public string query;
-        public object inputs = new { };
         public string response_mode = "blocking";
         public string user;
         public string conversation_id;
@@ -28,15 +26,12 @@ public class DifyChatService : MonoBehaviour
         public string message_id;
     }
 
-    /// <summary>
-    /// Gửi message tới Dify API. 
-    /// conversationId rỗng = tạo conversation mới.
-    /// </summary>
-    public IEnumerator SendMessage(
+    public IEnumerator SendMessageAI(
         string query,
+        string apiKey,           // ← nhận aiPersonality vào đây
         string userId,
         string conversationId,
-        Action<string, string> onSuccess,  // (answer, newConversationId)
+        Action<string, string> onSuccess,
         Action<string> onError)
     {
         var requestBody = new ChatRequest
@@ -48,12 +43,11 @@ public class DifyChatService : MonoBehaviour
         };
 
         string json = JsonUtility.ToJson(requestBody);
-        byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
 
         using var req = new UnityWebRequest(BASE_URL + "/chat-messages", "POST");
-        req.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
         req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Authorization", "Bearer " + API_KEY);
+        req.SetRequestHeader("Authorization", "Bearer " + apiKey); // ← dùng key của NPC đó
         req.SetRequestHeader("Content-Type", "application/json");
 
         yield return req.SendWebRequest();
@@ -65,7 +59,7 @@ public class DifyChatService : MonoBehaviour
         }
         else
         {
-            Debug.LogError($"[DifyChatService] Error: {req.error}\n{req.downloadHandler.text}");
+            Debug.LogError($"[DifyChatService] Error: {req.error}");
             onError?.Invoke(req.error);
         }
     }
