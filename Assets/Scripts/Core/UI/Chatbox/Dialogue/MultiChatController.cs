@@ -162,17 +162,10 @@ public class MultiChatManager : MonoBehaviour
             }
         }
     */
-
-    // MultiChatController.cs — sửa hàm ProcessParticipantAsync
-
     private IEnumerator ProcessParticipantAsync(IChatParticipant participant, string playerMessage)
     {
         yield return new WaitForSeconds(Random.Range(0.3f, 1.0f));
 
-       // string context = GetContextSummary();
-      //  string prompt = BuildPromptForParticipant(participant, playerMessage, context);
-
-        // ✅ THÊM: Nếu participant là NPCChatAdapter → wire async event TRƯỚC khi gọi
         NPCChatAdapter adapter = participant as NPCChatAdapter;
         if (adapter != null)
         {
@@ -180,7 +173,6 @@ public class MultiChatManager : MonoBehaviour
             adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
             adapter.OnAsyncResponseReady += HandleAsyncNPCResponse;
         }
-
         // Gọi ProcessMessage như cũ
         string response = participant.ProcessMessage(playerMessage, "Player");
 
@@ -220,13 +212,10 @@ public class MultiChatManager : MonoBehaviour
         }
     }
 
-    // ✅ THÊM 2 helper — typing indicator đơn giản
     private Dictionary<IChatParticipant, GameObject> _typingBubbles = new Dictionary<IChatParticipant, GameObject>();
 
     private void AddTypingIndicator(IChatParticipant participant)
     {
-        // Dùng lại AddChatBubble với text "..." và track lại GameObject
-        // Hoặc đơn giản nhất: AddChatBubble với text đặc biệt
         var bubble = AddChatBubble("...", false, participant.GetParticipantName(), participant.GetParticipantIcon());
         if (bubble != null)
             _typingBubbles[participant] = bubble;

@@ -3,7 +3,7 @@ using System.Collections;
 public class NPCChatAdapter : MonoBehaviour, IChatParticipant
 {
     [SerializeField] private BaseNPC targetNPC;
-    public System.Action<IChatParticipant, string> OnAsyncResponseReady;
+    public event System.Action<IChatParticipant, string> OnAsyncResponseReady;
     private void Awake()
     {
         if (targetNPC == null)
@@ -83,6 +83,7 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
             vendor.OnDifyResponseReceived += (answer) =>
             {
                 // Khi Dify trả về → báo cho MultiChatManager qua event
+                vendor.OnDifyResponseReceived = null;
                 OnAsyncResponseReady?.Invoke(this, answer);
             };
 

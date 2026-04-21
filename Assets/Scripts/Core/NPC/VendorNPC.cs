@@ -200,8 +200,8 @@ public class VendorNPC : BaseNPC, IChatParticipant
             return GetDefaultResponse();
 
         // Tránh gửi nhiều request cùng lúc
-        if (_isWaitingResponse);
-
+        if (_isWaitingResponse)
+            return null;
         // userId = npcId của vendor này để phân biệt session
         string userId = string.IsNullOrEmpty(npcId) ? "player-guest" : npcId;
 
@@ -217,7 +217,6 @@ public class VendorNPC : BaseNPC, IChatParticipant
                 _conversationId = newConvId;   // Lưu lại để giữ ngữ cảnh
                 _isWaitingResponse = false;
                 Debug.Log($"[{npcName}] Dify response: {answer}");
-                // Notify UI nếu cần — xem Bước 3
                 OnDifyResponseReceived?.Invoke(answer);
             },
             onError: (err) =>
@@ -363,7 +362,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
     }
     public override string ProcessMessage(string message, string sender)
     {
-        return GetDefaultResponse();
+        return message;
     }
     // Getter cho shop data
     public ShopData GetShopData() => dynamicShopData ?? defaultShopData;
