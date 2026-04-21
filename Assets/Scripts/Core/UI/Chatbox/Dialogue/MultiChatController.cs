@@ -165,13 +165,20 @@ public class MultiChatManager : MonoBehaviour
     private IEnumerator ProcessParticipantAsync(IChatParticipant participant, string playerMessage)
     {
         yield return new WaitForSeconds(Random.Range(0.3f, 1.0f));
-
-        NPCChatAdapter adapter = participant as NPCChatAdapter;
-        if (adapter != null)
+        VendorNPC vendor = participant as VendorNPC;
+        if (vendor != null)
         {
-            // Unsubscribe cũ tránh duplicate bubble
-            adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
-            adapter.OnAsyncResponseReady += HandleAsyncNPCResponse;
+            // Unsub cũ để tránh duplicate khi gửi nhiều lần
+            vendor.OnDifyResponseReceived = null;
+            vendor.OnDifyResponseReceived += (answer) =>
+            {
+                RemoveTypingIndicator(participant);   // xóa bubble "..."
+                if (!string.IsNullOrEmpty(answer))
+                {
+                    AddChatBubble(answer, false, participant.GetParticipantName(), participant.GetParticipantIcon());
+                    AddToSharedContext(participant.GetParticipantName(), answer);
+                }
+            };
         }
         // Gọi ProcessMessage như cũ
         string response = participant.ProcessMessage(playerMessage, "Player");
@@ -184,9 +191,7 @@ public class MultiChatManager : MonoBehaviour
             AddChatBubble(response, false, participant.GetParticipantName(), participant.GetParticipantIcon());
             AddToSharedContext(participant.GetParticipantName(), response);
 
-            // Unsubscribe vì không cần async nữa
-            if (adapter != null)
-                adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
+            if (vendor != null) vendor.OnDifyResponseReceived = null;
         }
         else
         {
