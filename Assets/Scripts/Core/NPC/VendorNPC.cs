@@ -34,6 +34,10 @@ public class VendorNPC : BaseNPC, IChatParticipant
     [Header("Vendor Image Layout")]
     [SerializeField] private ImageLayout myLayout = ImageLayout.Default;
 
+    [Header("Dify Chat State")]
+    private string _conversationId = "";     
+    private bool _isWaitingResponse = false;
+    [SerializeField] private string difyApiKey;
     private void Start()
     {
         NameplateManager.Instance.Register(this.transform, npcName);
@@ -60,7 +64,6 @@ public class VendorNPC : BaseNPC, IChatParticipant
         {
             npcName = vendorConfig.npcName;
             npcId = vendorConfig.npcId;
-            aiPersonality = $"You are a {vendorConfig.shopCategory} vendor. Be professional, knowledgeable about your products, and help customers make purchasing decisions.";
         }
 
         Debug.Log($"Vendor NPC '{npcName}' initialized - Category: {vendorConfig?.shopCategory}");
@@ -161,35 +164,73 @@ public class VendorNPC : BaseNPC, IChatParticipant
 
     protected override string GetDefaultResponse()
     {
-        if (vendorConfig != null)
-        {
-            string[] vendorResponses = {
-                $"Chào mừng đến {vendorConfig.shopCategory} store của tôi!",
-                "Hôm nay bạn muốn mua gì?",
-                $"Tôi có những {vendorConfig.shopCategory} chất lượng nhất!",
-                "Bạn có thể xem qua shop của tôi không?"
-            };
-            
-            return vendorResponses[Random.Range(0, vendorResponses.Length)];
-        }
+        /*  if (vendorConfig != null)
+          {
+              string[] vendorResponses = {
+                  $"Chào mừng đến {vendorConfig.shopCategory} store của tôi!",
+                  "Hôm nay bạn muốn mua gì?",
+                  $"Tôi có những {vendorConfig.shopCategory} chất lượng nhất!",
+                  "Bạn có thể xem qua shop của tôi không?"
+              };
 
-        return "Chào mừng đến cửa hàng của tôi!";
+              return vendorResponses[Random.Range(0, vendorResponses.Length)];
+          }
+
+          return "Chào mừng đến cửa hàng của tôi!";*/
+        return $"Xin chào! Tôi là {npcName}. Tôi có thể giúp gì cho bạn?";
+
+
     }
 
     // ✅ THÊM Method để VendorNPC cũng có AI Response
     public override string GetAIResponse(string playerMessage)
     {
-        string lowerMessage = playerMessage.ToLower();
+        /*  string lowerMessage = playerMessage.ToLower();
 
-        // Shop context responses
-        if (lowerMessage.Contains("help") || lowerMessage.Contains("giúp"))
-            return "Tôi có thể giúp bạn tìm sản phẩm phù hợp! Bạn đang cần gì?";
+          // Shop context responses
+          if (lowerMessage.Contains("help") || lowerMessage.Contains("giúp"))
+              return "Tôi có thể giúp bạn tìm sản phẩm phù hợp! Bạn đang cần gì?";
 
-        if (lowerMessage.Contains("recommend") || lowerMessage.Contains("gợi ý"))
-            return $"Tôi gợi ý bạn xem các sản phẩm {vendorConfig?.shopCategory} bán chạy nhất của shop!";
+          if (lowerMessage.Contains("recommend") || lowerMessage.Contains("gợi ý"))
+              return $"Tôi gợi ý bạn xem các sản phẩm {vendorConfig?.shopCategory} bán chạy nhất của shop!";
 
-        return GetDefaultResponse();
+          return GetDefaultResponse();*/
+
+        if (!enableAIChat || string.IsNullOrEmpty(aiPersonality))
+            return GetDefaultResponse();
+
+        // Tránh gửi nhiều request cùng lúc
+        if (_isWaitingResponse);
+
+        // userId = npcId của vendor này để phân biệt session
+        string userId = string.IsNullOrEmpty(npcId) ? "player-guest" : npcId;
+
+        _isWaitingResponse = true;
+
+        DifyChatService.Instance.SendMessageAI(
+            apiKey: aiPersonality,     // ← aiPersonality IS the API key
+            userId: userId,
+            query: playerMessage,
+            conversationId: _conversationId,
+            onSuccess: (answer, newConvId) =>
+            {
+                _conversationId = newConvId;   // Lưu lại để giữ ngữ cảnh
+                _isWaitingResponse = false;
+                Debug.Log($"[{npcName}] Dify response: {answer}");
+                // Notify UI nếu cần — xem Bước 3
+                OnDifyResponseReceived?.Invoke(answer);
+            },
+            onError: (err) =>
+            {
+                _isWaitingResponse = false;
+                Debug.LogError($"[{npcName}] Dify error: {err}");
+                OnDifyResponseReceived?.Invoke(GetDefaultResponse());
+            }
+        );
+
+        return null;
     }
+    public System.Action<string> OnDifyResponseReceived;
 
     // Vendor-specific methods (từ SellerTrigger cũ)
     private void FetchShopDataFromAPI()
@@ -322,11 +363,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
     }
     public override string ProcessMessage(string message, string sender)
     {
-        Debug.Log($"[{GetParticipantName()}] Processing message from {sender}: '{message}'");
-
-        // TODO: Gọi API OpenAI ở đây (code bạn đã có trong GetAIResponse)
-        // Tạm thời return mock response để test
-        return $"Xin chào! Tôi là {GetParticipantName()}. Bạn vừa nói: {message}";
+        return GetDefaultResponse();
     }
     // Getter cho shop data
     public ShopData GetShopData() => dynamicShopData ?? defaultShopData;

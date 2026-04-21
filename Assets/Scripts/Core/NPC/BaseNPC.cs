@@ -214,5 +214,10 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
 
     // ✅ Abstract method - child class bắt buộc implement
     public abstract string ProcessMessage(string message, string sender);
+    private string _conversationId = "";    
+    public string GetAIPersonality() => aiPersonality;
+    public bool GetEnableAIChat() => enableAIChat;
+    public string GetConversationId() => _conversationId;
+    public void SetConversationId(string id) => _conversationId = id;
 }
 

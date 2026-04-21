@@ -575,7 +575,6 @@ public class CompanionNPC : BaseNPC, IChatParticipant
     // ✅ IMPLEMENT METHOD BẮT BUỘC
     public override string ProcessMessage(string message, string sender)
     {
-        Debug.Log($"[{GetParticipantName()}] Processing message from {sender}: '{message}'");
 
         // TODO: Gọi API OpenAI ở đây (code bạn đã có trong GetAIResponse)
         // Tạm thời return mock response để test

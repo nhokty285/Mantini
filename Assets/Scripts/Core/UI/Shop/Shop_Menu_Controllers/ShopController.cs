@@ -360,8 +360,8 @@ public class ShopController : MonoBehaviour
         bool isInside = RectTransformUtility.RectangleContainsScreenPoint(
             ParticipantsContainer, screenPos, null);
 
-        if (debugTouchArea)
-            Debug.Log($"Touch at {screenPos} - Inside carousel area: {isInside}");
+       /* if (debugTouchArea)
+            Debug.Log($"Touch at {screenPos} - Inside carousel area: {isInside}");*/
 
         return isInside;
     }

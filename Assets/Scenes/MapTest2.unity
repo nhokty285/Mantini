@@ -7445,7 +7445,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000011444092}
+  m_AnchoredPosition: {x: 0, y: -0.000015258789}
   m_SizeDelta: {x: 0, y: 38.5778}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &264474902
@@ -34949,6 +34949,7 @@ GameObject:
   - component: {fileID: 1454406663}
   - component: {fileID: 1454406664}
   - component: {fileID: 1454406665}
+  - component: {fileID: 1454406666}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -35187,6 +35188,18 @@ MonoBehaviour:
   mailField: {fileID: 991481122}
   phoneField: {fileID: 1079243212}
   avatarPreview: {fileID: 1476875985}
+--- !u!114 &1454406666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1454406655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fabe8c546bf3a8c49857a633425f5434, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1454554683
 GameObject:
   m_ObjectHideFlags: 0
@@ -110354,8 +110367,8 @@ MonoBehaviour:
     imageLayout:
       anchoredPosition: {x: 8, y: -131}
       size: {x: 573, y: 1944}
-  enableAIChat: 0
-  aiPersonality: 
+  enableAIChat: 1
+  aiPersonality: app-YpxNAXaT7rMXskwFBCcDnyR8
   npcAnimator: {fileID: 1366091699706664265}
   interactionIndicator: {fileID: 4418757166816701948}
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
@@ -110370,6 +110383,7 @@ MonoBehaviour:
   myLayout:
     anchoredPosition: {x: 0, y: 0}
     size: {x: 200, y: 200}
+  difyApiKey: 
 --- !u!65 &5719194744923198862
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -113515,6 +113529,7 @@ MonoBehaviour:
   myLayout:
     anchoredPosition: {x: 0, y: 0}
     size: {x: 200, y: 200}
+  difyApiKey: 
 --- !u!65 &5857738792311465437
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -113666,6 +113681,7 @@ MonoBehaviour:
   myLayout:
     anchoredPosition: {x: 0, y: 0}
     size: {x: 200, y: 200}
+  difyApiKey: 
 --- !u!65 &5866666021862407883
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -118124,6 +118140,7 @@ MonoBehaviour:
   myLayout:
     anchoredPosition: {x: 0, y: 0}
     size: {x: 200, y: 200}
+  difyApiKey: 
 --- !u!65 &6673550917126104261
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -123298,7 +123315,7 @@ MonoBehaviour:
       anchoredPosition: {x: 22.5, y: -242}
       size: {x: 573, y: 2007}
   enableAIChat: 0
-  aiPersonality: app-YpxNAXaT7rMXskwFBCcDnyR8
+  aiPersonality: 
   npcAnimator: {fileID: 8840519045490929954}
   interactionIndicator: {fileID: 4418757166816701948}
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
@@ -123313,6 +123330,7 @@ MonoBehaviour:
   myLayout:
     anchoredPosition: {x: 0, y: 0}
     size: {x: 200, y: 200}
+  difyApiKey: 
 --- !u!65 &8840519045490929953
 BoxCollider:
   m_ObjectHideFlags: 0

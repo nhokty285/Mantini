@@ -126,42 +126,120 @@ public class MultiChatManager : MonoBehaviour
         chatInputField.text = "";       
     }
 
+    /*    private IEnumerator ProcessParticipantAsync(IChatParticipant participant, string playerMessage)
+        {
+            // Typing delay
+
+            yield return new WaitForSeconds(Random.Range(0.3f, 1.0f));
+
+            // Build prompt với context mới nhất
+            string context = GetContextSummary();
+            string prompt = BuildPromptForParticipant(participant, playerMessage, context);
+
+            // Gọi API
+            string response = null;
+            bool done = false;
+            float elapsed = 0f;
+            float timeout = participant.GetParticipantType() == ChatParticipantType.VendorNPC ? 8f : 15f;
+
+            // Sync call (tạm thời - nên chuyển sang async)
+            response = participant.ProcessMessage(prompt, "Player");
+            done = true;
+
+            // Timeout check (nếu dùng async thật)
+            // while (!done && elapsed < timeout) {
+            //     yield return new WaitForSeconds(0.1f);
+            //     elapsed += 0.1f;
+            // }
+
+            // Hiển thị
+            if (!string.IsNullOrEmpty(response))
+            {
+                Sprite npcIcon = participant.GetParticipantIcon();
+
+                AddChatBubble(response, false, participant.GetParticipantName(), npcIcon);
+                AddToSharedContext(participant.GetParticipantName(), response);
+            }
+        }
+    */
+
+    // MultiChatController.cs — sửa hàm ProcessParticipantAsync
+
     private IEnumerator ProcessParticipantAsync(IChatParticipant participant, string playerMessage)
     {
-        // Typing delay
-
         yield return new WaitForSeconds(Random.Range(0.3f, 1.0f));
 
-        // Build prompt với context mới nhất
-        string context = GetContextSummary();
-        string prompt = BuildPromptForParticipant(participant, playerMessage, context);
+       // string context = GetContextSummary();
+      //  string prompt = BuildPromptForParticipant(participant, playerMessage, context);
 
-        // Gọi API
-        string response = null;
-        bool done = false;
-        float elapsed = 0f;
-        float timeout = participant.GetParticipantType() == ChatParticipantType.VendorNPC ? 8f : 15f;
+        // ✅ THÊM: Nếu participant là NPCChatAdapter → wire async event TRƯỚC khi gọi
+        NPCChatAdapter adapter = participant as NPCChatAdapter;
+        if (adapter != null)
+        {
+            // Unsubscribe cũ tránh duplicate bubble
+            adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
+            adapter.OnAsyncResponseReady += HandleAsyncNPCResponse;
+        }
 
-        // Sync call (tạm thời - nên chuyển sang async)
-        response = participant.ProcessMessage(prompt, "Player");
-        done = true;
+        // Gọi ProcessMessage như cũ
+        string response = participant.ProcessMessage(playerMessage, "Player");
 
-        // Timeout check (nếu dùng async thật)
-        // while (!done && elapsed < timeout) {
-        //     yield return new WaitForSeconds(0.1f);
-        //     elapsed += 0.1f;
-        // }
-
-        // Hiển thị
+        // ✅ LOGIC PHÂN NHÁNH:
+        // - response != null  → sync response, hiển thị ngay (keyword match hoặc AI tắt)
+        // - response == null  → async đang chạy, callback HandleAsyncNPCResponse sẽ lo
         if (!string.IsNullOrEmpty(response))
         {
-            Sprite npcIcon = participant.GetParticipantIcon();
-
-            AddChatBubble(response, false, participant.GetParticipantName(), npcIcon);
+            AddChatBubble(response, false, participant.GetParticipantName(), participant.GetParticipantIcon());
             AddToSharedContext(participant.GetParticipantName(), response);
+
+            // Unsubscribe vì không cần async nữa
+            if (adapter != null)
+                adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
+        }
+        else
+        {
+            // ✅ Hiển thị typing indicator trong khi chờ Dify
+            AddTypingIndicator(participant);
         }
     }
 
+    // ✅ THÊM handler nhận async response từ NPCChatAdapter
+    private void HandleAsyncNPCResponse(IChatParticipant participant, string answer)
+    {
+        // Unsubscribe ngay sau khi nhận
+        if (participant is NPCChatAdapter adapter)
+            adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
+
+        // Xóa typing indicator
+        RemoveTypingIndicator(participant);
+
+        if (!string.IsNullOrEmpty(answer))
+        {
+            AddChatBubble(answer, false, participant.GetParticipantName(), participant.GetParticipantIcon());
+            AddToSharedContext(participant.GetParticipantName(), answer);
+        }
+    }
+
+    // ✅ THÊM 2 helper — typing indicator đơn giản
+    private Dictionary<IChatParticipant, GameObject> _typingBubbles = new Dictionary<IChatParticipant, GameObject>();
+
+    private void AddTypingIndicator(IChatParticipant participant)
+    {
+        // Dùng lại AddChatBubble với text "..." và track lại GameObject
+        // Hoặc đơn giản nhất: AddChatBubble với text đặc biệt
+        var bubble = AddChatBubble("...", false, participant.GetParticipantName(), participant.GetParticipantIcon());
+        if (bubble != null)
+            _typingBubbles[participant] = bubble;
+    }
+
+    private void RemoveTypingIndicator(IChatParticipant participant)
+    {
+        if (_typingBubbles.TryGetValue(participant, out var bubble))
+        {
+            if (bubble != null) Destroy(bubble);
+            _typingBubbles.Remove(participant);
+        }
+    }
     private void AddToSharedContext(string sender, string message)
     {
         sharedContext.Enqueue(new ChatContextEntry(sender, message));
@@ -171,60 +249,6 @@ public class MultiChatManager : MonoBehaviour
         }
     }
 
-    private string BuildPromptForParticipant(IChatParticipant participant, string playerMessage, string sharedContext)
-    {
-        string role = "";
-        string specialInstructions = "";
-
-        // ✅ TÙY BIẾN PROMPT THEO LOẠI NPC
-        switch (participant.GetParticipantType())
-        {
-            case ChatParticipantType.VendorNPC:
-                role = $"Bạn là Vendor tên {participant.GetParticipantName()}";
-                specialInstructions = @"
-- Trả lời về sản phẩm, giá cả, chất lượng.
-- Đặt tên sản phẩm trong [ngoặc vuông] để tạo link.
-- Trả lời ngắn gọn (1-2 câu).";
-                break;
-
-            case ChatParticipantType.Companion:
-                role = $"Bạn là Companion tên {participant.GetParticipantName()}";
-                specialInstructions = @"
-- Bạn là bạn thân của Player, đang đi shopping cùng.
-- Nếu Vendor đã trả lời (trong lịch sử), hãy bình luận ngắn về lời Vendor.
-- Nếu Vendor chưa trả lời, hãy tư vấn hoặc chat thân thiện.
-- Trả lời tự nhiên như bạn bè (1-2 câu).";
-                break;
-
-            default:
-                role = $"Bạn là {participant.GetParticipantName()}";
-                specialInstructions = "Trả lời ngắn gọn.";
-                break;
-        }
-
-        // Inject product context nếu đang xem sản phẩm cụ thể
-        string productBlock = "";
-        if (_productContext != null)
-        {
-            productBlock = $"[SẢN PHẨM ĐANG XEM]\n" +
-                           $"Tên: {_productContext.title}\n" +
-                           $"Giá: {_productContext.price:N0} VND\n" +
-                           $"Brand: {_productContext.brandName}\n\n";
-        }
-
-        // ✅ PROMPT HOÀN CHỈNH
-        return $@"{productBlock}{sharedContext}
-
-[VAI TRÒ]
-{role}
-
-[NHIỆM VỤ]
-Player vừa nói: ""{playerMessage}""
-{specialInstructions}
-
-Hãy trả lời:";
-    }
-    // File: MultiChatController.cs
 
     private void FindAndAssignCompanion()
     {
@@ -391,9 +415,9 @@ Hãy trả lời:";
         return formattedMessage;
     }
 
-    private void AddChatBubble(string message, bool isPlayer, string sender = "", Sprite icon = null)
+    private GameObject AddChatBubble(string message, bool isPlayer, string sender = "", Sprite icon = null)
     {
-        if (chatMessagePrefab == null || companionChatContent == null) return;
+        if (chatMessagePrefab == null || companionChatContent == null) return null;
 
         var go = Instantiate(chatMessagePrefab, companionChatContent);
         var ui = go.GetComponent<ChatMessageUI>();
@@ -437,6 +461,7 @@ Hãy trả lời:";
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(companionChatScroll.content);
         StartCoroutine(ScrollToBottomNextFrame());
+        return go;
     }
 
     private System.Collections.IEnumerator ScrollToBottomNextFrame()
@@ -663,20 +688,6 @@ Hãy trả lời:";
     private Queue<ChatContextEntry> sharedContext = new Queue<ChatContextEntry>();
     private const int MAX_CONTEXT_SIZE = 5; // Giữ 5 tin nhắn gần nhất
 
-   
-
-    // Hàm lấy context để gửi cho NPC
-    private string GetContextSummary()
-    {
-        if (sharedContext.Count == 0) return "";
-
-        string summary = "[Lịch sử chat gần đây]\n";
-        foreach (var entry in sharedContext)
-        {
-            summary += $"{entry.senderName}: {entry.message}\n";
-        }
-        return summary;
-    }
     #endregion
 
     public void ShowShopWelcome(IChatParticipant participant)

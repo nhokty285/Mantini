@@ -1,10 +1,9 @@
 ﻿using UnityEngine;
-
+using System.Collections;
 public class NPCChatAdapter : MonoBehaviour, IChatParticipant
 {
     [SerializeField] private BaseNPC targetNPC;
-    // [SerializeField] private ChatbotAI aiComponent; // Sẽ thêm sau
-
+    public System.Action<IChatParticipant, string> OnAsyncResponseReady;
     private void Awake()
     {
         if (targetNPC == null)
@@ -50,27 +49,49 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
         return reply;
     }
 
+    /*    private string ProcessVendorMessage(VendorNPC vendor, string message)
+        {
+            // ✅ VENDOR-SPECIFIC RESPONSES
+            string lowerMessage = message.ToLower();
+
+            if (lowerMessage.Contains("giá") || lowerMessage.Contains("price"))
+                return "Giá cả sản phẩm của chúng tôi rất hợp lý! Bạn muốn xem catalog không?";
+
+            if (lowerMessage.Contains("mua") || lowerMessage.Contains("buy"))
+                return "Tuyệt vời! Hãy chọn sản phẩm bạn thích từ catalog nhé!";
+
+            if (lowerMessage.Contains("chất lượng") || lowerMessage.Contains("quality"))
+                return $"Tất cả {vendor.GetVendorConfig()?.shopCategory} của chúng tôi đều có chất lượng cao!";
+
+            if (lowerMessage.Contains("giới thiệu") || lowerMessage.Contains("introduce"))
+                return $"Tôi là {vendor.GetNPCName()}, chuyên bán {vendor.GetVendorConfig()?.shopCategory}. Có gì tôi có thể giúp bạn?";
+
+            // Fallback to vendor default
+            string response = vendor.GetAIResponse(message);
+            Debug.Log($"✅ Vendor response: '{response}'");
+            return response;
+        }*/
+
     private string ProcessVendorMessage(VendorNPC vendor, string message)
     {
-        // ✅ VENDOR-SPECIFIC RESPONSES
-        string lowerMessage = message.ToLower();
 
-        if (lowerMessage.Contains("giá") || lowerMessage.Contains("price"))
-            return "Giá cả sản phẩm của chúng tôi rất hợp lý! Bạn muốn xem catalog không?";
+        // ✅ THÊM: Nếu enableAIChat = true → gọi Dify async
+        if (vendor.GetEnableAIChat() && !string.IsNullOrEmpty(vendor.GetAIPersonality()))
+        {
+            // Subscribe một lần rồi gọi
+            vendor.OnDifyResponseReceived = null; // reset tránh duplicate
+            vendor.OnDifyResponseReceived += (answer) =>
+            {
+                // Khi Dify trả về → báo cho MultiChatManager qua event
+                OnAsyncResponseReady?.Invoke(this, answer);
+            };
 
-        if (lowerMessage.Contains("mua") || lowerMessage.Contains("buy"))
-            return "Tuyệt vời! Hãy chọn sản phẩm bạn thích từ catalog nhé!";
+            vendor.GetAIResponse(message); // Kick off async call
+            return null; // null = "đang chờ async"
+        }
 
-        if (lowerMessage.Contains("chất lượng") || lowerMessage.Contains("quality"))
-            return $"Tất cả {vendor.GetVendorConfig()?.shopCategory} của chúng tôi đều có chất lượng cao!";
-
-        if (lowerMessage.Contains("giới thiệu") || lowerMessage.Contains("introduce"))
-            return $"Tôi là {vendor.GetNPCName()}, chuyên bán {vendor.GetVendorConfig()?.shopCategory}. Có gì tôi có thể giúp bạn?";
-
-        // Fallback to vendor default
-        string response = vendor.GetAIResponse(message);
-        Debug.Log($"✅ Vendor response: '{response}'");
-        return response;
+        // Fallback sync nếu AI tắt
+        return vendor.GetAIResponse(message);
     }
 
     // ✅ THÊM method này
@@ -108,5 +129,7 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
     {
         return targetNPC != null ? targetNPC.GetParticipantIcon() : null;
     }
+
+
 }
 
