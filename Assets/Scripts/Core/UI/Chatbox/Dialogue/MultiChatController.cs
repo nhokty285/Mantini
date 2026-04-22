@@ -416,16 +416,9 @@ public class MultiChatManager : MonoBehaviour
 
     public void OpenDialogWithShop()
     {
-        if (assignedCompanion == null)
-        {
-            FindAndAssignCompanion();
-        }
-
-        if (assignedCompanion == null)
-        {
-            Debug.LogWarning("No companion assigned to chat with");
-            return;
-        }
+        if (chatOpenedWithShop) return;  
+        if (assignedCompanion == null) FindAndAssignCompanion();
+        if (assignedCompanion == null) return;
 
         companionChatPanel.SetActive(true);
         chatOpenedWithShop = true;
@@ -436,9 +429,7 @@ public class MultiChatManager : MonoBehaviour
             AddParticipant(assignedCompanion);
         }
         // Add welcome message if first time
-        if (IsFirstTimeOpeningChat())
-        {
-           
+     
            foreach (var participant in activeParticipants)
             {
                 if (participant.IsActive())
@@ -452,7 +443,7 @@ public class MultiChatManager : MonoBehaviour
                 // Delay nhẹ 1 xíu cho tự nhiên
                 Invoke(nameof(Debug_TestProductSuggestion), 1.0f);
             }
-        }
+        
 
         // Don't auto-focus input field to avoid interrupting shopping
         // chatInputField?.ActivateInputField();
