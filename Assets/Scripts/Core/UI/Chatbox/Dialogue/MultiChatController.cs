@@ -455,10 +455,11 @@ public class MultiChatManager : MonoBehaviour
         {
             AddParticipant(assignedCompanion);
         }
-        foreach (var participant in activeParticipants)
+        var vendors = FindObjectsByType<VendorNPC>(FindObjectsSortMode.None);
+        foreach (var vendor in vendors)
         {
-            if (participant != activeParticipants)
-                ShowShopWelcome(participant);
+            if (vendor.IsActive() && !activeParticipants.Contains(vendor))
+                AddParticipant(vendor);  // Panel đã active → ShowShopWelcome chạy ✅
         }
         // Add welcome message if first time
         if (IsFirstTimeOpeningChat())

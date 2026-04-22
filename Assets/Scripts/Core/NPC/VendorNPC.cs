@@ -116,7 +116,6 @@ public class VendorNPC : BaseNPC, IChatParticipant
   
     public override void OnPlayerEnterRange()
     {
-        _chatManager?.AddParticipant(this);
         Debug.Log($"Vendor {npcName}: Player entered range");
         isCustomerNearby = true;
         if (npcAnimator != null)
