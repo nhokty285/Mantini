@@ -14,21 +14,17 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
     public string GetParticipantName() => targetNPC.GetNPCName();
     public ChatParticipantType GetParticipantType()
     {
-        // ❌ SỬATA: Đang hardcode thành VendorNPC
-        // return ChatParticipantType.VendorNPC;
-
-        // ✅ DYNAMIC CLASSIFICATION
         if (targetNPC is CompanionNPC)
             return ChatParticipantType.Companion;
         else if (targetNPC is VendorNPC)
             return ChatParticipantType.VendorNPC;
         else
-            return ChatParticipantType.AIBot; // Fallback
+            return ChatParticipantType.AIBot; 
     }
 
     public string ProcessMessage(string incomingMessage = "", string senderID = "")
     {
-        /*// ✅ DELEGATE TO CORRECT NPC TYPE
+        // ✅ DELEGATE TO CORRECT NPC TYPE
         if (targetNPC is CompanionNPC companion)
         {
             return ProcessCompanionMessage(companion, incomingMessage);
@@ -36,7 +32,7 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
         else if (targetNPC is VendorNPC vendor)
         {
             return ProcessVendorMessage(vendor, incomingMessage);
-        }*/
+        }
         return null;
     }
 
@@ -72,13 +68,6 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
         return vendor.GetAIResponse(message);
     }
 
-    // ✅ THÊM method này
-    private string GetDefaultResponse(string message)
-    {
-       return null;
-    }
-
-    // ✅ THÊM các methods còn thiếu  
     public string GetParticipantID()
     {
         return targetNPC != null ? targetNPC.GetInstanceID().ToString() : gameObject.GetInstanceID().ToString();

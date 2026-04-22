@@ -369,13 +369,6 @@ public class CompanionNPC : BaseNPC, IChatParticipant
 
     #region Animator – locomotion & idle emote
 
-    /*private void UpdateAnimationSpeed(float speed)
-    {
-        if (npcAnimator == null) return;
-        npcAnimator.SetFloat(speedHash, speed, 0.1f, Time.deltaTime);
-    }
-*/
-
     private void UpdateAnimationSpeed(float speed)
     {
         if (npcAnimator == null) return;

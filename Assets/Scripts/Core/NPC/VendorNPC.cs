@@ -166,22 +166,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
 
     protected override string GetDefaultResponse()
     {
-        /*  if (vendorConfig != null)
-          {
-              string[] vendorResponses = {
-                  $"Chào mừng đến {vendorConfig.shopCategory} store của tôi!",
-                  "Hôm nay bạn muốn mua gì?",
-                  $"Tôi có những {vendorConfig.shopCategory} chất lượng nhất!",
-                  "Bạn có thể xem qua shop của tôi không?"
-              };
-
-              return vendorResponses[Random.Range(0, vendorResponses.Length)];
-          }
-
-          return "Chào mừng đến cửa hàng của tôi!";*/
-        return $"Xin chào! Tôi là {npcName}. Tôi có thể giúp gì cho bạn?";
-
-
+        return $"Xin chào! Tôi là {npcName}. Chào mừng đến cửa hàng của tôi!";
     }
 
     // ✅ THÊM Method để VendorNPC cũng có AI Response
@@ -195,8 +180,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
         return "Hãy đợi mình một chút...";
 
         // userId = npcId của vendor này để phân biệt session
-        string userId = string.IsNullOrEmpty(npcId) ? "Player" : npcId;
-
+        string userId = string.IsNullOrEmpty(npcId) ? "player-guest" : npcId;
         _isWaitingResponse = true;
 
         DifyChatService.Instance.SendMessageAI(
@@ -219,7 +203,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
             }
         );
 
-        return "...";
+        return null;
     }
     public System.Action<string> OnDifyResponseReceived;
 
@@ -354,8 +338,12 @@ public class VendorNPC : BaseNPC, IChatParticipant
     }
     public override string ProcessMessage(string message, string sender)
     {
-        GetAIResponse(message);
-        return null;
+        if (enableAIChat && !string.IsNullOrEmpty(aiPersonality))
+        {
+            GetAIResponse(message);
+            return null; // Trả về null vì câu trả lời sẽ được gửi qua event khi Dify trả về
+        }
+        return GetDefaultResponse();
     }
     // Getter cho shop data
     public ShopData GetShopData() => dynamicShopData ?? defaultShopData;

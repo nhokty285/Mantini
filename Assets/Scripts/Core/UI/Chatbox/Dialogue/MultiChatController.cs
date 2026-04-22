@@ -66,18 +66,13 @@ public class MultiChatManager : MonoBehaviour
 
     public void AddParticipant(IChatParticipant participant) 
     {
-        if (participant == null )
-            return;
+        if (participant == null ) return;
         bool alreadyExists = activeParticipants.Any(p => p.GetParticipantID() == participant.GetParticipantID());
-        if (alreadyExists)
-        {
-            Debug.LogWarning($"[AddParticipant] ⚠️ '{participant.GetParticipantName()}' đã tồn tại, bỏ qua!");
-            return;
-        }
+        if (alreadyExists) return;
+
 
         activeParticipants.Add(participant);
         participant.OnJoinChat();
-        Debug.Log($"✅ Added {participant.GetParticipantName()} to chat. Total: {activeParticipants.Count}");
         if (companionChatPanel.activeInHierarchy)
             ShowShopWelcome(participant);
     }
@@ -88,9 +83,6 @@ public class MultiChatManager : MonoBehaviour
 
         activeParticipants.Remove(participant);
         participant.OnLeaveChat();
-        Debug.Log($"❌ Removed {participant.GetParticipantName()} from chat. Total: {activeParticipants.Count}");
-
-        //UpdateParticipantsList();
 
         // Show goodbye message
         if (companionChatPanel.activeInHierarchy)
@@ -101,11 +93,7 @@ public class MultiChatManager : MonoBehaviour
     }
 
     public void SendMessage(string message, IChatParticipant recipient = null)
-    {
-        Debug.Log($"[SendMessage] Total participants: {activeParticipants.Count}");
-        foreach (var p in activeParticipants)
-            Debug.Log($"  participant: '{p.GetParticipantName()}' active={p.IsActive()} hash={p.GetHashCode()}");
-
+    {   
         if (activeParticipants.Count == 0)
         {
             Debug.LogError("NO PARTICIPANTS!");
@@ -114,13 +102,11 @@ public class MultiChatManager : MonoBehaviour
 
         if (AudioManager.Instance != null)
         {
-            // Giả sử bạn đã có clip tên "Chat" trong danh sách uiSounds của AudioManager
             AudioManager.Instance.PlaySFXOneShot("Chat");
         }
 
         if (string.IsNullOrWhiteSpace(message)) return;
 
-        // 1. Hiển thị tin Player
         AddChatBubble(message, isPlayer: true, sender: "Player", icon: _playerSprite);
         AddToSharedContext("Player", message);
 
@@ -135,65 +121,20 @@ public class MultiChatManager : MonoBehaviour
 
         chatInputField.text = "";       
     }
-
-    /*    private IEnumerator ProcessParticipantAsync(IChatParticipant participant, string playerMessage)
-        {
-            // Typing delay
-
-            yield return new WaitForSeconds(Random.Range(0.3f, 1.0f));
-
-            // Build prompt với context mới nhất
-            string context = GetContextSummary();
-            string prompt = BuildPromptForParticipant(participant, playerMessage, context);
-
-            // Gọi API
-            string response = null;
-            bool done = false;
-            float elapsed = 0f;
-            float timeout = participant.GetParticipantType() == ChatParticipantType.VendorNPC ? 8f : 15f;
-
-            // Sync call (tạm thời - nên chuyển sang async)
-            response = participant.ProcessMessage(prompt, "Player");
-            done = true;
-
-            // Timeout check (nếu dùng async thật)
-            // while (!done && elapsed < timeout) {
-            //     yield return new WaitForSeconds(0.1f);
-            //     elapsed += 0.1f;
-            // }
-
-            // Hiển thị
-            if (!string.IsNullOrEmpty(response))
-            {
-                Sprite npcIcon = participant.GetParticipantIcon();
-
-                AddChatBubble(response, false, participant.GetParticipantName(), npcIcon);
-                AddToSharedContext(participant.GetParticipantName(), response);
-            }
-        }
-    */
     private IEnumerator ProcessParticipantAsync(IChatParticipant participant, string playerMessage)
     {
-        Debug.Log($"[ProcessParticipantAsync] START for '{participant.GetParticipantName()}' | frame={Time.frameCount}\n{new System.Diagnostics.StackTrace(true)}");
 
         yield return new WaitForSeconds(Random.Range(0.3f, 1.0f));
-        VendorNPC vendor = participant as VendorNPC;
-        if (vendor != null)
+ 
+        NPCChatAdapter adapter = participant as NPCChatAdapter;
+        if (adapter != null)
         {
-            // Unsub cũ để tránh duplicate khi gửi nhiều lần
-            vendor.OnDifyResponseReceived = null;
-            vendor.OnDifyResponseReceived += (answer) =>
-            {
-                RemoveTypingIndicator(participant);   // xóa bubble "..."
-                if (!string.IsNullOrEmpty(answer))
-                {
-                    AddChatBubble(answer, false, participant.GetParticipantName(), participant.GetParticipantIcon());
-                    AddToSharedContext(participant.GetParticipantName(), answer);
-                }
-            };
+            adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
+            adapter.OnAsyncResponseReady += HandleAsyncNPCResponse;
         }
-        // Gọi ProcessMessage như cũ
+
         string response = participant.ProcessMessage(playerMessage, "Player");
+
 
         // ✅ LOGIC PHÂN NHÁNH:
         // - response != null  → sync response, hiển thị ngay (keyword match hoặc AI tắt)
@@ -203,24 +144,16 @@ public class MultiChatManager : MonoBehaviour
             AddChatBubble(response, false, participant.GetParticipantName(), participant.GetParticipantIcon());
             AddToSharedContext(participant.GetParticipantName(), response);
 
-            if (vendor != null) vendor.OnDifyResponseReceived = null;
-        }
-        else
-        {
-            // ✅ Hiển thị typing indicator trong khi chờ Dify
-            AddTypingIndicator(participant);
+            if (adapter != null) adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
         }
     }
 
-    // ✅ THÊM handler nhận async response từ NPCChatAdapter
+    // THÊM handler nhận async response từ NPCChatAdapter
     private void HandleAsyncNPCResponse(IChatParticipant participant, string answer)
     {
         // Unsubscribe ngay sau khi nhận
         if (participant is NPCChatAdapter adapter)
             adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
-
-        // Xóa typing indicator
-        RemoveTypingIndicator(participant);
 
         if (!string.IsNullOrEmpty(answer))
         {
@@ -229,25 +162,6 @@ public class MultiChatManager : MonoBehaviour
         }
     }
 
-    private Dictionary<IChatParticipant, GameObject> _typingBubbles = new Dictionary<IChatParticipant, GameObject>();
-
-    private void AddTypingIndicator(IChatParticipant participant)
-    {
-        var bubble = AddChatBubble("...", false, participant.GetParticipantName(), participant.GetParticipantIcon());
-        if (bubble != null)
-            _typingBubbles[participant] = bubble;
-    }
-
-    private void RemoveTypingIndicator(IChatParticipant participant)
-    {
-        Debug.Log($"[RemoveTyping] trying to remove for '{participant.GetParticipantName()}' | tracked={_typingBubbles.ContainsKey(participant)}");
-
-        if (_typingBubbles.TryGetValue(participant, out var bubble))
-        {
-            if (bubble != null) Destroy(bubble);
-            _typingBubbles.Remove(participant);
-        }
-    }
     private void AddToSharedContext(string sender, string message)
     {
         sharedContext.Enqueue(new ChatContextEntry(sender, message));
@@ -256,7 +170,6 @@ public class MultiChatManager : MonoBehaviour
             sharedContext.Dequeue(); // Xóa tin cũ nhất
         }
     }
-
 
     private void FindAndAssignCompanion()
     {
@@ -280,15 +193,12 @@ public class MultiChatManager : MonoBehaviour
             companionChatButton.gameObject.SetActive(true);
         }
 
-
-        if (sendChatButton != null)
-            sendChatButton.onClick.AddListener(()=>
-            {           
+       sendChatButton.onClick.AddListener(()=>
+       {           
             SendCompanionMessage();
-            });
+       });
         audioSync = FindAnyObjectByType<DialogueAudioSync>();
-        /*        if (closeChatButton != null)
-                    closeChatButton.onClick.AddListener(CloseCompanionChat);*/
+
     }
 
     // ✅ THÊM: Listen for ViewModel changes
