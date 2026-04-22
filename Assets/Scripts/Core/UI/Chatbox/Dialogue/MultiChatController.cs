@@ -235,26 +235,6 @@ public class MultiChatManager : MonoBehaviour
         if (companionChatPanel != null)
             companionChatPanel.SetActive(false);
     }
-
-    private void SendCompanionChat()
-    {
-        if (assignedCompanion == null)
-        {
-            Debug.LogWarning("No companion assigned to chat with");
-            return;
-        }
-
-        companionChatPanel?.SetActive(true);
-
-        if (IsFirstTimeOpeningChat())
-        {
-            string welcomeMsg = $"Xin chào! Tôi là {viewModel.CurrentNPCName}, bạn cần hỗ trợ gì không?";
-            AddChatBubble(welcomeMsg, isPlayer: false);
-        }
-
-        chatInputField?.ActivateInputField();
-    }
-
     private bool IsFirstTimeOpeningChat()
     {
         return companionChatContent != null && companionChatContent.childCount == 0;
@@ -455,18 +435,17 @@ public class MultiChatManager : MonoBehaviour
         {
             AddParticipant(assignedCompanion);
         }
-        var vendors = FindObjectsByType<VendorNPC>(FindObjectsSortMode.None);
-        foreach (var vendor in vendors)
-        {
-            if (vendor.IsActive() && !activeParticipants.Contains(vendor))
-                AddParticipant(vendor);  // Panel đã active → ShowShopWelcome chạy ✅
-        }
         // Add welcome message if first time
         if (IsFirstTimeOpeningChat())
         {
-            string welcomeMsg =
-            $"Chào {viewModel.CurrentNPCName}! Tôi là {assignedCompanion.GetNPCName()}, tôi có thể hỗ trợ bạn tìm sản phẩm phù hợp!";
-            AddChatBubble(welcomeMsg, isPlayer: false, icon: assignedCompanion.GetParticipantIcon());
+           
+           foreach (var participant in activeParticipants)
+            {
+                if (participant.IsActive())
+                {
+                    ShowShopWelcome(participant);
+                }
+            }
             // THÊM ĐOẠN NÀY ĐỂ TEST
             if (testProductSuggestions)
             {
