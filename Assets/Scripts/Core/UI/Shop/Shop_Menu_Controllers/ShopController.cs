@@ -368,7 +368,6 @@ public class ShopController : MonoBehaviour
 
     public void SetNPCInteraction(bool isNear, string npcName, ShopData npcShopData = null, BaseNPC npc = null)
     {
-        Debug.Log($"🔍 SetNPCInteraction: isNear={isNear}, npcName={npcName}, npc={npc?.name}");
 
         // ✅ Early null check
         if (isNear && npc == null)
@@ -400,6 +399,7 @@ public class ShopController : MonoBehaviour
             MainMenuViewModel.CurrentNPCName = null;
             Debug.Log("Cleared shop data when leaving NPC");
             currentInteractingNPC = null;
+
         }
 
         var multiChatManager = MainMenuView.Instance?.GetComponentInChildren<MultiChatManager>();
