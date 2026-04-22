@@ -578,6 +578,6 @@ public class CompanionNPC : BaseNPC, IChatParticipant
 
         // TODO: Gọi API OpenAI ở đây (code bạn đã có trong GetAIResponse)
         // Tạm thời return mock response để test
-        return $"Xin chào! Tôi là {GetParticipantName()}. Bạn vừa nói: {message}";
+        return "";
     }
 }

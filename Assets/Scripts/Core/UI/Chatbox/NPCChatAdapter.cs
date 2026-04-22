@@ -26,9 +26,9 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
             return ChatParticipantType.AIBot; // Fallback
     }
 
-    public string ProcessMessage(string incomingMessage, string senderID)
+    public string ProcessMessage(string incomingMessage = "", string senderID = "")
     {
-        // ✅ DELEGATE TO CORRECT NPC TYPE
+        /*// ✅ DELEGATE TO CORRECT NPC TYPE
         if (targetNPC is CompanionNPC companion)
         {
             return ProcessCompanionMessage(companion, incomingMessage);
@@ -36,9 +36,8 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
         else if (targetNPC is VendorNPC vendor)
         {
             return ProcessVendorMessage(vendor, incomingMessage);
-        }
-
-        return GetDefaultResponse(incomingMessage);
+        }*/
+        return null;
     }
 
     private string ProcessCompanionMessage(CompanionNPC companion, string message)
@@ -49,28 +48,6 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
         return reply;
     }
 
-    /*    private string ProcessVendorMessage(VendorNPC vendor, string message)
-        {
-            // ✅ VENDOR-SPECIFIC RESPONSES
-            string lowerMessage = message.ToLower();
-
-            if (lowerMessage.Contains("giá") || lowerMessage.Contains("price"))
-                return "Giá cả sản phẩm của chúng tôi rất hợp lý! Bạn muốn xem catalog không?";
-
-            if (lowerMessage.Contains("mua") || lowerMessage.Contains("buy"))
-                return "Tuyệt vời! Hãy chọn sản phẩm bạn thích từ catalog nhé!";
-
-            if (lowerMessage.Contains("chất lượng") || lowerMessage.Contains("quality"))
-                return $"Tất cả {vendor.GetVendorConfig()?.shopCategory} của chúng tôi đều có chất lượng cao!";
-
-            if (lowerMessage.Contains("giới thiệu") || lowerMessage.Contains("introduce"))
-                return $"Tôi là {vendor.GetNPCName()}, chuyên bán {vendor.GetVendorConfig()?.shopCategory}. Có gì tôi có thể giúp bạn?";
-
-            // Fallback to vendor default
-            string response = vendor.GetAIResponse(message);
-            Debug.Log($"✅ Vendor response: '{response}'");
-            return response;
-        }*/
 
     private string ProcessVendorMessage(VendorNPC vendor, string message)
     {
@@ -98,7 +75,7 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
     // ✅ THÊM method này
     private string GetDefaultResponse(string message)
     {
-        return $"Xin chào! Tôi là {GetParticipantName()}. Bạn cần gì không?";
+       return null;
     }
 
     // ✅ THÊM các methods còn thiếu  

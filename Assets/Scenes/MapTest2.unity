@@ -6368,10 +6368,10 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 552520750016102306}
-  - {fileID: 4905961497678434099}
   - {fileID: 543450653679920316}
   - {fileID: 8840519045490929949}
   - {fileID: 6329501000285093498}
+  - {fileID: 4905961497678434099}
   m_Father: {fileID: 1659492038}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &194670326
@@ -7445,7 +7445,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.000015258789}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 38.5778}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &264474902
@@ -110374,6 +110374,7 @@ MonoBehaviour:
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: 37831f6e55934b249989519ecb7d69ca, type: 3}
+  _chatManager: {fileID: 1337125546}
   totalIdleVariations: 2
   vendorImage: {fileID: 21300000, guid: 5c3a76233aa99eb41abe1671c6dba1a1, type: 3}
   vendorIcon: {fileID: 21300000, guid: b13523d8def937f4780f4ac7fee80e44, type: 3}
@@ -113482,7 +113483,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   npcName: Leather
   npcId: 1
-  npcType: 0
+  npcType: 1
   interactionRange: 10
   npcIcon: {fileID: 21300000, guid: af460c9776aa5204a8f5b38692dfd925, type: 3}
   dialogueSequence:
@@ -113520,6 +113521,7 @@ MonoBehaviour:
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: af460c9776aa5204a8f5b38692dfd925, type: 3}
+  _chatManager: {fileID: 1337125546}
   totalIdleVariations: 3
   vendorImage: {fileID: 21300000, guid: 4d9593eee57f69b43a2469295eaa3458, type: 3}
   vendorIcon: {fileID: 21300000, guid: 418ee542b713caf4a98e2ab4cd026007, type: 3}
@@ -113634,7 +113636,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   npcName: Sport
-  npcId: 4
+  npcId: 3
   npcType: 1
   interactionRange: 10
   npcIcon: {fileID: 21300000, guid: a07711586da66f545bb474ca5e52a0c1, type: 3}
@@ -113672,6 +113674,7 @@ MonoBehaviour:
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: a07711586da66f545bb474ca5e52a0c1, type: 3}
+  _chatManager: {fileID: 1337125546}
   totalIdleVariations: 3
   vendorImage: {fileID: 21300000, guid: 9b3687c5432f64945a405edb0660ec70, type: 3}
   vendorIcon: {fileID: 21300000, guid: 6791b758df887a04bb01338a49e0c9eb, type: 3}
@@ -118091,8 +118094,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06e6940f977f6114ea52d22267d12d97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  npcName: Normal
-  npcId: 3
+  npcName: Apparel
+  npcId: 5
   npcType: 1
   interactionRange: 10
   npcIcon: {fileID: 21300000, guid: e2e3914d3141a0d4ba73c3d55e5205bc, type: 3}
@@ -118124,13 +118127,14 @@ MonoBehaviour:
     imageLayout:
       anchoredPosition: {x: 8, y: -131}
       size: {x: 504, y: 1977}
-  enableAIChat: 1
+  enableAIChat: 0
   aiPersonality: 
   npcAnimator: {fileID: 87480767407793152}
   interactionIndicator: {fileID: 4418757166816701948}
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: e2e3914d3141a0d4ba73c3d55e5205bc, type: 3}
+  _chatManager: {fileID: 1337125546}
   totalIdleVariations: 3
   vendorImage: {fileID: 21300000, guid: 172a211940510854eaad98f55dfa50e3, type: 3}
   vendorIcon: {fileID: 21300000, guid: 38f4604749c743b4db4e23b685684bf8, type: 3}
@@ -123282,7 +123286,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   npcName: Perfume
-  npcId: 1
+  npcId: 4
   npcType: 1
   interactionRange: 10
   npcIcon: {fileID: 21300000, guid: c49fd75ed8d0b8f4f8f7ef9ad9e09d84, type: 3}
@@ -123321,6 +123325,7 @@ MonoBehaviour:
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: af120be00dad31040bc27d654894ce89, type: 3}
+  _chatManager: {fileID: 1337125546}
   totalIdleVariations: 3
   vendorImage: {fileID: 21300000, guid: 2e9cd8cc6d3cd154aa64f22e8a3e4615, type: 3}
   vendorIcon: {fileID: 21300000, guid: af120be00dad31040bc27d654894ce89, type: 3}

@@ -7,7 +7,7 @@ public interface IChatParticipant
     string GetParticipantID();
     ChatParticipantType GetParticipantType();
     bool IsActive();
-    string ProcessMessage(string message, string sender);
+    string ProcessMessage(string message = "", string sender = "");
     void OnJoinChat();
     void OnLeaveChat();
     Sprite GetParticipantIcon();

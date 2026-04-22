@@ -9,7 +9,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
     [SerializeField] private NPCAPIConfig vendorConfig;
     [SerializeField] private ShopData defaultShopData; // Fallback nếu API fail
     [SerializeField] private Sprite vendorIconBT;
-   
+    [SerializeField] private MultiChatManager _chatManager;
     [Header("Idle Animation Settings")]
 
     [SerializeField] private int totalIdleVariations = 3; // Tổng số idle đặc biệt 
@@ -116,6 +116,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
   
     public override void OnPlayerEnterRange()
     {
+        _chatManager?.AddParticipant(this);
         Debug.Log($"Vendor {npcName}: Player entered range");
         isCustomerNearby = true;
         if (npcAnimator != null)
@@ -136,6 +137,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
 
     public override void OnPlayerExitRange()
     {
+        _chatManager?.RemoveParticipant(this);
         Debug.Log($"Vendor {npcName}: Player left range");
         isCustomerNearby = false;
 
@@ -184,26 +186,16 @@ public class VendorNPC : BaseNPC, IChatParticipant
 
     // ✅ THÊM Method để VendorNPC cũng có AI Response
     public override string GetAIResponse(string playerMessage)
-    {
-        /*  string lowerMessage = playerMessage.ToLower();
-
-          // Shop context responses
-          if (lowerMessage.Contains("help") || lowerMessage.Contains("giúp"))
-              return "Tôi có thể giúp bạn tìm sản phẩm phù hợp! Bạn đang cần gì?";
-
-          if (lowerMessage.Contains("recommend") || lowerMessage.Contains("gợi ý"))
-              return $"Tôi gợi ý bạn xem các sản phẩm {vendorConfig?.shopCategory} bán chạy nhất của shop!";
-
-          return GetDefaultResponse();*/
-
+    {   
         if (!enableAIChat || string.IsNullOrEmpty(aiPersonality))
             return GetDefaultResponse();
 
         // Tránh gửi nhiều request cùng lúc
         if (_isWaitingResponse)
-            return null;
+        return "Hãy đợi mình một chút...";
+
         // userId = npcId của vendor này để phân biệt session
-        string userId = string.IsNullOrEmpty(npcId) ? "player-guest" : npcId;
+        string userId = string.IsNullOrEmpty(npcId) ? "Player" : npcId;
 
         _isWaitingResponse = true;
 
@@ -227,7 +219,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
             }
         );
 
-        return null;
+        return "...";
     }
     public System.Action<string> OnDifyResponseReceived;
 

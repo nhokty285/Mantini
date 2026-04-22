@@ -36,7 +36,7 @@ public class MultiChatManager : MonoBehaviour
     [SerializeField] private MainMenuViewModel viewModel;
     private bool chatOpenedWithShop = false;
     private Sprite _playerSprite;
-
+    //[SerializeField] private VendorNPC _cachedVendor;
     [Header("Debug / Testing")]
     [SerializeField] private bool testProductSuggestions = true; // Bật cái này để test
 
@@ -66,8 +66,14 @@ public class MultiChatManager : MonoBehaviour
 
     public void AddParticipant(IChatParticipant participant) 
     {
-        if (participant == null || activeParticipants.Contains(participant))
+        if (participant == null )
             return;
+        bool alreadyExists = activeParticipants.Any(p => p.GetParticipantID() == participant.GetParticipantID());
+        if (alreadyExists)
+        {
+            Debug.LogWarning($"[AddParticipant] ⚠️ '{participant.GetParticipantName()}' đã tồn tại, bỏ qua!");
+            return;
+        }
 
         activeParticipants.Add(participant);
         participant.OnJoinChat();
@@ -96,6 +102,10 @@ public class MultiChatManager : MonoBehaviour
 
     public void SendMessage(string message, IChatParticipant recipient = null)
     {
+        Debug.Log($"[SendMessage] Total participants: {activeParticipants.Count}");
+        foreach (var p in activeParticipants)
+            Debug.Log($"  participant: '{p.GetParticipantName()}' active={p.IsActive()} hash={p.GetHashCode()}");
+
         if (activeParticipants.Count == 0)
         {
             Debug.LogError("NO PARTICIPANTS!");
@@ -164,6 +174,8 @@ public class MultiChatManager : MonoBehaviour
     */
     private IEnumerator ProcessParticipantAsync(IChatParticipant participant, string playerMessage)
     {
+        Debug.Log($"[ProcessParticipantAsync] START for '{participant.GetParticipantName()}' | frame={Time.frameCount}\n{new System.Diagnostics.StackTrace(true)}");
+
         yield return new WaitForSeconds(Random.Range(0.3f, 1.0f));
         VendorNPC vendor = participant as VendorNPC;
         if (vendor != null)
@@ -228,6 +240,8 @@ public class MultiChatManager : MonoBehaviour
 
     private void RemoveTypingIndicator(IChatParticipant participant)
     {
+        Debug.Log($"[RemoveTyping] trying to remove for '{participant.GetParticipantName()}' | tracked={_typingBubbles.ContainsKey(participant)}");
+
         if (_typingBubbles.TryGetValue(participant, out var bubble))
         {
             if (bubble != null) Destroy(bubble);
@@ -264,12 +278,12 @@ public class MultiChatManager : MonoBehaviour
         if (companionChatButton != null && assignedCompanion != null)
         {
             companionChatButton.gameObject.SetActive(true);
-            sendChatButton.onClick.AddListener(SendCompanionChat);
         }
 
 
         if (sendChatButton != null)
-            sendChatButton.onClick.AddListener(()=> {           
+            sendChatButton.onClick.AddListener(()=>
+            {           
             SendCompanionMessage();
             });
         audioSync = FindAnyObjectByType<DialogueAudioSync>();
@@ -411,6 +425,8 @@ public class MultiChatManager : MonoBehaviour
 
     private GameObject AddChatBubble(string message, bool isPlayer, string sender = "", Sprite icon = null)
     {
+        Debug.Log($"[AddChatBubble] sender='{sender}' | isPlayer={isPlayer} | msg='{message}'\n{new System.Diagnostics.StackTrace(true)}");
+
         if (chatMessagePrefab == null || companionChatContent == null) return null;
 
         var go = Instantiate(chatMessagePrefab, companionChatContent);
@@ -526,11 +542,8 @@ public class MultiChatManager : MonoBehaviour
         {
             AddParticipant(assignedCompanion);
         }
-        VendorNPC currentVendor = FindFirstObjectByType<VendorNPC>();
-        if (currentVendor != null && !activeParticipants.Contains(currentVendor))
-        {
-            AddParticipant(currentVendor);
-        }
+
+
         // Add welcome message if first time
         if (IsFirstTimeOpeningChat())
         {
