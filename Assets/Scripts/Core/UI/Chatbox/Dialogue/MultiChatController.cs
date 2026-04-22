@@ -29,16 +29,23 @@ public class MultiChatManager : MonoBehaviour
     // ✅ THÊM: Auto-open settings
     [Header("Auto-Open Settings")]
     [SerializeField] private bool autoOpenWithShop = true;
-
     [SerializeField] private List<IChatParticipant> activeParticipants = new List<IChatParticipant>();
     [SerializeField] private IChatParticipant selectedRecipient = null;
     [SerializeField] private CompanionNPC assignedCompanion;
     [SerializeField] private MainMenuViewModel viewModel;
     private bool chatOpenedWithShop = false;
     private Sprite _playerSprite;
-    //[SerializeField] private VendorNPC _cachedVendor;
     [Header("Debug / Testing")]
     [SerializeField] private bool testProductSuggestions = true; // Bật cái này để test
+    [Header("Debug Info")]
+    [SerializeField] private List<string> _debugParticipantNames = new List<string>();
+
+    private void RefreshDebugList()
+    {
+        _debugParticipantNames.Clear();
+        foreach (var p in activeParticipants)
+            _debugParticipantNames.Add($"{p.GetParticipantName()} ({p.GetParticipantType()})");
+    }
 
     private void Start()
     {
@@ -73,8 +80,7 @@ public class MultiChatManager : MonoBehaviour
 
         activeParticipants.Add(participant);
         participant.OnJoinChat();
-        if (companionChatPanel.activeInHierarchy)
-            ShowShopWelcome(participant);
+        RefreshDebugList();
     }
     public void RemoveParticipant(IChatParticipant participant) 
     {
@@ -90,6 +96,7 @@ public class MultiChatManager : MonoBehaviour
             string goodbyeMsg = $"{participant.GetParticipantName()} đã rời khỏi cuộc trò chuyện.";
             AddChatBubble(goodbyeMsg, isPlayer: false,sender:participant.GetParticipantName() ,icon: participant.GetParticipantIcon());
         }
+        RefreshDebugList();
     }
 
     public void SendMessage(string message, IChatParticipant recipient = null)
@@ -391,10 +398,6 @@ public class MultiChatManager : MonoBehaviour
         yield return null;
         ScrollChatToBottom();
     }
-
-
-
-    // Hàm này sẽ giả lập NPC đề xuất ngẫu nhiên 2-3 sản phẩm đang có trong shop
     // Hàm này sẽ giả lập NPC đề xuất ngẫu nhiên 2-3 sản phẩm đang có trong shop
     public void Debug_TestProductSuggestion()
     {
@@ -452,8 +455,11 @@ public class MultiChatManager : MonoBehaviour
         {
             AddParticipant(assignedCompanion);
         }
-
-
+        foreach (var participant in activeParticipants)
+        {
+            if (participant != activeParticipants)
+                ShowShopWelcome(participant);
+        }
         // Add welcome message if first time
         if (IsFirstTimeOpeningChat())
         {
