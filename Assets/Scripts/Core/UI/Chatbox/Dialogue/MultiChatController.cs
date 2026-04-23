@@ -149,30 +149,25 @@ public class MultiChatManager : MonoBehaviour
 
         yield return new WaitForSeconds(Random.Range(0.3f, 1.0f));
  
-        NPCChatAdapter adapter = participant as NPCChatAdapter;
+/*        NPCChatAdapter adapter = participant as NPCChatAdapter;
         if (adapter != null)
         {
             adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
             adapter.OnAsyncResponseReady += HandleAsyncNPCResponse;
         }
-
+*/
         string response = participant.ProcessMessage(playerMessage, "Player");
 
-
-        // ✅ LOGIC PHÂN NHÁNH:
-        // - response != null  → sync response, hiển thị ngay (keyword match hoặc AI tắt)
-        // - response == null  → async đang chạy, callback HandleAsyncNPCResponse sẽ lo
         if (!string.IsNullOrEmpty(response))
         {
             AddChatBubble(response, false, participant.GetParticipantName(), participant.GetParticipantIcon());
             AddToSharedContext(participant.GetParticipantName(), response);
 
-            if (adapter != null) adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
-        }
+/*            if (adapter != null) adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
+*/        }
     }
 
-    // THÊM handler nhận async response từ NPCChatAdapter
-    private void HandleAsyncNPCResponse(IChatParticipant participant, string answer)
+/*    private void HandleAsyncNPCResponse(IChatParticipant participant, string answer)
     {
         // Unsubscribe ngay sau khi nhận
         if (participant is NPCChatAdapter adapter)
@@ -184,7 +179,7 @@ public class MultiChatManager : MonoBehaviour
             AddToSharedContext(participant.GetParticipantName(), answer);
         }
     }
-
+*/
     private void AddToSharedContext(string sender, string message)
     {
         sharedContext.Enqueue(new ChatContextEntry(sender, message));
