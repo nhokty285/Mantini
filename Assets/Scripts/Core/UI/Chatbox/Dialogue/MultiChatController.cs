@@ -370,6 +370,18 @@ public class MultiChatManager : MonoBehaviour
         StartCoroutine(ScrollToBottomNextFrame());
         return go;
     }
+    public GameObject AddTypingBubble(string sender, Sprite icon)
+    {
+        // Reuse chatMessagePrefab, chỉ text khác
+        var go = Instantiate(chatMessagePrefab, companionChatContent);
+        var ui = go.GetComponent<ChatMessageUI>();
+        ui.Setup("đang nhập...", sender, isPlayer: false, icon);   // text = "đang nhập..."
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(companionChatScroll.content);
+        StartCoroutine(ScrollToBottomNextFrame());
+        return go; // trả về để caller destroy khi xong
+    }
 
     private System.Collections.IEnumerator ScrollToBottomNextFrame()
     {
@@ -560,6 +572,8 @@ public class MultiChatManager : MonoBehaviour
                 icon: participant.GetParticipantIcon());
         }
     }
+
+
     #endregion
 
     #region Save and Load Chat History

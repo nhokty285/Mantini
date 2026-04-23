@@ -59,7 +59,7 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
                 vendor.OnDifyResponseReceived = null;
                 OnAsyncResponseReady?.Invoke(this, answer);
             };
-
+            
             vendor.GetAIResponse(message); // Kick off async call
             return null; // null = "đang chờ async"
         }

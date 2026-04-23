@@ -10,6 +10,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
     [SerializeField] private ShopData defaultShopData; // Fallback nếu API fail
     [SerializeField] private Sprite vendorIconBT;
     [SerializeField] private MultiChatManager _chatManager;
+    private GameObject _typingBubble;
     [Header("Idle Animation Settings")]
 
     [SerializeField] private int totalIdleVariations = 3; // Tổng số idle đặc biệt 
@@ -37,6 +38,8 @@ public class VendorNPC : BaseNPC, IChatParticipant
     [Header("Dify Chat State")]
     private string _conversationId = "";     
     private bool _isWaitingResponse = false;
+    public System.Action OnTypingStarted;   // Fire khi bắt đầu chờ API
+    public System.Action OnTypingStopped;   // Fire khi nhận được response (hoặc lỗi)
     [SerializeField] private string difyApiKey;
     private void Start()
     {
@@ -182,6 +185,11 @@ public class VendorNPC : BaseNPC, IChatParticipant
         string userId = string.IsNullOrEmpty(npcId) ? "player-guest" : npcId;
         _isWaitingResponse = true;
 
+        _typingBubble = _chatManager?.AddTypingBubble(
+       sender: GetParticipantName(),
+       icon: GetParticipantIcon()
+   );
+
         DifyChatService.Instance.SendMessageAI(
             apiKey: aiPersonality,     // ← aiPersonality IS the API key
             userId: userId,
@@ -191,12 +199,25 @@ public class VendorNPC : BaseNPC, IChatParticipant
             {
                 _conversationId = newConvId;   // Lưu lại để giữ ngữ cảnh
                 _isWaitingResponse = false;
+
+                if (_typingBubble != null)
+                {
+                    Object.Destroy(_typingBubble);
+                    _typingBubble = null;
+                }
+
                 Debug.Log($"[{npcName}] Dify response: {answer}");
                 OnDifyResponseReceived?.Invoke(answer);
             },
             onError: (err) =>
             {
                 _isWaitingResponse = false;
+                if (_typingBubble != null)
+                {
+                    Object.Destroy(_typingBubble);
+                    _typingBubble = null;
+                }
+
                 Debug.LogError($"[{npcName}] Dify error: {err}");
                 OnDifyResponseReceived?.Invoke(GetDefaultResponse());
             }
@@ -288,7 +309,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
         }
     }
 
-    // ✅ NEW: Override GetDialogueSequence để setup dialogue của Vendor
+    //Override GetDialogueSequence để setup dialogue của Vendor
     public override List<DialogueEntry> GetDialogueSequence()
     {
         if (!customDialogueEnabled || dialogueSequence.Count == 0)
@@ -299,9 +320,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
         return new List<DialogueEntry>(dialogueSequence);
     }
 
-    /// <summary>
     /// Tạo dialogue mặc định cho vendor nếu không có custom dialogue
-    /// </summary>
     private List<DialogueEntry> GenerateDefaultVendorDialogue()
     {
         List<DialogueEntry> defaultDialogue = new List<DialogueEntry>();
@@ -347,6 +366,5 @@ public class VendorNPC : BaseNPC, IChatParticipant
     // Getter cho shop data
     public ShopData GetShopData() => dynamicShopData ?? defaultShopData;
     public NPCAPIConfig GetVendorConfig() => vendorConfig;
-
     public Sprite GetVendorImage() => vendorIconBT;
 }
