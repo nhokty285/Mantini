@@ -3,7 +3,7 @@ using System.Collections;
 public class NPCChatAdapter : MonoBehaviour, IChatParticipant
 {
     [SerializeField] private BaseNPC targetNPC;
-    public event System.Action<IChatParticipant, string> OnAsyncResponseReady;
+    //public event System.Action<IChatParticipant, string> OnAsyncResponseReady;
     private void Awake()
     {
         if (targetNPC == null)
@@ -19,7 +19,7 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
         else if (targetNPC is VendorNPC)
             return ChatParticipantType.VendorNPC;
         else
-            return ChatParticipantType.AIBot; 
+            return ChatParticipantType.AIBot;
     }
 
     public string ProcessMessage(string incomingMessage = "", string senderID = "")
@@ -48,7 +48,7 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
     private string ProcessVendorMessage(VendorNPC vendor, string message)
     {
         vendor.GetAIResponse(message);
-        return null;
+        return message;
     }
 
     public string GetParticipantID()
@@ -62,11 +62,11 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
 
     public void OnLeaveChat()
     {
-        
+
     }
 
 
-    
+
     public bool IsActive()
     {
         return targetNPC != null && targetNPC.gameObject.activeInHierarchy;

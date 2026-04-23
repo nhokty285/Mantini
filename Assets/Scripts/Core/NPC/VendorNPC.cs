@@ -227,7 +227,6 @@ public class VendorNPC : BaseNPC, IChatParticipant
         return null;
     }*/
 
-   // public System.Action<string> OnDifyResponseReceived;
 
     // Vendor-specific methods (từ SellerTrigger cũ)
     private void FetchShopDataFromAPI()
@@ -288,6 +287,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
     public bool IsActive()
     {
         return isCustomerNearby; // Vendor active khi có khách
+
     }
 
     public void OnJoinChat()
