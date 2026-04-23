@@ -213,6 +213,10 @@ public class CompanionNPC : BaseNPC, IChatParticipant
     private float currentWaitTime;
     private int lastEmoteId = 0;
     private bool isPlayingIdleEmote = false;
+    [SerializeField] private MultiChatManager _chatManager;
+    public System.Action OnTypingStarted;  
+    public System.Action OnTypingStopped;
+    protected override MultiChatManager GetChatManager() => _chatManager;
     void Start()
     {
         InitializeNPCData();
@@ -540,12 +544,12 @@ public class CompanionNPC : BaseNPC, IChatParticipant
         PlayAction(2); // ActionID 2 = Point / Talk gesture
     }
 
-    public override string GetAIResponse(string message)
+/*    public override string GetAIResponse(string message)
     {
         // TODO: Gọi API OpenAI ở đây (code bạn đã có trong GetAIResponse)
         // Tạm thời return mock response để test
         return "";
-    }
+    }*/
 
     protected override string GetDefaultResponse()
     {
@@ -575,9 +579,11 @@ public class CompanionNPC : BaseNPC, IChatParticipant
     // ✅ IMPLEMENT METHOD BẮT BUỘC
     public override string ProcessMessage(string message, string sender)
     {
-
-        // TODO: Gọi API OpenAI ở đây (code bạn đã có trong GetAIResponse)
-        // Tạm thời return mock response để test
-        return "";
+        if (enableAIChat && !string.IsNullOrEmpty(aiPersonality))
+        {
+            GetAIResponse(message);
+            return null; // Trả về null vì câu trả lời sẽ được gửi qua event khi Dify trả về
+        }
+        return GetDefaultResponse();
     }
 }

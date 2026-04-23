@@ -10,7 +10,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
     [SerializeField] private ShopData defaultShopData; // Fallback nếu API fail
     [SerializeField] private Sprite vendorIconBT;
     [SerializeField] private MultiChatManager _chatManager;
-    private GameObject _typingBubble;
+    protected override MultiChatManager GetChatManager() => _chatManager;
     [Header("Idle Animation Settings")]
 
     [SerializeField] private int totalIdleVariations = 3; // Tổng số idle đặc biệt 
@@ -36,8 +36,9 @@ public class VendorNPC : BaseNPC, IChatParticipant
     [SerializeField] private ImageLayout myLayout = ImageLayout.Default;
 
     [Header("Dify Chat State")]
-    private string _conversationId = "";     
+/*    private string _conversationId = "";     
     private bool _isWaitingResponse = false;
+    private GameObject _typingBubble;*/
     public System.Action OnTypingStarted;   // Fire khi bắt đầu chờ API
     public System.Action OnTypingStopped;   // Fire khi nhận được response (hoặc lỗi)
     [SerializeField] private string difyApiKey;
@@ -172,7 +173,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
     }
 
     // ✅ THÊM Method để VendorNPC cũng có AI Response
-    public override string GetAIResponse(string playerMessage)
+/*    public override string GetAIResponse(string playerMessage)
     {   
         if (!enableAIChat || string.IsNullOrEmpty(aiPersonality))
             return GetDefaultResponse();
@@ -224,7 +225,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
         );
 
         return null;
-    }
+    }*/
     public System.Action<string> OnDifyResponseReceived;
 
     // Vendor-specific methods (từ SellerTrigger cũ)

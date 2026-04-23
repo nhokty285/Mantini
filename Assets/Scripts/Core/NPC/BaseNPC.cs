@@ -29,6 +29,13 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
     [SerializeField] protected bool enableAIChat = false;
     [SerializeField] protected string aiPersonality; // "Friendly Companion" hoặc "Professional Vendor"
 
+    private string _conversationId = "";        // đã có sẵn
+    private bool _isWaitingResponse = false;    // ✅ move từ VendorNPC lên đây
+    private GameObject _typingBubble;           // ✅ thêm mới
+
+    // ✅ THÊM: Events — giống VendorNPC, để Base quản lý
+    public System.Action<string> OnDifyResponseReceived;
+
     [Header("Animation & Visual")]
     [SerializeField] protected Animator npcAnimator;
     [SerializeField] protected GameObject interactionIndicator;
@@ -129,20 +136,72 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
     }
 
     // Chuẩn bị cho AI Chat System
+    /*  public virtual string GetAIResponse(string playerMessage)
+      {
+          if (!enableAIChat) return GetDefaultResponse();
+
+          // TODO: Tích hợp với ChatGPT API sau này
+          // return await ChatGPTManager.Instance.SendMessageAsync(playerMessage, aiPersonality);
+
+          string baseResponse = GetDefaultResponse();
+
+          return GetDefaultResponse();
+      }*/
+
+
     public virtual string GetAIResponse(string playerMessage)
     {
-        if (!enableAIChat) return GetDefaultResponse();
+        if (!enableAIChat || string.IsNullOrEmpty(aiPersonality))
+            return GetDefaultResponse();
 
-        // TODO: Tích hợp với ChatGPT API sau này
-        // return await ChatGPTManager.Instance.SendMessageAsync(playerMessage, aiPersonality);
+        if (_isWaitingResponse)
+            return "Hãy đợi mình một chút...";
 
-        string baseResponse = GetDefaultResponse();
+        string userId = string.IsNullOrEmpty(npcId) ? "player-guest" : npcId;
+        _isWaitingResponse = true;
 
-        return GetDefaultResponse();
+        // ✅ Typing bubble — dùng _chatManager từ child nếu có
+        _typingBubble = GetChatManager()?.AddTypingBubble(
+            sender: GetParticipantName(),
+            icon: GetParticipantIcon()
+        );
+
+        DifyChatService.Instance.SendMessageAI(
+            apiKey: aiPersonality,
+            userId: userId,
+            query: playerMessage,
+            conversationId: _conversationId,
+            onSuccess: (answer, newConvId) =>
+            {
+                _conversationId = newConvId;
+                _isWaitingResponse = false;
+                DestroyTypingBubble();
+                OnDifyResponseReceived?.Invoke(answer);
+            },
+            onError: (err) =>
+            {
+                _isWaitingResponse = false;
+                DestroyTypingBubble();
+                Debug.LogError($"[{npcName}] Dify error: {err}");
+                OnDifyResponseReceived?.Invoke(GetDefaultResponse());
+            }
+        );
+
+        return null;
     }
 
+    // ✅ Helper — tránh duplicate destroy logic
+    private void DestroyTypingBubble()
+    {
+        if (_typingBubble != null)
+        {
+            UnityEngine.Object.Destroy(_typingBubble);
+            _typingBubble = null;
+        }
+    }
 
-
+    // ✅ Abstract/Virtual để child inject _chatManager của mình
+    protected virtual MultiChatManager GetChatManager() => null;
 
 
     /*  private string AddRemoteContext(string response)
@@ -214,10 +273,10 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
 
     // ✅ Abstract method - child class bắt buộc implement
     public abstract string ProcessMessage(string message, string sender);
-    private string _conversationId = "";    
+   // private string _conversationId = "";    
     public string GetAIPersonality() => aiPersonality;
     public bool GetEnableAIChat() => enableAIChat;
-    public string GetConversationId() => _conversationId;
-    public void SetConversationId(string id) => _conversationId = id;
+/*    public string GetConversationId() => _conversationId;
+    public void SetConversationId(string id) => _conversationId = id;*/
 }
 
