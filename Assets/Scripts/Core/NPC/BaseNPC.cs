@@ -34,7 +34,7 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
     private GameObject _typingBubble;           // ✅ thêm mới
 
     // ✅ THÊM: Events — giống VendorNPC, để Base quản lý
-    public System.Action<IChatParticipant,string> OnDifyResponseReceived;
+    public event System.Action<IChatParticipant,string> OnDifyResponseReceived;
 
     [Header("Animation & Visual")]
     [SerializeField] protected Animator npcAnimator;

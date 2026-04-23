@@ -415,23 +415,26 @@ public class ShopController : MonoBehaviour
 
             if (isNear)
             {
-                if (npcAdapter != null)
+                if (npc is IChatParticipant chatParticipant)
                 {
-                    multiChatManager.AddParticipant(npcAdapter);
-                    Debug.Log($"✅ Successfully added {npc.name} to multi-chat");
+                    multiChatManager.AddParticipant(chatParticipant);
+                    Debug.Log($"✅ Added {npc.name} directly as IChatParticipant");
                 }
                 else
                 {
-                    Debug.LogError($"❌ {npc.name} MISSING NPCChatAdapter component!");
+                    Debug.LogError($"❌ {npc.name} does not implement IChatParticipant!");
                 }
             }
             else
             {
-                if (npcAdapter != null)
-                {
-                    multiChatManager.RemoveParticipant(npcAdapter);
-                    Debug.Log($"❌ Removed {npc.name} from multi-chat");
-                }
+                /*                if (npcAdapter != null)
+                                {
+                                    multiChatManager.RemoveParticipant(npcAdapter);
+                                    Debug.Log($"❌ Removed {npc.name} from multi-chat");
+                                }*/
+
+                if (npc is IChatParticipant chatParticipant)
+                    multiChatManager.RemoveParticipant(chatParticipant);
             }
         }
         else

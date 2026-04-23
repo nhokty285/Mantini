@@ -108,11 +108,14 @@ public class MultiChatManager : MonoBehaviour
 
     private void OnNPCDifyResponse(IChatParticipant participant, string answer)
     {
+        Debug.Log($"[OnNPCDifyResponse] participant={participant?.GetParticipantName()} | answer={answer}");
+
         if (string.IsNullOrEmpty(answer)) return;
         AddChatBubble(answer, isPlayer: false,
             sender: participant.GetParticipantName(),
             icon: participant.GetParticipantIcon());
         AddToSharedContext(participant.GetParticipantName(), answer);
+
     }
 
     public void SendMessage(string message, IChatParticipant recipient = null)

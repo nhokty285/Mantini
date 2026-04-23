@@ -314,7 +314,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   npcName: Companion_Male
-  npcId: 3
+  npcId: 13
   npcType: 0
   interactionRange: 2
   npcIcon: {fileID: 21300000, guid: 0c779150f7facab48bf03b36bda26817, type: 3}
@@ -328,9 +328,11 @@ MonoBehaviour:
   smoothTime: 0.3
   rotationSpeed: 5
   shouldFollowPlayer: 1
+  teleportDistance: 10
   minIdleTime: 3
   maxIdleTime: 6
   totalIdleEmotes: 2
+  _chatManager: {fileID: 0}
   helpTopics: []
 --- !u!1 &629388155494717060
 GameObject:

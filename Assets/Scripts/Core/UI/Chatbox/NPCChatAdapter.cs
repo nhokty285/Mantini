@@ -38,17 +38,15 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
 
     private string ProcessCompanionMessage(CompanionNPC companion, string message)
     {
-        string reply = companion.GetHelpForTopic(message);
-        if (string.IsNullOrWhiteSpace(reply))
-            reply = companion.GetAIResponse(message);
-        return reply;
+        companion.GetAIResponse(message);
+        return null;
     }
 
 
     private string ProcessVendorMessage(VendorNPC vendor, string message)
     {
         vendor.GetAIResponse(message);
-        return message;
+        return null;
     }
 
     public string GetParticipantID()

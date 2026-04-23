@@ -223,7 +223,7 @@ public class CompanionNPC : BaseNPC, IChatParticipant
         AutoFindPlayer();
         ResetIdleTimer();
         NameplateManager.Instance.Register(this.transform, npcName);
-
+        _chatManager = FindFirstObjectByType<MultiChatManager>();
     }
 
     /*  void FixedUpdate()

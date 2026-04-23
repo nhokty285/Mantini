@@ -2043,13 +2043,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   npcName: Companion_Female
-  npcId: 2
+  npcId: 12
   npcType: 0
   interactionRange: 2
   npcIcon: {fileID: 21300000, guid: b852264e4c9871c4e8b8a624be2ea970, type: 3}
   dialogueSequence: []
-  enableAIChat: 0
-  aiPersonality: 
+  enableAIChat: 1
+  aiPersonality: app-edQTxZq6Et6JU0svMs8gfUkN
   npcAnimator: {fileID: 6714800624510491313}
   interactionIndicator: {fileID: 0}
   followDistance: 2
@@ -2057,9 +2057,11 @@ MonoBehaviour:
   smoothTime: 0.3
   rotationSpeed: 5
   shouldFollowPlayer: 1
+  teleportDistance: 10
   minIdleTime: 3
   maxIdleTime: 6
   totalIdleEmotes: 2
+  _chatManager: {fileID: 0}
   helpTopics: []
 --- !u!1 &7419403914448490536
 GameObject:

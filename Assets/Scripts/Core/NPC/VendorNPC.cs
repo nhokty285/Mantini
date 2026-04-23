@@ -45,6 +45,8 @@ public class VendorNPC : BaseNPC, IChatParticipant
     private void Start()
     {
         NameplateManager.Instance.Register(this.transform, npcName);
+        _chatManager = FindFirstObjectByType<MultiChatManager>();
+
 
     }
     private void FixedUpdate()
@@ -287,7 +289,6 @@ public class VendorNPC : BaseNPC, IChatParticipant
     public bool IsActive()
     {
         return isCustomerNearby; // Vendor active khi có khách
-
     }
 
     public void OnJoinChat()

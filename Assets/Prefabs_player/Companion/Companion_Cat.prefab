@@ -151,7 +151,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   npcName: Companion_Cat
-  npcId: 1
+  npcId: 11
   npcType: 0
   interactionRange: 3
   npcIcon: {fileID: 21300000, guid: 6dc792395586ea04bb5e8bf52d4f3624, type: 3}
@@ -165,9 +165,11 @@ MonoBehaviour:
   smoothTime: 0.3
   rotationSpeed: 5
   shouldFollowPlayer: 1
+  teleportDistance: 10
   minIdleTime: 3
   maxIdleTime: 6
   totalIdleEmotes: 1
+  _chatManager: {fileID: 0}
   helpTopics: []
 --- !u!54 &2895725043681004947
 Rigidbody:
