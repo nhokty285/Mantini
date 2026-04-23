@@ -47,25 +47,8 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
 
     private string ProcessVendorMessage(VendorNPC vendor, string message)
     {
-
-        // ✅ THÊM: Nếu enableAIChat = true → gọi Dify async
-        if (vendor.GetEnableAIChat() && !string.IsNullOrEmpty(vendor.GetAIPersonality()))
-        {
-            // Subscribe một lần rồi gọi
-            vendor.OnDifyResponseReceived = null; // reset tránh duplicate
-            vendor.OnDifyResponseReceived += (answer) =>
-            {
-                // Khi Dify trả về → báo cho MultiChatManager qua event
-                vendor.OnDifyResponseReceived = null;
-                OnAsyncResponseReady?.Invoke(this, answer);
-            };
-            
-            vendor.GetAIResponse(message); // Kick off async call
-            return null; // null = "đang chờ async"
-        }
-
-        // Fallback sync nếu AI tắt
-        return vendor.GetAIResponse(message);
+        vendor.GetAIResponse(message);
+        return null;
     }
 
     public string GetParticipantID()
@@ -81,6 +64,7 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
     {
         
     }
+
 
     
     public bool IsActive()

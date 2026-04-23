@@ -34,7 +34,7 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
     private GameObject _typingBubble;           // ✅ thêm mới
 
     // ✅ THÊM: Events — giống VendorNPC, để Base quản lý
-    public System.Action<string> OnDifyResponseReceived;
+    public System.Action<IChatParticipant,string> OnDifyResponseReceived;
 
     [Header("Animation & Visual")]
     [SerializeField] protected Animator npcAnimator;
@@ -176,14 +176,14 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
                 _conversationId = newConvId;
                 _isWaitingResponse = false;
                 DestroyTypingBubble();
-                OnDifyResponseReceived?.Invoke(answer);
+                OnDifyResponseReceived?.Invoke(this,answer);
             },
             onError: (err) =>
             {
                 _isWaitingResponse = false;
                 DestroyTypingBubble();
                 Debug.LogError($"[{npcName}] Dify error: {err}");
-                OnDifyResponseReceived?.Invoke(GetDefaultResponse());
+                OnDifyResponseReceived?.Invoke(this,GetDefaultResponse());
             }
         );
 

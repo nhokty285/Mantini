@@ -80,12 +80,19 @@ public class MultiChatManager : MonoBehaviour
 
         activeParticipants.Add(participant);
         participant.OnJoinChat();
+        if (participant is BaseNPC baseNpc)
+        {
+            baseNpc.OnDifyResponseReceived -= OnNPCDifyResponse; // tránh double subscribe
+            baseNpc.OnDifyResponseReceived += OnNPCDifyResponse;
+        }
         RefreshDebugList();
     }
     public void RemoveParticipant(IChatParticipant participant) 
     {
         if (participant == null || !activeParticipants.Contains(participant))
             return;
+        if (participant is BaseNPC baseNpc)
+            baseNpc.OnDifyResponseReceived -= OnNPCDifyResponse;
 
         activeParticipants.Remove(participant);
         participant.OnLeaveChat();
@@ -97,6 +104,15 @@ public class MultiChatManager : MonoBehaviour
             AddChatBubble(goodbyeMsg, isPlayer: false,sender:participant.GetParticipantName() ,icon: participant.GetParticipantIcon());
         }
         RefreshDebugList();
+    }
+
+    private void OnNPCDifyResponse(IChatParticipant participant, string answer)
+    {
+        if (string.IsNullOrEmpty(answer)) return;
+        AddChatBubble(answer, isPlayer: false,
+            sender: participant.GetParticipantName(),
+            icon: participant.GetParticipantIcon());
+        AddToSharedContext(participant.GetParticipantName(), answer);
     }
 
     public void SendMessage(string message, IChatParticipant recipient = null)

@@ -226,7 +226,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
 
         return null;
     }*/
-    public System.Action<string> OnDifyResponseReceived;
+
 
     // Vendor-specific methods (từ SellerTrigger cũ)
     private void FetchShopDataFromAPI()
