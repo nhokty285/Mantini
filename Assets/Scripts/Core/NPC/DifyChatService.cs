@@ -1,5 +1,4 @@
-﻿// DifyChatService.cs
-using System;
+﻿using System;
 using System.Collections;
 using System.Text;
 using UnityEngine;
@@ -176,10 +175,8 @@ public class DifyChatService : MonoBehaviour
             onError?.Invoke("Empty response from Dify");
     }
 
-    /// <summary>
     /// Extract 1 field từ JSON string không cần JsonUtility
     /// Dùng vì "event" là keyword trong C# và JsonUtility không map được
-    /// </summary>
     private string ExtractJsonField(string json, string fieldName)
     {
         string search = $"\"{fieldName}\":\"";
@@ -193,3 +190,5 @@ public class DifyChatService : MonoBehaviour
         return json.Substring(start, end - start);
     }
 }
+
+

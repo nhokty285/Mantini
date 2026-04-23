@@ -427,11 +427,7 @@ public class ShopController : MonoBehaviour
             }
             else
             {
-                /*                if (npcAdapter != null)
-                                {
-                                    multiChatManager.RemoveParticipant(npcAdapter);
-                                    Debug.Log($"❌ Removed {npc.name} from multi-chat");
-                                }*/
+
 
                 if (npc is IChatParticipant chatParticipant)
                     multiChatManager.RemoveParticipant(chatParticipant);

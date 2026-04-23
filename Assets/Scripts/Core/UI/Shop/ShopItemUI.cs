@@ -22,6 +22,7 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
 
     [Header("Product Detail")]
     [SerializeField] private Button productDetailButton;
+    [SerializeField] private MarqueeText nameMarquee;
 
     private APIProductItem originalAPIItem;
 /*    private Action onBuyClicked;
@@ -43,6 +44,7 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
 
         // Setup UI
         nameText.text = shopItem.itemName;
+        nameMarquee?.StartScroll();
         priceText.text = $"{shopItem.price:N0} VND";
         if(shopItem.regularPrice > shopItem.price)
         {
@@ -74,6 +76,13 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
         // Hiển thị thông tin chi tiết chỉ khi ở center
         if (nameText != null)
             nameText.gameObject.SetActive(isCarouselCenter);
+
+        if (nameText != null)
+        {
+            nameText.gameObject.SetActive(isCarouselCenter);
+            if (isCarouselCenter) nameMarquee?.StartScroll(); // ← scroll khi hiện
+            else nameMarquee?.StopScroll();                   // ← dừng khi ẩn
+        }
 
         if (priceText != null)
             priceText.gameObject.SetActive(isCarouselCenter);

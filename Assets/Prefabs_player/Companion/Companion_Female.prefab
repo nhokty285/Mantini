@@ -2048,7 +2048,7 @@ MonoBehaviour:
   interactionRange: 2
   npcIcon: {fileID: 21300000, guid: b852264e4c9871c4e8b8a624be2ea970, type: 3}
   dialogueSequence: []
-  enableAIChat: 1
+  enableAIChat: 0
   aiPersonality: app-edQTxZq6Et6JU0svMs8gfUkN
   npcAnimator: {fileID: 6714800624510491313}
   interactionIndicator: {fileID: 0}

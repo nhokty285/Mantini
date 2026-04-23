@@ -584,6 +584,6 @@ public class CompanionNPC : BaseNPC, IChatParticipant
             GetAIResponse(message);
             return null; // Trả về null vì câu trả lời sẽ được gửi qua event khi Dify trả về
         }
-        return GetDefaultResponse();
+        return null;
     }
 }

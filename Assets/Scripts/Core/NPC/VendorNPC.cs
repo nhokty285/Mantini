@@ -362,9 +362,10 @@ public class VendorNPC : BaseNPC, IChatParticipant
         if (enableAIChat && !string.IsNullOrEmpty(aiPersonality))
         {
             GetAIResponse(message);
-            return null; // Trả về null vì câu trả lời sẽ được gửi qua event khi Dify trả về
+            return null;
         }
         return GetDefaultResponse();
+
     }
     // Getter cho shop data
     public ShopData GetShopData() => dynamicShopData ?? defaultShopData;

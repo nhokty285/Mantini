@@ -135,20 +135,6 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
         }
     }
 
-    // Chuẩn bị cho AI Chat System
-    /*  public virtual string GetAIResponse(string playerMessage)
-      {
-          if (!enableAIChat) return GetDefaultResponse();
-
-          // TODO: Tích hợp với ChatGPT API sau này
-          // return await ChatGPTManager.Instance.SendMessageAsync(playerMessage, aiPersonality);
-
-          string baseResponse = GetDefaultResponse();
-
-          return GetDefaultResponse();
-      }*/
-
-
     public virtual string GetAIResponse(string playerMessage)
     {
         if (!enableAIChat || string.IsNullOrEmpty(aiPersonality))

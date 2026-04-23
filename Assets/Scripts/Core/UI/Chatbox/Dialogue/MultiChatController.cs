@@ -152,13 +152,6 @@ public class MultiChatManager : MonoBehaviour
 
         yield return new WaitForSeconds(Random.Range(0.3f, 1.0f));
  
-/*        NPCChatAdapter adapter = participant as NPCChatAdapter;
-        if (adapter != null)
-        {
-            adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
-            adapter.OnAsyncResponseReady += HandleAsyncNPCResponse;
-        }
-*/
         string response = participant.ProcessMessage(playerMessage, "Player");
 
         if (!string.IsNullOrEmpty(response))
@@ -166,23 +159,10 @@ public class MultiChatManager : MonoBehaviour
             AddChatBubble(response, false, participant.GetParticipantName(), participant.GetParticipantIcon());
             AddToSharedContext(participant.GetParticipantName(), response);
 
-/*            if (adapter != null) adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
-*/        }
+       }
     }
 
-/*    private void HandleAsyncNPCResponse(IChatParticipant participant, string answer)
-    {
-        // Unsubscribe ngay sau khi nhận
-        if (participant is NPCChatAdapter adapter)
-            adapter.OnAsyncResponseReady -= HandleAsyncNPCResponse;
 
-        if (!string.IsNullOrEmpty(answer))
-        {
-            AddChatBubble(answer, false, participant.GetParticipantName(), participant.GetParticipantIcon());
-            AddToSharedContext(participant.GetParticipantName(), answer);
-        }
-    }
-*/
     private void AddToSharedContext(string sender, string message)
     {
         sharedContext.Enqueue(new ChatContextEntry(sender, message));
@@ -248,10 +228,6 @@ public class MultiChatManager : MonoBehaviour
     {
         if (companionChatPanel != null)
             companionChatPanel.SetActive(false);
-    }
-    private bool IsFirstTimeOpeningChat()
-    {
-        return companionChatContent != null && companionChatContent.childCount == 0;
     }
 
     public void CloseCompanionChat()
