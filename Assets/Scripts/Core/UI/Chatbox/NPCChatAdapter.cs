@@ -82,6 +82,7 @@ public class NPCChatAdapter : MonoBehaviour, IChatParticipant
         
     }
 
+    
     public bool IsActive()
     {
         return targetNPC != null && targetNPC.gameObject.activeInHierarchy;

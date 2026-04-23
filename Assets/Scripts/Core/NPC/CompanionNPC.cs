@@ -540,6 +540,13 @@ public class CompanionNPC : BaseNPC, IChatParticipant
         PlayAction(2); // ActionID 2 = Point / Talk gesture
     }
 
+    public override string GetAIResponse(string message)
+    {
+        // TODO: Gọi API OpenAI ở đây (code bạn đã có trong GetAIResponse)
+        // Tạm thời return mock response để test
+        return "";
+    }
+
     protected override string GetDefaultResponse()
     {
         return "Tôi sẽ đi cùng bạn!";
