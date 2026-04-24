@@ -42,7 +42,8 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        Application.targetFrameRate = 120;
+        Application.targetFrameRate = 60;
+        QualitySettings.vSyncCount = 0;
     }
     void Start()
     {
@@ -92,7 +93,7 @@ public class PlayerController : MonoBehaviour
         OnMovementStateChanged?.Invoke(shouldMove);
     }
 
-    void Update()
+    void LateUpdate()
     {
         if (canMove && cameraTransform != null)
             _cachedInputDirection = CalculateCameraRelativeMovement();
