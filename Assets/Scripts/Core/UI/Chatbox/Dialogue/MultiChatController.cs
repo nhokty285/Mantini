@@ -425,14 +425,15 @@ public class MultiChatManager : MonoBehaviour
         companionChatPanel.SetActive(true);
         chatOpenedWithShop = true;
 
-        // ✅ QUAN TRỌNG: Add Companion vào chat
-        if (assignedCompanion != null && !activeParticipants.Contains(assignedCompanion))
-        {
-            AddParticipant(assignedCompanion);
-        }
-        // Add welcome message if first time
-     
-           foreach (var participant in activeParticipants)
+  
+            // ✅ QUAN TRỌNG: Add Companion vào chat
+            if (assignedCompanion != null && !activeParticipants.Contains(assignedCompanion))
+            {
+                AddParticipant(assignedCompanion);
+            }
+            // Add welcome message if first time
+
+            foreach (var participant in activeParticipants)
             {
                 if (participant.IsActive())
                 {
@@ -445,11 +446,11 @@ public class MultiChatManager : MonoBehaviour
                 // Delay nhẹ 1 xíu cho tự nhiên
                 Invoke(nameof(Debug_TestProductSuggestion), 1.0f);
             }
+
+
+            // Don't auto-focus input field to avoid interrupting shopping
+            // chatInputField?.ActivateInputField();
         
-
-        // Don't auto-focus input field to avoid interrupting shopping
-        // chatInputField?.ActivateInputField();
-
         Debug.Log("Chat opened automatically with shop");
     }
 
@@ -466,7 +467,8 @@ public class MultiChatManager : MonoBehaviour
     {
         if (companionChatPanel != null)
             companionChatPanel.SetActive(false);
-            ClearChatHistory();
+        ClearChatHistory();
+        chatOpenedWithShop = false;
     }
 
     #region Product Context
@@ -607,6 +609,28 @@ public class MultiChatManager : MonoBehaviour
         // Add a single bubble for the welcome message
         AddChatBubble(message, isPlayer: false, sender: participant.GetParticipantName(), icon: participant.GetParticipantIcon());
     }
+    public GameObject AddRestoredMessage(string message, bool isPlayer, string sender = "", Sprite icon = null)
+    {
+        // ✅ Gọi đúng signature: (string message, bool isPlayer, string sender, Sprite icon)
+        var bubble = AddChatBubble(
+            message: message,
+            isPlayer: isPlayer,
+            sender: sender,
+            icon: icon
+        );
+
+        // Làm mờ bubble lịch sử để player nhận ra đây là tin cũ
+        if (bubble != null)
+        {
+            var canvasGroup = bubble.GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+                canvasGroup = bubble.AddComponent<CanvasGroup>();
+            canvasGroup.alpha = 0.75f;
+        }
+
+        return bubble;
+    }
+
 }
 
 

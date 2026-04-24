@@ -14,7 +14,7 @@ public class MainMenuView : MonoBehaviour
     [Header("Controllers")]
     [SerializeField] private MenuController menuController;
     [SerializeField] private ShopController shopController;
-    [SerializeField] private MultiChatManager companionChatController;
+    [SerializeField] public MultiChatManager companionChatController;
 
     [Header("NPC Interaction")]
     [SerializeField] public Button talkButton;
@@ -191,5 +191,42 @@ public class MainMenuView : MonoBehaviour
         cachedShopData = null;
         AudioManager.Instance.StopBGM();
         AudioManager.Instance.StopAmbient();
+    }
+
+
+    public void RestoreChatHistory(List<DifyMessage> messages, BaseNPC npc)
+    {
+        if (companionChatController == null) return;
+
+        // API trả ngược (mới nhất trước) → đảo lại
+        var ordered = new List<DifyMessage>(messages);
+        ordered.Reverse();
+
+        foreach (var msg in ordered)
+        {
+            // ✅ Tin của player — isPlayer: true
+            if (!string.IsNullOrEmpty(msg.query))
+            {
+                companionChatController.AddRestoredMessage(
+                    message: msg.query,
+                    isPlayer: true,
+                    sender: "Player",
+                    icon: null          // player icon nếu có thì truyền vào đây
+                );
+            }
+
+            // ✅ Tin của NPC — isPlayer: false
+            if (!string.IsNullOrEmpty(msg.answer))
+            {
+                companionChatController.AddRestoredMessage(
+                    message: msg.answer,
+                    isPlayer: false,
+                    sender: npc.GetParticipantName(),
+                    icon: npc.GetParticipantIcon()
+                );
+            }
+        }
+
+        Debug.Log($"[MainMenuView] Restored {ordered.Count} message pairs to chat UI");
     }
 }

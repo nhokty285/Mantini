@@ -13,7 +13,7 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
     [SerializeField] private Image iconImage;
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI priceText;
-    [SerializeField] private TextMeshProUGUI regularPriceText;
+    //[SerializeField] private TextMeshProUGUI regularPriceText;
     [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private Button buyButton;
 
@@ -46,7 +46,7 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
         nameText.text = shopItem.itemName;
         nameMarquee?.StartScroll();
         priceText.text = $"{shopItem.price:N0} VND";
-        if(shopItem.regularPrice > shopItem.price)
+      /*  if(shopItem.regularPrice > shopItem.price)
         {
             regularPriceText.gameObject.SetActive(true);
             regularPriceText.text = $"{shopItem.regularPrice:N0} VND";
@@ -54,7 +54,7 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
         else
         {
             regularPriceText.gameObject.SetActive(false);
-        }   
+        }   */
         descriptionText.text = shopItem.description;
 
         SetupItemIcon(shopItem);
@@ -87,8 +87,8 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
         if (priceText != null)
             priceText.gameObject.SetActive(isCarouselCenter);
 
-        if(regularPriceText != null)
-            regularPriceText.gameObject.SetActive(isCarouselCenter);
+      //  if(regularPriceText != null)
+          //  regularPriceText.gameObject.SetActive(isCarouselCenter);
   
         // if (brandtext != null)
         //      itemBrandText.gameObject.SetActive(isCarouselCenter);

@@ -484,7 +484,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -758}
+  m_AnchoredPosition: {x: 0, y: -735.6725}
   m_SizeDelta: {x: 143.24829, y: 50.6887}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6402966623408721785
@@ -581,7 +581,6 @@ MonoBehaviour:
   iconImage: {fileID: 4096966975405506391}
   nameText: {fileID: 6408886585142139432}
   priceText: {fileID: 4034588130918565913}
-  regularPriceText: {fileID: 3817757677115672219}
   descriptionText: {fileID: 4938799894204191511}
   buyButton: {fileID: 6160449423662846879}
   defaultItemSprite: {fileID: 21300000, guid: 1c8fe0d92ced15a4ba86c0474d0f3c99, type: 3}
@@ -617,7 +616,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 60
   delayBeforeScroll: 1.2
-  pauseAtEnd: 0.8
+  pauseAtEnd: 0.9
   _text: {fileID: 6408886585142139432}
   _rect: {fileID: 1272350053137535451}
   _parentRect: {fileID: 3177088869576127552}
@@ -976,10 +975,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 45
-  m_fontSizeBase: 44
+  m_fontSize: 60
+  m_fontSizeBase: 60
   m_fontWeight: 400
-  m_enableAutoSizing: 1
+  m_enableAutoSizing: 0
   m_fontSizeMin: 45
   m_fontSizeMax: 50
   m_fontStyle: 0

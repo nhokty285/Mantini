@@ -153,12 +153,42 @@ public class VendorNPC : BaseNPC, IChatParticipant
         }
     }
 
+    /*   public override void ProcessInteraction()
+       {
+           if (MainMenuView.Instance != null)
+           {
+               // ✅ THÊM tham số this
+               MainMenuView.Instance.SetNPCInteraction(true, npcName, dynamicShopData ?? defaultShopData, this);
+           }
+       }*/
+
     public override void ProcessInteraction()
     {
-        if (MainMenuView.Instance != null)
+        if (MainMenuView.Instance == null) return;
+
+        // ✅ Nếu đã có conversation trong session này → restore lịch sử
+        if (HasActiveConversation && !SessionRestoredThisPlay)
         {
-            // ✅ THÊM tham số this
-            MainMenuView.Instance.SetNPCInteraction(true, npcName, dynamicShopData ?? defaultShopData, this);
+            Debug.Log($"[VendorNPC] {npcName}: Restoring conversation {ConversationId}");
+
+            RestoreConversationSession((messages) =>
+            {
+                // Mở shop bình thường
+                MainMenuView.Instance.SetNPCInteraction(
+                    true, npcName, dynamicShopData ?? defaultShopData, this);
+
+                // ✅ Sau khi UI mở, load lịch sử chat lên
+                if (messages != null && messages.Count > 0)
+                {
+                    MainMenuView.Instance.RestoreChatHistory(messages, this);
+                }
+            });
+        }
+        else
+        {
+            // Lần đầu vào shop hoặc đã restore rồi → mở bình thường
+            MainMenuView.Instance.SetNPCInteraction(
+                true, npcName, dynamicShopData ?? defaultShopData, this);
         }
     }
 

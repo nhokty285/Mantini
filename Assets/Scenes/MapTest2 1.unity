@@ -19190,6 +19190,9 @@ MonoBehaviour:
   autoOpenWithShop: 1
   assignedCompanion: {fileID: 0}
   testProductSuggestions: 1
+  _debugParticipantNames: []
+  productDetailScrollPosY: 0
+  productDetailScrollHeight: 300
 --- !u!114 &1337125547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19224,7 +19227,8 @@ MonoBehaviour:
   rightPosition_4: 650
   leftPosition_1: 78
   rightPosition_2: 811
-  positionY: 21
+  positionY_first: 23
+  positionY_between: 94
   positionY_Center: 71
   useCarouselMode: 1
   carouselOffsetX: 300
@@ -19237,7 +19241,6 @@ MonoBehaviour:
   minSwipeDistance: 50
   maxSwipeTime: 0.5
   debugSwipe: 1
-  playerController: {fileID: 0}
   carouselIndicator: {fileID: 7585357385149913984}
   openBGM: {fileID: 0}
   openaAmbient: {fileID: 0}
@@ -21717,6 +21720,9 @@ MonoBehaviour:
   moreButton: {fileID: 2015760577}
   selectAllToCartButton: {fileID: 2071467424}
   addSelectedToCartButton: {fileID: 243659735}
+  closeMoreButton: {fileID: 0}
+  selectAllButtonIcon: {fileID: 0}
+  addSelectedButtonIcon: {fileID: 0}
   cartButton: {fileID: 341189582}
   cartCountText: {fileID: 1498955761}
   cartCountBadge: {fileID: 12270808}
@@ -21732,12 +21738,21 @@ MonoBehaviour:
   customerInfoPanel: {fileID: 154948915}
   buyButton: {fileID: 2064865262}
   backButton: {fileID: 606250862}
+  paymentMethodPanel: {fileID: 0}
+  codButton: {fileID: 0}
+  bankButton: {fileID: 0}
+  changePaymentButton: {fileID: 0}
+  selectedPaymentText: {fileID: 0}
   unpaidTab: {fileID: 382859778}
   paidTab: {fileID: 1459857472}
   futureTab3: {fileID: 1511523078}
   futureTab4: {fileID: 2134847482}
   cartImageItemPrefab: {fileID: 330007471796472935, guid: 7a955c1c0605a2c4ab8235ded2959591, type: 3}
   autoUpdateTotalAmount: 1
+  shopController: {fileID: 0}
+  selectZone: {fileID: 0}
+  isSelectMode: 0
+  number: 0
 --- !u!114 &1454406661
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22751,11 +22766,13 @@ MonoBehaviour:
   addToCartButton: {fileID: 1373488370}
   buyNowButton: {fileID: 732978313}
   closeDetailButton: {fileID: 1919957161}
+  deleteButton: {fileID: 0}
   imageScrollContent: {fileID: 85143513}
   imagePagePrefab: {fileID: 7464938705080974341, guid: 8e96c78318710154aacf41357cdd391d, type: 3}
   snapSpeed: 10
   imageScrollRect: {fileID: 1260348081}
   carouselIndicator: {fileID: 5215685393875582909}
+  chatAnchor: {fileID: 0}
 --- !u!1 &1477490732
 GameObject:
   m_ObjectHideFlags: 0
@@ -29426,6 +29443,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultSpawnPoint: {fileID: 0}
   cinemachineCamera: {fileID: 0}
+  playerApiService: {fileID: 0}
 --- !u!1 &1901180235
 GameObject:
   m_ObjectHideFlags: 0
@@ -41659,9 +41677,11 @@ MonoBehaviour:
   smoothTime: 0.3
   rotationSpeed: 5
   shouldFollowPlayer: 1
+  teleportDistance: 10
   minIdleTime: 3
   maxIdleTime: 6
   totalIdleEmotes: 3
+  _chatManager: {fileID: 0}
   helpTopics:
   - topicName: Huong dan
     helpText: WASD
@@ -92419,12 +92439,17 @@ MonoBehaviour:
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: 37831f6e55934b249989519ecb7d69ca, type: 3}
+  _chatManager: {fileID: 0}
   totalIdleVariations: 2
   vendorImage: {fileID: 21300000, guid: 5c3a76233aa99eb41abe1671c6dba1a1, type: 3}
   vendorIcon: {fileID: 0}
   shopCategory: General
   nameTagUI: {fileID: 0}
   customDialogueEnabled: 1
+  myLayout:
+    anchoredPosition: {x: 0, y: 0}
+    size: {x: 200, y: 200}
+  difyApiKey: 
 --- !u!65 &5719194744923198862
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -94042,22 +94067,34 @@ MonoBehaviour:
     npcImage: {fileID: 21300000, guid: 4d9593eee57f69b43a2469295eaa3458, type: 3}
     displayDuration: 3
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 0, y: 0}
+      size: {x: 0, y: 0}
   - speakerName: Player
     dialogueText: "T mu\u1ED1n mua 1 s\u1ED1 \u0111\u1ED3 da"
     npcImage: {fileID: 21300000, guid: d1d0145b805b9304b825523b54bd946b, type: 3}
     displayDuration: 3
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 0, y: 0}
+      size: {x: 0, y: 0}
   - speakerName: "H\xE0"
     dialogueText: "H\xF4m nay, ch\xFAng t\xF4i v\u1EEBa nh\u1EADp \u0111\u01B0\u1EE3c
       1 s\u1ED1 h\xE0ng t\u1ED1t"
     npcImage: {fileID: 21300000, guid: 4d9593eee57f69b43a2469295eaa3458, type: 3}
     displayDuration: 5
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 0, y: 0}
+      size: {x: 0, y: 0}
   - speakerName: "H\xE0"
     dialogueText: "M\u1EDDi b\u1EA1n xem qua"
     npcImage: {fileID: 21300000, guid: 4d9593eee57f69b43a2469295eaa3458, type: 3}
     displayDuration: 3
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 0, y: 0}
+      size: {x: 0, y: 0}
   enableAIChat: 0
   aiPersonality: 
   npcAnimator: {fileID: 5857738792311465438}
@@ -94065,12 +94102,17 @@ MonoBehaviour:
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: af460c9776aa5204a8f5b38692dfd925, type: 3}
+  _chatManager: {fileID: 0}
   totalIdleVariations: 3
   vendorImage: {fileID: 21300000, guid: 4d9593eee57f69b43a2469295eaa3458, type: 3}
   vendorIcon: {fileID: 0}
   shopCategory: General
   nameTagUI: {fileID: 0}
   customDialogueEnabled: 1
+  myLayout:
+    anchoredPosition: {x: 0, y: 0}
+    size: {x: 200, y: 200}
+  difyApiKey: 
 --- !u!65 &5857738792311465437
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -94209,12 +94251,17 @@ MonoBehaviour:
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: a07711586da66f545bb474ca5e52a0c1, type: 3}
+  _chatManager: {fileID: 0}
   totalIdleVariations: 3
   vendorImage: {fileID: 21300000, guid: 9b3687c5432f64945a405edb0660ec70, type: 3}
   vendorIcon: {fileID: 0}
   shopCategory: General
   nameTagUI: {fileID: 0}
   customDialogueEnabled: 1
+  myLayout:
+    anchoredPosition: {x: 0, y: 0}
+    size: {x: 200, y: 200}
+  difyApiKey: 
 --- !u!65 &5866666021862407883
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -94511,6 +94558,7 @@ MonoBehaviour:
   totalIdleAnimations: 7
   canMove: 1
   inputAxisController: {fileID: 0}
+  anim: {fileID: 0}
 --- !u!4 &5994412691031345372
 Transform:
   m_ObjectHideFlags: 0
@@ -97573,12 +97621,17 @@ MonoBehaviour:
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: e2e3914d3141a0d4ba73c3d55e5205bc, type: 3}
+  _chatManager: {fileID: 0}
   totalIdleVariations: 3
   vendorImage: {fileID: 21300000, guid: 172a211940510854eaad98f55dfa50e3, type: 3}
   vendorIcon: {fileID: 0}
   shopCategory: General
   nameTagUI: {fileID: 0}
   customDialogueEnabled: 1
+  myLayout:
+    anchoredPosition: {x: 0, y: 0}
+    size: {x: 200, y: 200}
+  difyApiKey: 
 --- !u!65 &6673550917126104261
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -104293,22 +104346,34 @@ MonoBehaviour:
     npcImage: {fileID: 21300000, guid: 2e9cd8cc6d3cd154aa64f22e8a3e4615, type: 3}
     displayDuration: 3
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 0, y: 0}
+      size: {x: 0, y: 0}
   - speakerName: Player
     dialogueText: "T mu\u1ED1n mua 1 s\u1ED1 \u0111\u1ED3 da"
     npcImage: {fileID: 21300000, guid: d1d0145b805b9304b825523b54bd946b, type: 3}
     displayDuration: 3
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 0, y: 0}
+      size: {x: 0, y: 0}
   - speakerName: "H\xE0"
     dialogueText: "H\xF4m nay, ch\xFAng t\xF4i v\u1EEBa nh\u1EADp \u0111\u01B0\u1EE3c
       1 s\u1ED1 h\xE0ng t\u1ED1t"
     npcImage: {fileID: 21300000, guid: 2e9cd8cc6d3cd154aa64f22e8a3e4615, type: 3}
     displayDuration: 5
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 0, y: 0}
+      size: {x: 0, y: 0}
   - speakerName: "H\xE0"
     dialogueText: "M\u1EDDi b\u1EA1n xem qua"
     npcImage: {fileID: 21300000, guid: 2e9cd8cc6d3cd154aa64f22e8a3e4615, type: 3}
     displayDuration: 3
     sfxOnStart: {fileID: 0}
+    imageLayout:
+      anchoredPosition: {x: 0, y: 0}
+      size: {x: 0, y: 0}
   enableAIChat: 0
   aiPersonality: 
   npcAnimator: {fileID: 8840519045490929954}
@@ -104316,12 +104381,17 @@ MonoBehaviour:
   vendorConfig: {fileID: 11400000, guid: fc3006e5565ffe343b4762eb34a1ac5d, type: 2}
   defaultShopData: {fileID: 0}
   vendorIconBT: {fileID: 21300000, guid: af120be00dad31040bc27d654894ce89, type: 3}
+  _chatManager: {fileID: 0}
   totalIdleVariations: 3
   vendorImage: {fileID: 21300000, guid: 2e9cd8cc6d3cd154aa64f22e8a3e4615, type: 3}
   vendorIcon: {fileID: 0}
   shopCategory: General
   nameTagUI: {fileID: 0}
   customDialogueEnabled: 1
+  myLayout:
+    anchoredPosition: {x: 0, y: 0}
+    size: {x: 200, y: 200}
+  difyApiKey: 
 --- !u!65 &8840519045490929953
 BoxCollider:
   m_ObjectHideFlags: 0

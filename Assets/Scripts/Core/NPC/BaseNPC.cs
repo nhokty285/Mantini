@@ -31,6 +31,14 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
 
     private string _conversationId = "";        // đã có sẵn
     private bool _isWaitingResponse = false;    // ✅ move từ VendorNPC lên đây
+    private bool _sessionRestoredThisPlay = false;
+    public string ConversationId
+    {
+        get => _conversationId;
+        set => _conversationId = value;
+    }
+    public bool HasActiveConversation => !string.IsNullOrEmpty(_conversationId);
+    public bool SessionRestoredThisPlay => _sessionRestoredThisPlay;
     private GameObject _typingBubble;           // ✅ thêm mới
 
     // ✅ THÊM: Events — giống VendorNPC, để Base quản lý
@@ -186,9 +194,33 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
         }
     }
 
+    public void RestoreConversationSession(System.Action<List<DifyMessage>> onRestored)
+    {
+        if (!enableAIChat || string.IsNullOrEmpty(aiPersonality)) return;
+        if (string.IsNullOrEmpty(_conversationId)) return;
+
+        string userId = string.IsNullOrEmpty(npcId) ? "player-guest" : npcId;
+
+        DifyChatService.Instance.GetConversationMessages(
+            apiKey: aiPersonality,
+            userId: userId,
+            conversationId: _conversationId,
+            onSuccess: (messages) =>
+            {
+                _sessionRestoredThisPlay = true;
+                Debug.Log($"[{npcName}] Restored {messages.Count} messages from conversation {_conversationId}");
+                onRestored?.Invoke(messages);
+            },
+            onError: (err) =>
+            {
+                Debug.LogWarning($"[{npcName}] Could not restore conversation: {err}");
+                onRestored?.Invoke(new List<DifyMessage>());
+            }
+        );
+    }
+
     // ✅ Abstract/Virtual để child inject _chatManager của mình
     protected virtual MultiChatManager GetChatManager() => null;
-
 
     /*  private string AddRemoteContext(string response)
       {

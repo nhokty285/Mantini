@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -36,8 +37,46 @@ public class DifyChatResponse
     public string message_id;
 }
 
+
+[Serializable]
+public class DifyConversation
+{
+    public string id;
+    public string name;
+    public string status;
+    public long updated_at;
+}
+
+[Serializable]
+public class DifyConversationsResponse
+{
+    public int limit;
+    public bool has_more;
+    public List<DifyConversation> data;
+}
+
+[Serializable]
+public class DifyMessage
+{
+    public string id;
+    public string conversation_id;
+    public string query;
+    public string answer;
+    public long created_at;
+}
+
+[Serializable]
+public class DifyMessagesResponse
+{
+    public int limit;
+    public bool has_more;
+    public List<DifyMessage> data;
+}
+
+
 public class DifyChatService : MonoBehaviour
 {
+
     private const string BASE_URL = "https://dify.staging.storims.com/v1";
 
     public static DifyChatService Instance { get; private set; }
@@ -188,6 +227,88 @@ public class DifyChatService : MonoBehaviour
         if (end < 0) return "";
 
         return json.Substring(start, end - start);
+    }
+
+    /// <summary>
+    /// GET /conversations — lấy danh sách conversation của user với chatbot này
+    /// </summary>
+    public void GetConversations(
+    string apiKey,
+    string userId,
+    Action<List<DifyConversation>> onSuccess,
+    Action<string> onError,
+    int limit = 20)
+    {
+        StartCoroutine(GetConversationsCoroutine(apiKey, userId, limit, onSuccess, onError));
+    }
+
+    private IEnumerator GetConversationsCoroutine(
+        string apiKey, string userId, int limit,
+        Action<List<DifyConversation>> onSuccess,
+        Action<string> onError)
+    {
+        string url = $"{BASE_URL}/conversations?user={UnityWebRequest.EscapeURL(userId)}&limit={limit}&sort_by=-updated_at";
+
+        using var req = UnityWebRequest.Get(url);
+        req.SetRequestHeader("Authorization", "Bearer " + apiKey);
+        req.SetRequestHeader("Content-Type", "application/json");
+
+        yield return req.SendWebRequest();
+
+        if (req.result == UnityWebRequest.Result.Success)
+        {
+            try
+            {
+                var response = JsonUtility.FromJson<DifyConversationsResponse>(req.downloadHandler.text);
+                onSuccess?.Invoke(response?.data ?? new List<DifyConversation>());
+            }
+            catch (Exception e) { onError?.Invoke("Parse error: " + e.Message); }
+        }
+        else
+        {
+            onError?.Invoke($"Network error: {req.error}");
+        }
+    }
+
+    /// <summary>
+    /// GET /messages — lấy lịch sử tin nhắn của 1 conversation
+    /// </summary>
+    public void GetConversationMessages(
+        string apiKey,
+        string userId,
+        string conversationId,
+        Action<List<DifyMessage>> onSuccess,
+        Action<string> onError,
+        int limit = 20)
+    {
+        StartCoroutine(GetMessagesCoroutine(apiKey, userId, conversationId, limit, onSuccess, onError));
+    }
+
+    private IEnumerator GetMessagesCoroutine(
+        string apiKey, string userId, string conversationId, int limit,
+        Action<List<DifyMessage>> onSuccess,
+        Action<string> onError)
+    {
+        string url = $"{BASE_URL}/messages?conversation_id={conversationId}&user={UnityWebRequest.EscapeURL(userId)}&limit={limit}";
+
+        using var req = UnityWebRequest.Get(url);
+        req.SetRequestHeader("Authorization", "Bearer " + apiKey);
+
+        yield return req.SendWebRequest();
+
+        if (req.result == UnityWebRequest.Result.Success)
+        {
+            try
+            {
+                var response = JsonUtility.FromJson<DifyMessagesResponse>(req.downloadHandler.text);
+                onSuccess?.Invoke(response?.data ?? new List<DifyMessage>());
+            }
+            catch (Exception e) { onError?.Invoke("Parse error: " + e.Message); }
+        }
+        else
+        {
+            onError?.Invoke($"Network error: {req.error}");
+        }
     }
 }
 
