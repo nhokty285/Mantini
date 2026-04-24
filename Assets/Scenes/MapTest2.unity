@@ -3466,7 +3466,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 66395638}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.74281466
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -7411,7 +7411,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000019073486}
+  m_AnchoredPosition: {x: 0, y: -0.000011444092}
   m_SizeDelta: {x: 0, y: 38.5778}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &264474902
@@ -34485,7 +34485,6 @@ GameObject:
   - component: {fileID: 1454406664}
   - component: {fileID: 1454406665}
   - component: {fileID: 1454406666}
-  - component: {fileID: 1454406667}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -34736,19 +34735,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fabe8c546bf3a8c49857a633425f5434, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1454406667
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1454406655}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c48358d9e64303c4abc46f06f24edb87, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  roomUserId: room-001
 --- !u!1 &1454554683
 GameObject:
   m_ObjectHideFlags: 0

@@ -92,38 +92,6 @@ public class PlayerController : MonoBehaviour
         OnMovementStateChanged?.Invoke(shouldMove);
     }
 
-    /*  void FixedUpdate()
-      {
-          // Vẫn tìm camera (trường hợp camera động)
-          if (cameraTransform == null)
-              FindCameraByTag();
-
-          // Kiểm tra canMove trước khi di chuyển
-          Vector3 moveDir = Vector3.zero;
-
-          if (canMove && cameraTransform != null)
-          {
-              moveDir = CalculateCameraRelativeMovement();
-          }
-
-          float currentSpeed = moveDir.magnitude;
-          anim.SetFloat("moveSpeed", currentSpeed, 0.1f, Time.fixedDeltaTime); // DampTime 0.1f giúp blend mượt mà
-
-          bool isMoving = currentSpeed > 0.01f;
-          HandleIdleAnimations(isMoving);
-
-          if (!isMoving) return;
-
-          moveDir.Normalize();
-
-          // Di chuyển chỉ khi canMove = true
-          Quaternion targetRot = Quaternion.LookRotation(moveDir);
-          rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime));
-
-          Vector3 newPosition = rb.position + moveDir * moveSpeed * Time.fixedDeltaTime;
-          rb.MovePosition(newPosition);
-      }*/
-
     void Update()
     {
         if (canMove && cameraTransform != null)
