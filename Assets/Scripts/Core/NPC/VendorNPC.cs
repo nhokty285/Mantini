@@ -165,6 +165,10 @@ public class VendorNPC : BaseNPC, IChatParticipant
     public override void ProcessInteraction()
     {
         if (MainMenuView.Instance == null) return;
+        Debug.Log($"[RESTORE][11] ProcessInteraction — " +
+           $"HasActiveConversation={HasActiveConversation}, " +
+           $"SessionRestoredThisPlay={SessionRestoredThisPlay}, " +
+           $"ConversationId='{ConversationId}'");
 
         // ✅ Nếu đã có conversation trong session này → restore lịch sử
         if (HasActiveConversation && !SessionRestoredThisPlay)
@@ -173,6 +177,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
 
             RestoreConversationSession((messages) =>
             {
+                Debug.Log($"[RESTORE][11] → Restore callback nhận {messages?.Count ?? 0} messages, mở shop...");
                 // Mở shop bình thường
                 MainMenuView.Instance.SetNPCInteraction(
                     true, npcName, dynamicShopData ?? defaultShopData, this);
@@ -182,6 +187,8 @@ public class VendorNPC : BaseNPC, IChatParticipant
                 {
                     MainMenuView.Instance.RestoreChatHistory(messages, this);
                 }
+                else
+                    Debug.LogWarning("[RESTORE][11] → messages rỗng, không restore UI");
             });
         }
         else

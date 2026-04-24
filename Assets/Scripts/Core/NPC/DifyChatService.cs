@@ -96,6 +96,7 @@ public class DifyChatService : MonoBehaviour
         Action<string> onError)
     {
         StartCoroutine(SendMessageCoroutine(apiKey, userId, query, conversationId, onSuccess, onError));
+
     }
 
     private IEnumerator SendMessageCoroutine(
@@ -232,7 +233,7 @@ public class DifyChatService : MonoBehaviour
     /// <summary>
     /// GET /conversations — lấy danh sách conversation của user với chatbot này
     /// </summary>
-    public void GetConversations(
+  /*  public void GetConversations(
     string apiKey,
     string userId,
     Action<List<DifyConversation>> onSuccess,
@@ -248,7 +249,7 @@ public class DifyChatService : MonoBehaviour
         Action<string> onError)
     {
         string url = $"{BASE_URL}/conversations?user={UnityWebRequest.EscapeURL(userId)}&limit={limit}&sort_by=-updated_at";
-
+        Debug.Log($"[DifyChatService] Get conversations URL: {url}");
         using var req = UnityWebRequest.Get(url);
         req.SetRequestHeader("Authorization", "Bearer " + apiKey);
         req.SetRequestHeader("Content-Type", "application/json");
@@ -269,7 +270,71 @@ public class DifyChatService : MonoBehaviour
             onError?.Invoke($"Network error: {req.error}");
         }
     }
+*/
 
+    public void GetConversations(
+    string apiKey,
+    string userId,
+    Action<List<DifyConversation>> onSuccess,
+    Action<string> onError,
+    int limit = 20)
+    {
+        StartCoroutine(GetConversationsCoroutine(apiKey, userId, limit, onSuccess, onError));
+    }
+
+    private IEnumerator GetConversationsCoroutine(
+        string apiKey, string userId, int limit,
+        Action<List<DifyConversation>> onSuccess,
+        Action<string> onError)
+    {
+        // ✅ FIX 1: Bỏ sort_by — Dify không support param này
+        string url = $"{BASE_URL}/conversations?user={UnityWebRequest.EscapeURL(userId)}&limit={limit}";
+
+        Debug.Log($"[DifyChatService][GetConversations] GET {url}");
+
+        using var req = UnityWebRequest.Get(url);
+        req.SetRequestHeader("Authorization", "Bearer " + apiKey);
+        // ✅ FIX 2: Bỏ Content-Type trên GET request
+
+        yield return req.SendWebRequest();
+
+        Debug.Log($"[DifyChatService][GetConversations] HTTP {req.responseCode} | Result: {req.result}");
+
+        if (req.result == UnityWebRequest.Result.Success)
+        {
+            string rawJson = req.downloadHandler.text;
+            Debug.Log($"[DifyChatService][GetConversations] Raw JSON: {rawJson.Substring(0, Mathf.Min(300, rawJson.Length))}");
+
+            try
+            {
+                // ✅ FIX 3: Dùng wrapper để JsonUtility parse được List
+                var response = JsonUtility.FromJson<DifyConversationsResponse>(rawJson);
+
+                // ✅ FIX 4: Kiểm tra null sau parse — JsonUtility hay trả null list
+                if (response == null || response.data == null)
+                {
+                    Debug.LogWarning("[DifyChatService][GetConversations] response.data = null sau parse, trả list rỗng");
+                    onSuccess?.Invoke(new List<DifyConversation>());
+                }
+                else
+                {
+                    Debug.Log($"[DifyChatService][GetConversations] ✅ Parse OK — {response.data.Count} conversations");
+                    onSuccess?.Invoke(response.data);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[DifyChatService][GetConversations] Parse error: {e.Message}\nRaw: {rawJson}");
+                onError?.Invoke("Parse error: " + e.Message);
+            }
+        }
+        else
+        {
+            string errorBody = req.downloadHandler?.text ?? "no body";
+            Debug.LogError($"[DifyChatService][GetConversations] Network error: {req.error} | Body: {errorBody}");
+            onError?.Invoke($"HTTP {req.responseCode}: {req.error}");
+        }
+    }
     /// <summary>
     /// GET /messages — lấy lịch sử tin nhắn của 1 conversation
     /// </summary>
@@ -281,6 +346,7 @@ public class DifyChatService : MonoBehaviour
         Action<string> onError,
         int limit = 20)
     {
+        Debug.Log($"[DifyChatService] Get messages for conversation {conversationId}");
         StartCoroutine(GetMessagesCoroutine(apiKey, userId, conversationId, limit, onSuccess, onError));
     }
 
@@ -290,7 +356,7 @@ public class DifyChatService : MonoBehaviour
         Action<string> onError)
     {
         string url = $"{BASE_URL}/messages?conversation_id={conversationId}&user={UnityWebRequest.EscapeURL(userId)}&limit={limit}";
-
+        Debug.Log($"[DifyChatService] Get messages URL: {url}");
         using var req = UnityWebRequest.Get(url);
         req.SetRequestHeader("Authorization", "Bearer " + apiKey);
 

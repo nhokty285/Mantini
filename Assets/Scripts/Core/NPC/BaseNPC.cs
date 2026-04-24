@@ -37,8 +37,8 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
         get => _conversationId;
         set => _conversationId = value;
     }
-    public bool HasActiveConversation => !string.IsNullOrEmpty(_conversationId);
-    public bool SessionRestoredThisPlay => _sessionRestoredThisPlay;
+    [SerializeField] public bool HasActiveConversation => !string.IsNullOrEmpty(_conversationId);
+    [SerializeField] public bool SessionRestoredThisPlay => _sessionRestoredThisPlay;
     private GameObject _typingBubble;           // ✅ thêm mới
 
     // ✅ THÊM: Events — giống VendorNPC, để Base quản lý
@@ -196,10 +196,13 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
 
     public void RestoreConversationSession(System.Action<List<DifyMessage>> onRestored)
     {
+        Debug.Log($"[RESTORE][1] {npcName} — enableAIChat={enableAIChat}, " +
+            $"aiPersonality='{aiPersonality}', " +
+            $"_conversationId='{_conversationId}'");
         if (!enableAIChat || string.IsNullOrEmpty(aiPersonality)) return;
         if (string.IsNullOrEmpty(_conversationId)) return;
 
-        string userId = string.IsNullOrEmpty(npcId) ? "player-guest" : npcId;
+        string userId = string.IsNullOrEmpty(npcId) ? "player" : npcId;
 
         DifyChatService.Instance.GetConversationMessages(
             apiKey: aiPersonality,

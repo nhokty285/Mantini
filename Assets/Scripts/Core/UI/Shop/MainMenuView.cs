@@ -207,6 +207,7 @@ public class MainMenuView : MonoBehaviour
             // ✅ Tin của player — isPlayer: true
             if (!string.IsNullOrEmpty(msg.query))
             {
+                Debug.Log($"[RESTORE] → Player bubble: '{msg.query.Substring(0, Mathf.Min(40, msg.query.Length))}'");
                 companionChatController.AddRestoredMessage(
                     message: msg.query,
                     isPlayer: true,
@@ -218,6 +219,7 @@ public class MainMenuView : MonoBehaviour
             // ✅ Tin của NPC — isPlayer: false
             if (!string.IsNullOrEmpty(msg.answer))
             {
+                Debug.Log($"[RESTORE] → NPC bubble: '{msg.answer.Substring(0, Mathf.Min(40, msg.answer.Length))}'");
                 companionChatController.AddRestoredMessage(
                     message: msg.answer,
                     isPlayer: false,
@@ -227,6 +229,6 @@ public class MainMenuView : MonoBehaviour
             }
         }
 
-        Debug.Log($"[MainMenuView] Restored {ordered.Count} message pairs to chat UI");
+        Debug.Log($"[RESTORE][12] ✅ RestoreChatHistory DONE — {ordered.Count} pairs rendered");
     }
 }
