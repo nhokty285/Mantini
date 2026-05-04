@@ -451,7 +451,16 @@ public class CartUI : MonoBehaviour
 
         // Lấy đúng các item đang highlight — O(k), k = số item đang chọn
         var highlighted = CartImageItem.GetHighlightedItems();
-        if (highlighted.Count == 0) return;
+
+        if (highlighted.Count == 0)
+        {
+            PopupManager.Instance.ShowPopup(
+                "Thông báo",
+                "Bạn cần nhấn chọn vật phẩm trước khi lưu",
+                null
+            );
+            return;
+        }
 
         // Commit sang checkout trong 1 pass
         var selectedSet = new HashSet<CartItem>();
@@ -510,6 +519,22 @@ public class CartUI : MonoBehaviour
 
     private void InputInfomation()
     {
+        if (ShoppingCart.Instance != null)
+        {
+            float total = ShoppingCart.Instance.TotalAmount;
+            int count = ShoppingCart.Instance.GetSelectedCheckoutCount();
+
+            if (total == 0 && count == 0)
+            {
+                PopupManager.Instance.ShowPopup(
+                    "Thông báo",
+                    "Bạn cần nhấn vào lưu vật phẩm để xác nhận trước",
+                    null
+                );
+                return; // ← Dừng lại, không mở panel
+            }
+        }
+
         if (customerInfoPanel != null)
             customerInfoPanel.SetActive(true);
         // Hiện panel chọn phương thức, ẩn nút đổi
