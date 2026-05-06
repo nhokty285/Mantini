@@ -612,9 +612,7 @@ public class CartUI : MonoBehaviour
         if (trigger.triggers == null)
             trigger.triggers = new List<EventTrigger.Entry>();
 
-        System.Func<bool> isSelected = () =>
-            EventSystem.current != null &&
-            EventSystem.current.currentSelectedGameObject == button.gameObject;
+        System.Func<bool> isSelected = () => EventSystem.current != null && EventSystem.current.currentSelectedGameObject == button.gameObject;
 
         AddEvent(trigger, EventTriggerType.PointerDown, _ => icon.SetActive(true));
         AddEvent(trigger, EventTriggerType.PointerUp, _ => icon.SetActive(isSelected()));
