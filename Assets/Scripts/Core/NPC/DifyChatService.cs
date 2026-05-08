@@ -134,6 +134,7 @@ public class DifyChatService : MonoBehaviour
             {
                 string rawBody = request.downloadHandler.text;
                 ParseStreamingResponse(rawBody, onSuccess, onError);
+                TutorialGamePlay.Instance?.OnAIResponseReceived();
             }
             catch (Exception e)
             {

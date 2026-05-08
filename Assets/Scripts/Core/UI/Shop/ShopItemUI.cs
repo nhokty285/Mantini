@@ -142,7 +142,7 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
         if (ProductDetailUI.Instance != null && originalAPIItem != null)
         {
             ProductDetailUI.Instance.ShowProductDetail(originalAPIItem);
-
+            TutorialGamePlay.Instance?.OnPlayerTappedItem();
         }
         else
         {

@@ -21,6 +21,7 @@ public class CartQuickButton : MonoBehaviour
             {
                 OnOpenCartClicked();
                 AudioManager.Instance.PlaySFXOneShot("Button");
+                TutorialGamePlay.Instance?.OnCartOpened();
             });
         }
 

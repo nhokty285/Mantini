@@ -197,6 +197,7 @@ public class MultiChatManager : MonoBehaviour
        sendChatButton.onClick.AddListener(()=>
        {           
             SendCompanionMessage();
+           TutorialGamePlay.Instance?.OnPlayerSentChat();
        });
         audioSync = FindAnyObjectByType<DialogueAudioSync>();
 

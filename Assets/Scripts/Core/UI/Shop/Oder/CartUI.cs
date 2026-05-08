@@ -151,6 +151,7 @@ public class CartUI : MonoBehaviour
         addSelectedToCartButton?.onClick.AddListener(()=>
         {
             OnAddSelectedToCartClicked();
+            TutorialGamePlay.Instance?.OnAddSelectedToCartSuccess();
         });
       
         cartButton?.onClick.AddListener(() =>

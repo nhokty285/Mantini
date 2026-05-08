@@ -35,48 +35,6 @@ public class PlayerApiService : MonoBehaviour
         public string avatar_id;
     }
 
-
-    /*    public void SyncSelectionToServer()
-        {
-            // Lấy index character + companion từ PlayerDataManager
-            var characterData = PlayerDataManager.Instance.GetSelectedCharacterData();
-            var companionData = PlayerDataManager.Instance.GetSelectedCompanionData();
-
-            if (characterData == null || companionData == null)
-            {
-                Debug.LogError("[PlayerSelectionSync] Character or companion data not found!");
-                return;
-            }
-
-            // Build mảng companion_ids: character là phần tử đầu, sau đó là companion
-            // (Giả sử bạn có ID duy nhất cho từng CharacterData; nếu không, dùng characterName)
-            List<string> companionIds = new List<string>
-            {
-                characterData.characterName,  // ID character (hoặc dùng characterData.id nếu có)
-                companionData.characterName   // ID companion
-            };
-
-            // Build payload chỉ gồm companion_ids để PUT
-            PlayerUpdatePayload payload = new PlayerUpdatePayload
-            {
-                companion_ids = companionIds.ToArray(),
-            };
-
-            string json = JsonUtility.ToJson(payload);
-
-            // PUT lên server
-            APIClient.Instance.PostJsonFull(playerMeUrl, json,
-                onSuccess: (response) =>
-                {
-                    Debug.Log($"[PlayerSelectionSync] Successfully synced selection to server:\n{json}");
-                },
-                onError: (error) =>
-                {
-                    Debug.LogError($"[PlayerSelectionSync] Failed to sync: {error}");
-                }
-            );
-        }*/
-
     // Pseudo: lấy current từ server trước rồi PUT lại
     public void SyncSelectionToServer()
     {
@@ -91,13 +49,6 @@ public class PlayerApiService : MonoBehaviour
                 Debug.LogError("[PlayerSelectionSync] Character or companion data not found!");
                 return;
             }
-
-         /*   var companionIds = new List<string>
-        {          
-            companionData.characterName
-        };
-            string characterId = characterData.characterName;*/
-
             var payload = new PlayerUpdatePayload
             {
                 name = current.name,
@@ -130,38 +81,6 @@ public class PlayerApiService : MonoBehaviour
                 Debug.LogError($"[PlayerSelectionSync] Failed to get player data: {error}");
             });
     }
-    /* public void UpdatePlayerInfo(
-         string newName,
-         string newMail,
-         string newUserName,
-         string newPhone,
-         //string newAvatarUrl,
-         Action onSuccess,
-         Action<string> onError)
-     {
-         // Chỉ gửi những field có giá trị
-         string json = BuildPartialProfileJson(newName, newMail, newPhone, newUserName*//*, newAvatarUrl*//*);
-
-         if (json == "{}")
-         {
-             Debug.Log("[PlayerSelectionSync] No profile fields provided, skip PUT");
-             onSuccess?.Invoke();
-             return;
-         }
-
-         APIClient.Instance.PutJsonFull(playerMeUrl, json,
-             onSuccess: (res) =>
-             {
-                 Debug.Log("[PlayerSelectionSync] Profile updated");
-                 onSuccess?.Invoke();
-             },
-             onError: (err) =>
-             {
-                 Debug.LogError("[PlayerSelectionSync] Update profile failed: " + err);
-                 onError?.Invoke(err);
-             });
-     }*/
-
     public void UpdatePlayerInfo(string newName, string newMail, string newUserName, string newPhone, string newAvatarUrl,
     Action onSuccess, Action<string> onError)
     {

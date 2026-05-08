@@ -57,6 +57,7 @@ public class MainMenuView : MonoBehaviour
         
             OnTalkButtonClicked();
             AudioManager.Instance.PlaySFXOneShot("Button");
+            TutorialGamePlay.Instance?.OnPlayerClickedNPC();
         });
         skipButton.onClick.AddListener(MainMenuViewModel.OnSkipClicked);
         talkButton.gameObject.SetActive(false);

@@ -167,6 +167,7 @@ public class ProductDetailUI : MonoBehaviour
                 () => {
                     // Khi bấm "Đồng ý" trên Popup thì mới chạy hàm này
                     OnAddToCartClicked();
+                    TutorialGamePlay.Instance?.OnAddToCartSuccess();
                 }
             );
         });
@@ -633,6 +634,7 @@ public class ProductDetailUI : MonoBehaviour
         ResetGalleryScroll();
         imagePages.Clear();
         //Debug.Log("[ProductDetailUI] Panel closed safely");
+        TutorialGamePlay.Instance?.OnPlayerBackToShop();
     }
 
     // =================================================================================

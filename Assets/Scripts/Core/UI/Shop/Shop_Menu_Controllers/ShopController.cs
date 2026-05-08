@@ -1052,6 +1052,7 @@ public class ShopController : MonoBehaviour
     // Hàm callback được gọi từ ChatMessageUI khi bấm vào link
     public void OnProductLinkCallback(string productID)
     {
+        TutorialGamePlay.Instance?.OnPlayerTappedItem();
         Debug.Log($"[ShopController] Received request to open product: {productID}");
 
         // 1. Tìm ShopItem tương ứng trong dữ liệu Shop hiện tại

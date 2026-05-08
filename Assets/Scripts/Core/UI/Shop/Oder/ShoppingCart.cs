@@ -428,7 +428,7 @@ public class ShoppingCart : MonoBehaviour
     {
         Debug.Log($"Đặt hàng thành công! Mã đơn: {order.retailOrderNumber}");
         PopupManager.Instance.ShowPopup("Thông báo", "Thanh toán thành công", null, "Đóng");
-
+        TutorialGamePlay.Instance.OnCheckoutCompleted();
         var selected = GetUnpaidItems().FindAll(i => i.isSelectedForCheckout);
         foreach (var it in selected)
             it.MarkAsPaid();

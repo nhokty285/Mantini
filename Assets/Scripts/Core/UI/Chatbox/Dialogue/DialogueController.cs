@@ -301,6 +301,7 @@ public class NPCDialogueSystem : MonoBehaviour
         currentNPC = null;
         currentDialogueSequence.Clear();
         cachedShopData = null;
+        TutorialGamePlay.Instance?.OnHideDialogueAndOpenShop();
     }
 
     /// <summary>

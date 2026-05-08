@@ -138,6 +138,7 @@ public class VendorNPC : BaseNPC, IChatParticipant
         {
             FetchShopDataFromAPI();
         }
+        TutorialGamePlay.Instance?.OnPlayerEnterNPCRange();
     }
 
     public override void OnPlayerExitRange()
@@ -197,6 +198,8 @@ public class VendorNPC : BaseNPC, IChatParticipant
             MainMenuView.Instance.SetNPCInteraction(
                 true, npcName, dynamicShopData ?? defaultShopData, this);
         }
+
+        TutorialGamePlay.Instance?.OnPlayerClickedNPC();
     }
 
     public override Sprite GetParticipantIcon()
