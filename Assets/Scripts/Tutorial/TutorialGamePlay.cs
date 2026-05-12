@@ -86,7 +86,7 @@ public class TutorialGamePlay : MonoBehaviour
     [SerializeField] private GameObject spotlightOverlay;
     [SerializeField] private RectTransform spotlightHole;
     [SerializeField] private Vector2 spotlightPadding = new Vector2(20f, 220f);
-
+    [SerializeField] private float autoHideDelay = 2f;
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — STEP 1
     // ════════════════════════════════════════════════════════════════════════
@@ -497,7 +497,6 @@ public class TutorialGamePlay : MonoBehaviour
     {
         HideAllTutorialUI();
         yield return ShowCompanionMessage(msg_Step2_Size, wait: true);
-        yield return new WaitForSeconds(1.3f);
 /*        if (productDetailPanel != null)
             ShowSpotlightWorldObject(productDetailPanel);*/
 
@@ -681,7 +680,22 @@ public class TutorialGamePlay : MonoBehaviour
         else
         {
             companionContinueButton.gameObject.SetActive(false);
+            yield return new WaitForSeconds(autoHideDelay);
         }
+        /*        if (wait)
+                {
+                    _continuePressed = false;                              // ← fix bug: reset về false TRƯỚC
+                    companionContinueButton?.gameObject.SetActive(true);
+                    yield return new WaitUntil(() => _continuePressed);   // ← giờ mới chờ thật sự
+                    HideCompanionPanel();
+
+                }
+                else
+                {
+                    companionContinueButton?.gameObject.SetActive(false);
+                  //  yield return new WaitForSeconds(autoHideDelay);       // ← đợi 1s rồi tự tắt
+
+                }*/
     }
 
     private void OnContinuePressed() => _continuePressed = true;

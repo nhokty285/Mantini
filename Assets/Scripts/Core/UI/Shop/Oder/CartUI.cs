@@ -151,7 +151,6 @@ public class CartUI : MonoBehaviour
         addSelectedToCartButton?.onClick.AddListener(()=>
         {
             OnAddSelectedToCartClicked();
-            TutorialGamePlay.Instance?.OnAddSelectedToCartSuccess();
         });
       
         cartButton?.onClick.AddListener(() =>
@@ -447,8 +446,9 @@ public class CartUI : MonoBehaviour
                 ShoppingCart.Instance.SelectItemForCheckout(selectedItem.productId, selectedItem.selectedSize, true);
                 UpdateTotalAmount();
                 RefreshAllCartIndicators();*/
+        TutorialGamePlay.Instance?.OnAddSelectedToCartSuccess();
 
-        if(ShoppingCart.Instance == null) return;
+        if (ShoppingCart.Instance == null) return;
 
         // Lấy đúng các item đang highlight — O(k), k = số item đang chọn
         var highlighted = CartImageItem.GetHighlightedItems();
