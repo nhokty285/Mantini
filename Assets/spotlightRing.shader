@@ -2,15 +2,18 @@
 {
     Properties
     {
-        _RingColor  ("Ring Color",    Color)  = (0.2, 0.8, 1.0, 1.0)
-        _GlowColor  ("Glow Color",    Color)  = (1.0, 1.0, 1.0, 1.0)
-        _Radius     ("Hole Radius",   Float)  = 0.35
-        _Softness   ("Edge Softness", Float)  = 0.04
-        _RingWidth  ("Ring Width",    Float)  = 0.08
-        _FresnelPow ("Fresnel Power", Float)  = 3.0
-        // ↑ Power càng cao → glow càng tập trung vào rìa
-        _PulseSpeed ("Pulse Speed",   Float)  = 2.0
-        _Intensity  ("Intensity",     Float)  = 1.2
+        _OverlayColor ("Overlay Color",      Color)  = (0.0, 0.0, 0.0, 0.75)
+        _RingColor    ("Ring Color",          Color)  = (0.2, 0.8, 1.0, 1.0)
+        _GlowColor    ("Glow Color",          Color)  = (1.0, 1.0, 1.0, 1.0)
+
+        _HalfW        ("Hole Half Width",     Float)  = 0.28
+        _HalfH        ("Hole Half Height",    Float)  = 0.18
+        _CornerRadius ("Corner Radius",       Float)  = 0.04
+
+        _Softness     ("Edge Softness",       Float)  = 0.012
+        _RingWidth    ("Ring Width",          Float)  = 0.06
+        _PulseSpeed   ("Pulse Speed",         Float)  = 2.5
+        _Intensity    ("Intensity",           Float)  = 1.3
     }
     SubShader
     {
@@ -29,56 +32,81 @@
             #pragma fragment frag
             #include "UnityCG.cginc"
 
+            fixed4 _OverlayColor;
             fixed4 _RingColor;
             fixed4 _GlowColor;
-            float  _Radius;
+
+            float  _HalfW;
+            float  _HalfH;
+            float  _CornerRadius;
             float  _Softness;
             float  _RingWidth;
-            float  _FresnelPow;
             float  _PulseSpeed;
             float  _Intensity;
 
             struct appdata { float4 vertex:POSITION; float2 uv:TEXCOORD0; };
             struct v2f    { float4 pos:SV_POSITION;  float2 uv:TEXCOORD0; };
 
+            // ── Signed Distance Field: hình chữ nhật bo góc ──────────────
+            // < 0 : bên trong  |  = 0 : đúng cạnh  |  > 0 : bên ngoài
+            float sdRoundRect(float2 p, float2 b, float r)
+            {
+                float2 q = abs(p) - b + r;
+                return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+            }
+
             v2f vert(appdata v)
             {
                 v2f o;
                 o.pos = UnityObjectToClipPos(v.vertex);
-                o.uv  = v.uv - 0.5; // Center (0,0) tại tâm
+                o.uv  = v.uv - 0.5;   // tâm (0,0) ở giữa
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target
             {
-                float dist = length(i.uv);
+                float2 uv = i.uv;
 
-                // ── Lỗ trong suốt ────────────────────────────────────
-                float innerEdge = _Radius - _Softness;
-                float holeAlpha = smoothstep(innerEdge, innerEdge + _Softness * 2, dist);
-                // dist < innerEdge → alpha = 0 (trong suốt = lỗ)
+                // SDF hình chữ nhật bo góc
+                float2 halfSize = float2(_HalfW, _HalfH);
+                float  d        = sdRoundRect(uv, halfSize, _CornerRadius);
+                // d < 0 → bên trong lỗ
+                // d = 0 → trên cạnh
+                // d > 0 → bên ngoài (vùng overlay tối)
 
-                // ── Fresnel: tính "góc nhìn" từ tâm ra rìa ───────────
-                // Với UI 2D, dùng dist làm proxy cho fresnel
-                float fresnelMask = 1.0 - saturate((dist - _Radius + _RingWidth) / _RingWidth);
-                float fresnel     = pow(1.0 - fresnelMask, _FresnelPow);
-                // fresnelPow = 2 → glow đều
-                // fresnelPow = 5 → glow chỉ tập trung ở rìa ngoài
+                // ── 1. Overlay tối bên ngoài ────────────────────────────
+                // d > 0  → overlay hiện ra
+                // d < 0  → trong suốt (lỗ)
+                float overlayAlpha = smoothstep(-_Softness, _Softness, d);
+                fixed4 overlay     = _OverlayColor;
+                overlay.a         *= overlayAlpha;
 
-                // ── Ring boundary ─────────────────────────────────────
-                float outerEdge  = _Radius + _RingWidth * 0.5;
-                float ringFade   = 1.0 - smoothstep(outerEdge - _Softness, outerEdge + _Softness, dist);
+                // ── 2. Ring nhấp nháy sát cạnh ──────────────────────────
+                // Chỉ vẽ khi d trong khoảng [-_RingWidth, +_RingWidth]
+                // = vành quanh cạnh hình chữ nhật (cả trong lẫn ngoài)
 
-                // ── Pulse theo thời gian ───────────────────────────────
-                float pulse      = 0.75 + 0.25 * sin(_Time.y * _PulseSpeed);
+                // Gần cạnh (d ≈ 0) → ringMask ≈ 1
+                // Xa cạnh          → ringMask ≈ 0
+                float ringMask = 1.0 - saturate(abs(d) / _RingWidth);
+                ringMask       = smoothstep(0.0, 1.0, ringMask);
 
-                // ── Kết hợp màu ───────────────────────────────────────
-                // Lerp từ RingColor (rìa trong) → GlowColor (rìa ngoài)
-                fixed4 col       = lerp(_RingColor, _GlowColor, fresnel);
-                col              *= _Intensity * pulse;
-                col.a            = holeAlpha * ringFade * col.a;
+                // Pulse theo thời gian
+                float pulse = 0.5 + 0.5 * sin(_Time.y * _PulseSpeed);
 
-                return col;
+                // Blend 2 màu ring theo pulse
+                fixed4 ringCol = lerp(_RingColor, _GlowColor, pulse);
+                ringCol       *= _Intensity;
+                ringCol.a     *= ringMask;
+
+                // ── 3. Kết hợp: overlay + ring ───────────────────────────
+                // Alpha cuối:
+                //   - Bên ngoài lỗ : overlay tối + ring glow ở cạnh
+                //   - Bên trong lỗ : trong suốt + ring glow ở cạnh
+                fixed4 result;
+                result.rgb = lerp(ringCol.rgb, overlay.rgb, overlay.a * (1.0 - ringMask));
+                result.a   = max(overlay.a, ringCol.a);
+
+                return result;
             }
             ENDCG
         }

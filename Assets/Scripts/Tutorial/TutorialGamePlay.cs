@@ -3,6 +3,7 @@ using System.Drawing;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 /// <summary>
 /// Tutorial workflow cho scene MapTest2.
@@ -304,6 +305,9 @@ public class TutorialGamePlay : MonoBehaviour
         DebugLog($"SetStep → {step}");
         UpdateDebugUI();
 
+
+        SetSpotlightForStep(step);
+
         switch (step)
         {
             case TutorialStep.Step1_Intro:          StartCoroutine(RunStep1());                 break;
@@ -319,6 +323,29 @@ public class TutorialGamePlay : MonoBehaviour
             case TutorialStep.Step3_Reward:         StartCoroutine(RunStep3_Reward());          break;
             case TutorialStep.Step4_Contextual:     ActivateContextualTooltips();               break;
             case TutorialStep.Completed:            CompleteTutorial();                         break;
+        }
+    }
+
+    private void SetSpotlightForStep(TutorialStep step)
+    {
+        switch (step)
+        {
+            // ── Các step KHÔNG dùng spotlight ────────────────────────────────
+            case TutorialStep.Step1_WaitNPCClick:   // ← fix bug của bạn
+            case TutorialStep.Step2_InProductDetail:
+            case TutorialStep.Step2_WaitAddToCart:
+            case TutorialStep.Step2_WaitBackToShop:
+            case TutorialStep.Step3_Reward:
+            case TutorialStep.Step4_Contextual:
+            case TutorialStep.Completed:
+            case TutorialStep.None:
+                HideSpotlight();
+                break;
+
+            // ── Các step CÓ spotlight → để RunStepX() tự gọi ShowSpotlight ──
+            // (không làm gì ở đây, Coroutine sẽ xử lý)
+            default:
+                break;
         }
     }
 
@@ -398,9 +425,11 @@ public class TutorialGamePlay : MonoBehaviour
     private IEnumerator ShowCompanionThenWaitClick()
     {
         yield return ShowCompanionMessage(msg_Step1_Click, wait: false);
-        _step = TutorialStep.Step1_WaitNPCClick;
-        yield return new WaitForSeconds(1.8f);
+/*        _step = TutorialStep.Step1_WaitNPCClick;
+*/        yield return new WaitForSeconds(1.8f);
         HideAllTutorialUI();
+        SetStep(TutorialStep.Step1_WaitNPCClick);
+        HideSpotlight();
         PlayerPrefs.SetInt(KEY_STEP, (int)_step);
         PlayerPrefs.Save();
         UpdateDebugUI();
@@ -413,7 +442,7 @@ public class TutorialGamePlay : MonoBehaviour
         if (_step != TutorialStep.Step1_WaitNPCClick) return;
         StopArrowBounce();
         HideSpotlight();
-        HideCompanionPanel();
+        HideAllTutorialUI();
         arrowNPC?.SetActive(false);
         if (_arrowDirectionRoutine != null)
         {
@@ -428,6 +457,7 @@ public class TutorialGamePlay : MonoBehaviour
     {
         if (_step != TutorialStep.Step1_WaitNPCClick) return;
         SetStep(TutorialStep.Step2_Chat);
+        ShowSpotlight(chatInputArea);
     }
 
     #endregion
@@ -438,9 +468,9 @@ public class TutorialGamePlay : MonoBehaviour
 
     private IEnumerator RunStep2_Chat()
     {
-        ShowSpotlight(chatInputArea);
         yield return ShowCompanionMessage(msg_Step2_Chat, wait: true);
         SetShopUIInteractableExcept(chatInputArea, chatSendButton);
+        
     }
 
     /// <summary>Hook → MultiChatManager (khi player nhấn Send)</summary>
@@ -482,7 +512,6 @@ public class TutorialGamePlay : MonoBehaviour
     {
         if (_step != TutorialStep.Step2_SelectItem) return;
         HideSpotlight();
-
         RestoreAllShopUI();
         SetStep(TutorialStep.Step2_InProductDetail);
     }
@@ -497,9 +526,6 @@ public class TutorialGamePlay : MonoBehaviour
     {
         HideAllTutorialUI();
         yield return ShowCompanionMessage(msg_Step2_Size, wait: true);
-/*        if (productDetailPanel != null)
-            ShowSpotlightWorldObject(productDetailPanel);*/
-
         // Chuyển state thủ công vì không gọi SetStep (tránh loop)
         _step = TutorialStep.Step2_WaitAddToCart;
         PlayerPrefs.SetInt(KEY_STEP, (int)_step);
@@ -651,20 +677,27 @@ public class TutorialGamePlay : MonoBehaviour
     #region COMPANION HELPERS
     // ════════════════════════════════════════════════════════════════════════
 
-    private IEnumerator ShowCompanionMessage(string msg, bool wait)
+    private IEnumerator ShowCompanionMessage(string msg, bool wait, bool showPanel = true)
     {
         if (companionPanel == null) yield break;
-        companionPanel.SetActive(true);
+        companionPanel.SetActive(showPanel);
+
+        Vector3 originalScale = companionImage.transform.localScale;
+
+        companionImage.transform.localScale = Vector3.zero;
+        companionImage.transform.DOScale(originalScale, 0.5f).SetEase(Ease.OutBack);
+
 
         if (companionImage != null && tutorialCompanionSprite != null)
             companionImage.sprite = tutorialCompanionSprite;
 
         if (companionChatText != null)
         {
-            companionChatText.text = "";
-            foreach (char c in msg)
+            companionChatText.text = msg;           // set full text 1 lần duy nhất
+            companionChatText.maxVisibleCharacters = 0;
+            for (int i = 0; i <= msg.Length; i++)
             {
-                companionChatText.text += c;
+                companionChatText.maxVisibleCharacters = i;
                 yield return new WaitForSeconds(typewriterSpeed);
             }
         }
@@ -716,20 +749,17 @@ public class TutorialGamePlay : MonoBehaviour
     private void ShowSpotlight(RectTransform target)
     {
         if (spotlightOverlay == null || spotlightHole == null || target == null) return;
+        spotlightHole.gameObject.SetActive(true);
         StopSpotlightTracking(); // Dừng tracking cũ nếu có
         spotlightOverlay.SetActive(true);
         spotlightHole.position = target.position;
         spotlightHole.sizeDelta = target.rect.size + spotlightPadding;
     }
-    private void ShowSpotlightWorldObject(GameObject go)
-    {
-        if (go == null) return;
-        var rect = go.GetComponent<RectTransform>();
-        if (rect != null) ShowSpotlight(rect);
-    }
+
     private void ShowSpotlightOnWorld(Transform worldTarget, Vector2 size)
     {
         if (spotlightOverlay == null || spotlightHole == null || worldTarget == null) return;
+        spotlightHole.gameObject.SetActive(true);
         StopSpotlightTracking();
         spotlightOverlay.SetActive(true);
         spotlightHole.sizeDelta = size + spotlightPadding;
@@ -785,6 +815,7 @@ public class TutorialGamePlay : MonoBehaviour
     {
         StopSpotlightTracking(); // NEW: dừng tracking khi ẩn
         spotlightOverlay?.SetActive(false);
+        spotlightHole?.gameObject.SetActive(false); 
     }
 
     #endregion
