@@ -1,30 +1,36 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class Joystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
 {
-    public float Horizontal { get { return (snapX) ? SnapFloat(input.x, AxisOptions.Horizontal) : input.x; } }
-    public float Vertical { get { return (snapY) ? SnapFloat(input.y, AxisOptions.Vertical) : input.y; } }
-    public Vector2 Direction { get { return new Vector2(Horizontal, Vertical); } }
+    // ── Public Properties ────────────────────────────────────────
+    public float Horizontal => snapX ? SnapFloat(input.x, AxisOptions.Horizontal) : input.x;
+    public float Vertical => snapY ? SnapFloat(input.y, AxisOptions.Vertical) : input.y;
+    public Vector2 Direction => new Vector2(Horizontal, Vertical);
 
     public float HandleRange
     {
-        get { return handleRange; }
-        set { handleRange = Mathf.Abs(value); }
+        get => handleRange;
+        set => handleRange = Mathf.Abs(value);
     }
 
     public float DeadZone
     {
-        get { return deadZone; }
-        set { deadZone = Mathf.Abs(value); }
+        get => deadZone;
+        set => deadZone = Mathf.Abs(value);
     }
 
-    public AxisOptions AxisOptions { get { return AxisOptions; } set { axisOptions = value; } }
-    public bool SnapX { get { return snapX; } set { snapX = value; } }
-    public bool SnapY { get { return snapY; } set { snapY = value; } }
+    // FIX #2: getter phải trả về field "axisOptions", không phải property "AxisOptions"
+    public AxisOptions AxisOptions
+    {
+        get => axisOptions;   // ← Đúng: trả về field
+        set => axisOptions = value;
+    }
 
+    public bool SnapX { get => snapX; set => snapX = value; }
+    public bool SnapY { get => snapY; set => snapY = value; }
+
+    // ── Serialized Fields ────────────────────────────────────────
     [SerializeField] private float handleRange = 1;
     [SerializeField] private float deadZone = 0;
     [SerializeField] private AxisOptions axisOptions = AxisOptions.Both;
@@ -32,22 +38,33 @@ public class Joystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoint
     [SerializeField] private bool snapY = false;
 
     [SerializeField] protected RectTransform background = null;
-    [SerializeField] private RectTransform handle = null;
-    private RectTransform baseRect = null;
+    [SerializeField] protected RectTransform handle = null;
 
+    // ── Private State ─────────────────────────────────────────────
+    private RectTransform baseRect;
     private Canvas canvas;
     private Camera cam;
-
     private Vector2 input = Vector2.zero;
 
+    // ── Lifecycle ─────────────────────────────────────────────────
     protected virtual void Start()
     {
         HandleRange = handleRange;
         DeadZone = deadZone;
         baseRect = GetComponent<RectTransform>();
         canvas = GetComponentInParent<Canvas>();
+
         if (canvas == null)
-            Debug.LogError("The Joystick is not placed inside a canvas");
+        {
+            Debug.LogError("Joystick: không tìm thấy Canvas cha.");
+            return;
+        }
+
+        // FIX #1: Cache cam ngay trong Start, không reset trong OnDrag
+        RefreshCamera();
+
+        // FIX #3: Force Canvas layout trước khi dùng sizeDelta
+        Canvas.ForceUpdateCanvases();
 
         Vector2 center = new Vector2(0.5f, 0.5f);
         background.pivot = center;
@@ -57,17 +74,16 @@ public class Joystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoint
         handle.anchoredPosition = Vector2.zero;
     }
 
+    // ── Pointer Events ────────────────────────────────────────────
     public virtual void OnPointerDown(PointerEventData eventData)
     {
+        RefreshCamera(); // đảm bảo cam luôn đúng trước mọi tính toán
         OnDrag(eventData);
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        cam = null;
-        if (canvas.renderMode == RenderMode.ScreenSpaceCamera)
-            cam = canvas.worldCamera;
-
+        // FIX #1: KHÔNG reset cam = null ở đây nữa
         Vector2 position = RectTransformUtility.WorldToScreenPoint(cam, background.position);
         Vector2 radius = background.sizeDelta / 2;
         input = (eventData.position - position) / (radius * canvas.scaleFactor);
@@ -76,15 +92,48 @@ public class Joystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoint
         handle.anchoredPosition = input * radius * handleRange;
     }
 
+    public virtual void OnPointerUp(PointerEventData eventData)
+    {
+        input = Vector2.zero;
+        handle.anchoredPosition = Vector2.zero;
+    }
+
+    // ── Protected Helpers ─────────────────────────────────────────
     protected virtual void HandleInput(float magnitude, Vector2 normalised, Vector2 radius, Camera cam)
     {
         if (magnitude > deadZone)
         {
-            if (magnitude > 1)
+            if (magnitude > 1f)
                 input = normalised;
         }
         else
+        {
             input = Vector2.zero;
+        }
+    }
+
+    protected Vector2 ScreenPointToAnchoredPosition(Vector2 screenPosition)
+    {
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                baseRect, screenPosition, cam, out Vector2 localPoint))
+        {
+            Vector2 pivotOffset = baseRect.pivot * baseRect.sizeDelta;
+            return localPoint - (background.anchorMax * baseRect.sizeDelta) + pivotOffset;
+        }
+        return Vector2.zero;
+    }
+
+    // ── Private Helpers ───────────────────────────────────────────
+
+    /// <summary>
+    /// Cache camera đúng theo renderMode — gọi 1 lần trong Start và OnPointerDown.
+    /// Time Complexity: O(1)
+    /// </summary>
+    private void RefreshCamera()
+    {
+        cam = canvas.renderMode == RenderMode.ScreenSpaceCamera
+            ? canvas.worldCamera
+            : null;
     }
 
     private void FormatInput()
@@ -97,53 +146,21 @@ public class Joystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoint
 
     private float SnapFloat(float value, AxisOptions snapAxis)
     {
-        if (value == 0)
-            return value;
+        if (value == 0f) return value;
 
         if (axisOptions == AxisOptions.Both)
         {
             float angle = Vector2.Angle(input, Vector2.up);
             if (snapAxis == AxisOptions.Horizontal)
-            {
-                if (angle < 22.5f || angle > 157.5f)
-                    return 0;
-                else
-                    return (value > 0) ? 1 : -1;
-            }
-            else if (snapAxis == AxisOptions.Vertical)
-            {
-                if (angle > 67.5f && angle < 112.5f)
-                    return 0;
-                else
-                    return (value > 0) ? 1 : -1;
-            }
+                return (angle < 22.5f || angle > 157.5f) ? 0f : (value > 0f ? 1f : -1f);
+            if (snapAxis == AxisOptions.Vertical)
+                return (angle > 67.5f && angle < 112.5f) ? 0f : (value > 0f ? 1f : -1f);
             return value;
         }
-        else
-        {
-            if (value > 0)
-                return 1;
-            if (value < 0)
-                return -1;
-        }
-        return 0;
-    }
 
-    public virtual void OnPointerUp(PointerEventData eventData)
-    {
-        input = Vector2.zero;
-        handle.anchoredPosition = Vector2.zero;
-    }
-
-    protected Vector2 ScreenPointToAnchoredPosition(Vector2 screenPosition)
-    {
-        Vector2 localPoint = Vector2.zero;
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(baseRect, screenPosition, cam, out localPoint))
-        {
-            Vector2 pivotOffset = baseRect.pivot * baseRect.sizeDelta;
-            return localPoint - (background.anchorMax * baseRect.sizeDelta) + pivotOffset;
-        }
-        return Vector2.zero;
+        if (value > 0f) return 1f;
+        if (value < 0f) return -1f;
+        return 0f;
     }
 }
 
