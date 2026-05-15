@@ -605,7 +605,6 @@ public class CartUI : MonoBehaviour
                 ShoppingCart.Instance.SelectItemForCheckout(selectedItem.productId, selectedItem.selectedSize, true);
                 UpdateTotalAmount();
                 RefreshAllCartIndicators();*/
-        TutorialGamePlay.Instance?.OnAddSelectedToCartSuccess();
 
         if (ShoppingCart.Instance == null) return;
 

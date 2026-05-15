@@ -558,6 +558,7 @@ public class ShoppingCart : MonoBehaviour
             _selectedTotalAmount = 0f;
 
         NotifyInventoryUpdated();
+        TutorialGamePlay.Instance.OnAddSelectedToCartSuccess();
     }
     public void SelectAllUnpaidItems(bool selected)
     {
