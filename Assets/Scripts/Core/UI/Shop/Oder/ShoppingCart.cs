@@ -91,7 +91,8 @@ public class ShoppingCart : MonoBehaviour
     public static ShoppingCart Instance { get; private set; }
 
     [SerializeField] private List<CartItem> cartItems = new List<CartItem>();
-
+    private readonly Dictionary<(string productId, string size), CartItem> _unpaidItemMap
+= new Dictionary<(string productId, string size), CartItem>();
     public event System.Action<int> OnCartCountChanged;
     public event System.Action<List<CartItem>> OnCartUpdated;
     public CartUI cartUI;
@@ -134,7 +135,10 @@ public class ShoppingCart : MonoBehaviour
         }
       
     }
-
+    private static (string productId, string size) MakeKey(string productId, string size)
+    {
+        return (productId ?? string.Empty, size ?? string.Empty);
+    }
     private void RecalculateSelectionAggregates()
     {
         _selectedTotalAmount = 0f;
@@ -166,6 +170,31 @@ public class ShoppingCart : MonoBehaviour
         return new List<CartItem>(cartItems);
     }
 
+    /* public void AddToInventory(CartItem newItem)
+     {
+         newItem.isPaid = false; // Mặc định chưa thanh toán
+
+         var existingItem = cartItems.Find(item =>
+             item.productId == newItem.productId &&
+             item.customId == newItem.customId &&
+             item.selectedSize == newItem.selectedSize &&
+             item.isPaid == newItem.isPaid);
+
+         if (existingItem != null)
+         {
+             existingItem.quantity += newItem.quantity;
+             if (string.IsNullOrEmpty(existingItem.customId) && !string.IsNullOrEmpty(newItem.customId))
+                 existingItem.customId = newItem.customId;
+         }
+         else
+         {
+             if (string.IsNullOrWhiteSpace(newItem.customId))
+                 Debug.LogError($"[Cart] Missing customId for {newItem.productName}");
+             cartItems.Add(newItem);
+         }
+
+         NotifyInventoryUpdated();
+     }*/
     public void AddToInventory(CartItem newItem)
     {
         newItem.isPaid = false; // Mặc định chưa thanh toán
@@ -181,24 +210,34 @@ public class ShoppingCart : MonoBehaviour
             existingItem.quantity += newItem.quantity;
             if (string.IsNullOrEmpty(existingItem.customId) && !string.IsNullOrEmpty(newItem.customId))
                 existingItem.customId = newItem.customId;
+
+            // 🆕 Đảm bảo map trỏ về đúng instance unpaid hiện tại
+            var key = MakeKey(existingItem.productId, existingItem.selectedSize);
+            _unpaidItemMap[key] = existingItem;
         }
         else
         {
             if (string.IsNullOrWhiteSpace(newItem.customId))
                 Debug.LogError($"[Cart] Missing customId for {newItem.productName}");
             cartItems.Add(newItem);
+
+            // 🆕 Thêm item unpaid mới vào map
+            var key = MakeKey(newItem.productId, newItem.selectedSize);
+            _unpaidItemMap[key] = newItem;
         }
 
         NotifyInventoryUpdated();
     }
-
-    // ✅ THÊM: Mark items as paid after checkout
     public void MarkUnpaidItemsAsPaid()
     {
         var unpaidItems = cartItems.FindAll(item => !item.isPaid);
         foreach (var item in unpaidItems)
         {
             item.MarkAsPaid();
+
+            // 🆕 Bỏ khỏi map unpaid khi chuyển sang paid
+            var key = MakeKey(item.productId, item.selectedSize);
+            _unpaidItemMap.Remove(key);
         }
 
         NotifyInventoryUpdated();
@@ -213,10 +252,13 @@ public class ShoppingCart : MonoBehaviour
 
     public void RemoveItem(string productId, string size)
     {
+        // 🆕 Xoá khỏi map unpaid trước
+        var key = MakeKey(productId, size);
+        _unpaidItemMap.Remove(key);
+
         cartItems.RemoveAll(item => item.productId == productId && item.selectedSize == size);
         NotifyInventoryUpdated();
     }
-
     public void UpdateQuantity(string productId, string size, int newQuantity)
     {
         var item = cartItems.Find(i => i.productId == productId && i.selectedSize == size);
@@ -242,13 +284,15 @@ public class ShoppingCart : MonoBehaviour
             () =>
             {
                 cartItems.Clear();
+                // 🆕 Clear luôn map unpaid
+                _unpaidItemMap.Clear();
+
                 NotifyInventoryUpdated();
             },
             "Đồng ý"
         );
     }
 
-    // ✅ THÊM: Clear only 1 selected unpaid item
     public void ClearUnpaidItems(CartItem targetItem)
     {
         if (targetItem == null || targetItem.isPaid) return;
@@ -258,13 +302,16 @@ public class ShoppingCart : MonoBehaviour
             "Bạn có chắc muốn loại bỏ vật phẩm này?",
             () =>
             {
+                // 🆕 Xoá khỏi map unpaid
+                var key = MakeKey(targetItem.productId, targetItem.selectedSize);
+                _unpaidItemMap.Remove(key);
+
                 cartItems.Remove(targetItem);
                 NotifyInventoryUpdated();
             },
             "Đồng ý"
         );
     }
-
     public void ClearCheckoutSelection()
     {
         foreach (var it in cartItems)
@@ -454,13 +501,20 @@ public class ShoppingCart : MonoBehaviour
         Debug.Log($"Đặt hàng thành công! Mã đơn: {order.retailOrderNumber}");
         PopupManager.Instance.ShowPopup("Thông báo", "Thanh toán thành công", null, "Đóng");
         TutorialGamePlay.Instance.OnCheckoutCompleted();
+
         var selected = GetUnpaidItems().FindAll(i => i.isSelectedForCheckout);
         foreach (var it in selected)
+        {
             it.MarkAsPaid();
+
+            // 🆕 Bỏ khỏi map unpaid sau khi chuyển sang paid
+            var key = MakeKey(it.productId, it.selectedSize);
+            _unpaidItemMap.Remove(key);
+        }
+
         NotifyInventoryUpdated();
         SaveOwnedItemsToBackend(selected);
     }
-
     private void OnOrderFailed(string message)
     {
         Debug.LogError("Đặt hàng thất bại: " + message);
@@ -469,17 +523,19 @@ public class ShoppingCart : MonoBehaviour
 
     public void SelectItemForCheckout(string productId, string size, bool selected)
     {
-        // Tìm trực tiếp trong cartItems; unpaid + match productId + size
-        var it = cartItems.Find(i => !i.isPaid &&
-                                     i.productId == productId &&
-                                     i.selectedSize == size);
-        if (it == null) return;
+        var key = MakeKey(productId, size);
 
-        // Nếu state không đổi thì bỏ
+        if (!_unpaidItemMap.TryGetValue(key, out var it))
+            return;
+
+        if (it.isPaid)
+            return;
+
+        // Nếu state không đổi thì không làm gì
         if (it.isSelectedForCheckout == selected)
             return;
 
-        // 🆕 Cập nhật aggregate incrementally
+        // Cập nhật aggregate incrementally TRƯỚC khi notify
         if (selected)
         {
             _selectedItemCount += 1;
@@ -494,7 +550,13 @@ public class ShoppingCart : MonoBehaviour
         // Cập nhật flag trên item
         it.isSelectedForCheckout = selected;
 
-        // Notify UI (CartUI dùng TotalAmount + GetSelectedCheckoutCount)
+        // Clamp an toàn nếu có case lệch state
+        if (_selectedItemCount < 0)
+            _selectedItemCount = 0;
+
+        if (_selectedTotalAmount < 0f)
+            _selectedTotalAmount = 0f;
+
         NotifyInventoryUpdated();
     }
     public void SelectAllUnpaidItems(bool selected)
