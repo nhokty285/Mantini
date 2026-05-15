@@ -96,7 +96,7 @@ public class ShoppingCart : MonoBehaviour
     public event System.Action<List<CartItem>> OnCartUpdated;
     public CartUI cartUI;
     public int ItemCount => cartItems.Count;
-    public float TotalAmount => CalculateTotalAmount();
+  
 
     public event System.Action<List<CartItem>> OnUnpaidItemsUpdated;
     public event System.Action<List<CartItem>> OnPaidItemsUpdated;
@@ -108,13 +108,19 @@ public class ShoppingCart : MonoBehaviour
 
     public int UnpaidItemCount => _unpaidCount;
     public int PaidItemCount => _paidCount;
-    public int GetSelectedCheckoutCount() =>
-    cartItems.Count(i => !i.isPaid && i.isSelectedForCheckout);
 
+    private float _selectedTotalAmount = 0f;
+    private int _selectedItemCount = 0;
+    public float TotalAmount => _selectedTotalAmount;
+    public int GetSelectedCheckoutCount() => _selectedItemCount;
+    /*    public int GetSelectedCheckoutCount() =>
+        cartItems.Count(i => !i.isPaid && i.isSelectedForCheckout);
+        public float TotalAmount => CalculateTotalAmount();*/
     public PlayerApiService playerApi;
 
     private readonly List<CartItem> _cachedUnpaid = new();
     private readonly List<CartItem> _cachedPaid = new();
+
     private void Awake()
     {
         if (Instance == null)
@@ -129,7 +135,20 @@ public class ShoppingCart : MonoBehaviour
       
     }
 
- 
+    private void RecalculateSelectionAggregates()
+    {
+        _selectedTotalAmount = 0f;
+        _selectedItemCount = 0;
+
+        foreach (var item in cartItems)
+        {
+            if (!item.isPaid && item.isSelectedForCheckout)
+            {
+                _selectedItemCount += 1;
+                _selectedTotalAmount += item.TotalPrice;
+            }
+        }
+    }
 
     // Get items theo trạng thái
     public List<CartItem> GetUnpaidItems()
@@ -250,16 +269,22 @@ public class ShoppingCart : MonoBehaviour
     {
         foreach (var it in cartItems)
             if (!it.isPaid) it.isSelectedForCheckout = false;
+
+        _selectedItemCount = 0;
+        _selectedTotalAmount = 0f;
+
         NotifyInventoryUpdated();
     }
-
     public void SetCheckoutSelection(HashSet<CartItem> selectedSet)
     {
         foreach (var it in cartItems)
         {
             if (it.isPaid) continue;
-            it.isSelectedForCheckout = selectedSet.Contains(it); // HashSet.Contains = O(1)
+            it.isSelectedForCheckout = selectedSet.Contains(it);
         }
+
+        // Batch update -> tính lại từ đầu
+        RecalculateSelectionAggregates();
         NotifyInventoryUpdated();
     }
 
@@ -444,20 +469,42 @@ public class ShoppingCart : MonoBehaviour
 
     public void SelectItemForCheckout(string productId, string size, bool selected)
     {
-        var it = GetUnpaidItems().Find(i => i.productId == productId && i.selectedSize == size);
-        if (it != null)
+        // Tìm trực tiếp trong cartItems; unpaid + match productId + size
+        var it = cartItems.Find(i => !i.isPaid &&
+                                     i.productId == productId &&
+                                     i.selectedSize == size);
+        if (it == null) return;
+
+        // Nếu state không đổi thì bỏ
+        if (it.isSelectedForCheckout == selected)
+            return;
+
+        // 🆕 Cập nhật aggregate incrementally
+        if (selected)
         {
-            it.isSelectedForCheckout = selected;
-            NotifyInventoryUpdated(); // để UI cập nhật tổng tiền tức thì
+            _selectedItemCount += 1;
+            _selectedTotalAmount += it.TotalPrice;
         }
+        else
+        {
+            _selectedItemCount -= 1;
+            _selectedTotalAmount -= it.TotalPrice;
+        }
+
+        // Cập nhật flag trên item
+        it.isSelectedForCheckout = selected;
+
+        // Notify UI (CartUI dùng TotalAmount + GetSelectedCheckoutCount)
+        NotifyInventoryUpdated();
     }
     public void SelectAllUnpaidItems(bool selected)
     {
         foreach (var it in GetUnpaidItems())
             it.isSelectedForCheckout = selected;
+
+        RecalculateSelectionAggregates();
         NotifyInventoryUpdated();
     }
-
     // ShoppingCart.cs - nếu backend không hỗ trợ size
     private string BuildOwnedItemsString(IEnumerable<CartItem> items)
     {
@@ -599,68 +646,6 @@ public class ShoppingCart : MonoBehaviour
         }, err => Debug.LogError($"Load inventory failed: {err}"));
     }
 
-    /* private IEnumerator EnrichAndAddRange(List<InventoryItem> items)
-     {
-         foreach (var it in items)
-         {
-             var gi = it.game_item; // có external_id, name, image_url...
-                                    // Tách customId/size nếu cần: external_id có thể là "customId@Size 42"
-             var ext = gi.external_id ?? "";
-             var parts = ext.Split('@');
-             var customId = parts[0];
-             var sizeName = parts.Length > 1 ? parts[1] : "";
-
-             // Gọi chi tiết sản phẩm theo customId để lấy title/brand/price/image (nếu muốn override)
-             string detailUrl = $"https://data.storims.c1.hubcom.tech/api/v1/TenantProduct/45A26BFC-F2B2-4CA2-AB49-9EE8E9ADCFEC/{customId}";
-             string productJson = null; string error = null;
-             APIClient.Instance.GetFull(detailUrl, j => productJson = j, e => error = e);
-             while (productJson == null && error == null) yield return null;
-
-             // Map sang CartItem hiển thị trong túi
-             var cartItem = new CartItem
-             {
-                 gameItemId = gi.item_id,
-                 customId = customId,
-                 productId = ext,                // lưu external_id để đối soát
-                 productName = gi.name,
-                 brandName = "",                 // có thể điền từ productJson
-                 price = 0,                      // có thể điền từ productJson/gi.price
-                 selectedSize = sizeName,
-                 imageUrl = gi.image_url,
-                 quantity = it.quantity,
-                 isPaid = true,
-                 purchaseDate = DateTime.Now
-             };
-             // --- LOGIC TÁCH BRAND & SIZE TỪ DESCRIPTION CỦA BACKEND ---
-             // Backend trả về: "Jeep - Size 36"
-             string desc = gi.description ?? "";
-             if (desc.Contains("-"))
-             {
-                 var part = desc.Split(new[] { '-' }, System.StringSplitOptions.RemoveEmptyEntries);
-                 if (part.Length >= 2)
-                 {
-                     cartItem.brandName = part[0].Trim();      // "Jeep"
-                     cartItem.selectedSize = part[1].Trim();   // "Size 36"
-                 }
-                 else
-                 {
-                     cartItem.brandName = desc; // Fallback
-                     cartItem.selectedSize = "";
-                 }
-             }
-             else
-             {
-                 // Trường hợp không có dấu gạch ngang
-                 cartItem.brandName = "";
-                 cartItem.selectedSize = desc;
-             }
-             // ----------------------------------------------------------
-             cartItems.Add(cartItem);
-         }
-         NotifyInventoryUpdated();
-     }
- */
-
     private IEnumerator EnrichAndAddRange(List<InventoryItem> items)
     {
         if (items == null || items.Count == 0)
@@ -748,7 +733,6 @@ public class ShoppingCart : MonoBehaviour
             err => Debug.LogError($"Delete inventory failed: {err}")
         );
     }
-
 
 }
 
