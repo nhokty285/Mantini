@@ -98,11 +98,9 @@ public class ShoppingCart : MonoBehaviour
     public CartUI cartUI;
     public int ItemCount => cartItems.Count;
   
-
     public event System.Action<List<CartItem>> OnUnpaidItemsUpdated;
     public event System.Action<List<CartItem>> OnPaidItemsUpdated;
-/*    public int UnpaidItemCount => cartItems.FindAll(item => !item.isPaid).Count;
-    public int PaidItemCount => cartItems.FindAll(item => item.isPaid).Count;*/
+
 
     private int _unpaidCount;
     private int _paidCount;
@@ -110,13 +108,11 @@ public class ShoppingCart : MonoBehaviour
     public int UnpaidItemCount => _unpaidCount;
     public int PaidItemCount => _paidCount;
 
-    private float _selectedTotalAmount = 0f;
+    private float _currentSelectedTotal = 0f;
     private int _selectedItemCount = 0;
-    public float TotalAmount => _selectedTotalAmount;
+    public float TotalAmount => _currentSelectedTotal;
+
     public int GetSelectedCheckoutCount() => _selectedItemCount;
-    /*    public int GetSelectedCheckoutCount() =>
-        cartItems.Count(i => !i.isPaid && i.isSelectedForCheckout);
-        public float TotalAmount => CalculateTotalAmount();*/
     public PlayerApiService playerApi;
 
     private readonly List<CartItem> _cachedUnpaid = new();
@@ -141,7 +137,7 @@ public class ShoppingCart : MonoBehaviour
     }
     private void RecalculateSelectionAggregates()
     {
-        _selectedTotalAmount = 0f;
+        _currentSelectedTotal = 0f;
         _selectedItemCount = 0;
 
         foreach (var item in cartItems)
@@ -149,7 +145,7 @@ public class ShoppingCart : MonoBehaviour
             if (!item.isPaid && item.isSelectedForCheckout)
             {
                 _selectedItemCount += 1;
-                _selectedTotalAmount += item.TotalPrice;
+                _currentSelectedTotal += item.TotalPrice;
             }
         }
     }
@@ -318,7 +314,7 @@ public class ShoppingCart : MonoBehaviour
             if (!it.isPaid) it.isSelectedForCheckout = false;
 
         _selectedItemCount = 0;
-        _selectedTotalAmount = 0f;
+        _currentSelectedTotal = 0f;
 
         NotifyInventoryUpdated();
     }
@@ -335,14 +331,6 @@ public class ShoppingCart : MonoBehaviour
         NotifyInventoryUpdated();
     }
 
-    private float CalculateTotalAmount()
-    {
-        float total = 0f;
-        foreach (var item in GetUnpaidItems())
-            if (item.isSelectedForCheckout) // chỉ cộng item đã “bỏ vào giỏ”
-                total += item.TotalPrice;
-        return total;
-    }
 
     // ✅ THÊM: Notify all tabs
     private void NotifyInventoryUpdated()
@@ -539,12 +527,12 @@ public class ShoppingCart : MonoBehaviour
         if (selected)
         {
             _selectedItemCount += 1;
-            _selectedTotalAmount += it.TotalPrice;
+            _currentSelectedTotal += it.TotalPrice;
         }
         else
         {
             _selectedItemCount -= 1;
-            _selectedTotalAmount -= it.TotalPrice;
+            _currentSelectedTotal -= it.TotalPrice;
         }
 
         // Cập nhật flag trên item
@@ -554,8 +542,8 @@ public class ShoppingCart : MonoBehaviour
         if (_selectedItemCount < 0)
             _selectedItemCount = 0;
 
-        if (_selectedTotalAmount < 0f)
-            _selectedTotalAmount = 0f;
+        if (_currentSelectedTotal < 0f)
+            _currentSelectedTotal = 0f;
 
         NotifyInventoryUpdated();
         TutorialGamePlay.Instance.OnAddSelectedToCartSuccess();

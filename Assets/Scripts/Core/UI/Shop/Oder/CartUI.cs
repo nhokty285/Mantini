@@ -70,7 +70,7 @@ public class CartUI : MonoBehaviour
     public GameObject shopController; // Reference đến ShopController để gọi API khi cần
 
     [Header("Select Mode")]
-    [SerializeField] private RectTransform selectZone;
+    [SerializeField] private List<RectTransform> selectZones = new List<RectTransform>(); 
     [SerializeField] public bool isSelectMode = false;     // 🆕 THÊM: track chế độ chọn thủ công
     [SerializeField] private int number;
 
@@ -104,13 +104,24 @@ public class CartUI : MonoBehaviour
         if (!cartPanel.activeSelf) return;
         if (!Input.GetMouseButtonDown(0)) return;
 
-        // Kiểm tra click có nằm trong vùng selectZone không
-        bool insideZone = selectZone != null &&
-                          RectTransformUtility.RectangleContainsScreenPoint(
-                              selectZone,
-                              Input.mousePosition,
-                              null // null = Screen Space Overlay, truyền Camera nếu dùng Screen Space Camera
-                          );
+        bool insideZone = false;
+
+        if (selectZones != null)
+        {
+            foreach (var zone in selectZones)
+            {
+                if (zone == null) continue;
+
+                if (RectTransformUtility.RectangleContainsScreenPoint(
+                        zone,
+                        Input.mousePosition,
+                        null)) // Screen Space Overlay => cam = null
+                {
+                    insideZone = true;
+                    break; // chỉ cần trúng 1 vùng là đủ
+                }
+            }
+        }
 
         if (!insideZone)
         {
@@ -377,131 +388,6 @@ public class CartUI : MonoBehaviour
         }
     }
 
-    /* private void OnItemClicked(CartItem item)
-     {
-         float currentTime = Time.time;
-
-         // 🆕 Nếu đang trong chế độ multi-select
-         if (isSelectMode)
-         {
-             // Visual toggle — CartImageItem tự quản lý _highlighted set
-             foreach (Transform child in cartItemsContainer)
-             {
-                 var cell = child.GetComponent<CartImageItem>();
-                 if (cell != null && cell.GetCurrentItem() == item)
-                 {
-                     cell.ToggleHighlightMultiSelect(); // toggle highlight + tự add/remove _highlighted
-                     OnAddSelectedToCartClicked(); // Cập nhật tổng tiền ngay khi toggle (O(k) với k = số item đang chọn, chấp nhận được)
-                     break; // O(1) trung bình khi tìm thấy sớm
-                 }
-             }
-             lastClickedItem = null;
-             return;
-         }
-
-         selectedItem = item;
-
-         // ✅ THÊM: Single highlight khi ngoài selectMode
-         foreach (Transform child in cartItemsContainer)
-         {
-             var cell = child.GetComponent<CartImageItem>();
-             if (cell != null && cell.GetCurrentItem() == item)
-             {
-                 cell.SelectThisItem();  // Single highlight, tự clear item trước đó
-                 break;
-             }
-         }
-
-         // Logic click: 1 click để chọn, 2 click để xem chi tiết
-         if (lastClickedItem == item && (currentTime - lastClickTime) < doubleClickThreshold)
-         {
-             // Double click - Mở ProductDetailUI thay vì panel cũ
-             ShowProductDetailInMainUI(item);
-             lastClickedItem = null;
-         }
-         else
-         {
-             // Single click - Chỉ chọn item
-             lastClickedItem = item;
-             lastClickTime = currentTime;
-         }
-
-
-     }*/
-
-    /*  private void OnItemClicked(CartItem item)
-      {
-          float currentTime = Time.time;
-
-          // 🆕 Nhánh multi-select khi đang ở select mode
-          if (isSelectMode)
-          {
-              // Tìm đúng cell tương ứng với CartItem được click
-              CartImageItem clickedCell = null;
-              foreach (Transform child in cartItemsContainer)
-              {
-                  var cell = child.GetComponent<CartImageItem>();
-                  if (cell != null && cell.GetCurrentItem() == item)
-                  {
-                      clickedCell = cell;
-                      break;
-                  }
-              }
-
-              if (clickedCell != null)
-              {
-                  // Toggle highlight (multi-select, không clear item khác)
-                  clickedCell.ToggleHighlightMultiSelect();
-                  bool nowHighlighted = clickedCell.IsHighlighted();
-
-                  // Đồng bộ state xuống ShoppingCart (isSelectedForCheckout)
-                  if (ShoppingCart.Instance != null)
-                  {
-                      ShoppingCart.Instance.SelectItemForCheckout(
-                          item.productId,
-                          item.selectedSize,
-                          nowHighlighted
-                      );
-                  }
-
-                  // Cập nhật overlay/icon "đã lưu vào giỏ"
-                  clickedCell.RefreshCartIndicator();
-
-                  // Cập nhật lại tổng tiền + số món ngay lập tức
-                  UpdateTotalAmount();
-              }
-
-              // Không dùng double-click trong select mode
-              lastClickedItem = null;
-              return;
-          }
-
-          // ==== Phần dưới giữ nguyên logic single-select + double click mở detail ====
-
-          selectedItem = item;
-
-          foreach (Transform child in cartItemsContainer)
-          {
-              var cell = child.GetComponent<CartImageItem>();
-              if (cell != null && cell.GetCurrentItem() == item)
-              {
-                  cell.SelectThisItem();
-                  break;
-              }
-          }
-
-          if (lastClickedItem == item && (currentTime - lastClickTime) < doubleClickThreshold)
-          {
-              ShowProductDetailInMainUI(item);
-              lastClickedItem = null;
-          }
-          else
-          {
-              lastClickedItem = item;
-              lastClickTime = currentTime;
-          }
-      }*/
-
     private void OnItemClicked(CartItem item)
     {
         float currentTime = Time.time;
@@ -596,42 +482,6 @@ public class CartUI : MonoBehaviour
                 Debug.LogError("Unpaid item missing CustomID, cannot load shop detail.");
             }
         }
-    }
-
-    private void OnAddSelectedToCartClicked()
-    {
-        /*
-                if (selectedItem == null || ShoppingCart.Instance == null) return;
-                ShoppingCart.Instance.SelectItemForCheckout(selectedItem.productId, selectedItem.selectedSize, true);
-                UpdateTotalAmount();
-                RefreshAllCartIndicators();*/
-
-        if (ShoppingCart.Instance == null) return;
-
-        // Lấy đúng các item đang highlight — O(k), k = số item đang chọn
-        var highlighted = CartImageItem.GetHighlightedItems();
-
-        if (highlighted.Count == 0)
-        {
-            PopupManager.Instance.ShowPopup(
-                "Thông báo",
-                "Bạn cần nhấn chọn vật phẩm trước khi lưu",
-                null
-            );
-            return;
-        }
-
-        // Commit sang checkout trong 1 pass
-        var selectedSet = new HashSet<CartItem>();
-        foreach (var cell in highlighted)
-            selectedSet.Add(cell.GetCurrentItem());
-
-        ShoppingCart.Instance.SetCheckoutSelection(selectedSet);
-
-        // Thoát select mode, xóa visual
-                selectedItem = null;
-        isSelectMode = false;
-        CartImageItem.ClearAllHighlights();
     }
 
     private void UpdateTotalAmount()
