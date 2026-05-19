@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using static MainMenuViewModel;
 using static System.Net.Mime.MediaTypeNames;
-using DG.Tweening;
 
 [System.Serializable]
 public struct CarouselPosition
