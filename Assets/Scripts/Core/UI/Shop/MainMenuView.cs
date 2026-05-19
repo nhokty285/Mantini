@@ -20,7 +20,6 @@ public class MainMenuView : MonoBehaviour
     [SerializeField] public Button talkButton;
     [SerializeField] private GameObject dialoguePopup;
     [SerializeField] private Button skipButton;
-  
 
     private MainMenuViewModel MainMenuViewModel;
     private BaseNPC currentInteractingNPC;
@@ -37,6 +36,7 @@ public class MainMenuView : MonoBehaviour
         InitializeControllers();
         SetupNPCEventListeners();
         MainMenuViewModel.PropertyChangedd += OnViewModelChanged;
+
     }
 
     private void InitializeControllers()
@@ -232,4 +232,5 @@ public class MainMenuView : MonoBehaviour
 
         Debug.Log($"[RESTORE][12] ✅ RestoreChatHistory DONE — {ordered.Count} pairs rendered");
     }
+
 }

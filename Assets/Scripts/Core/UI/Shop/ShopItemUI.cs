@@ -107,24 +107,26 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
     {
         buyButton.onClick.RemoveAllListeners();
         buyButton.onClick.AddListener(() => {
-            // Tính toán khoảng thời gian từ lần click trước đến hiện tại
-            float currentTime = Time.time;
-            float timeSinceLastClick = currentTime - lastClickTime;
+            /*   // Tính toán khoảng thời gian từ lần click trước đến hiện tại
+               float currentTime = Time.time;
+               float timeSinceLastClick = currentTime - lastClickTime;
 
-            if (timeSinceLastClick <= doubleClickThreshold)
-            {
-                // Thực hiện logic khi Double Click
-                AudioManager.Instance.PlaySFXOneShot("Button_High");
-                ShowProductDetail();
+               if (timeSinceLastClick <= doubleClickThreshold)
+               {
+                   // Thực hiện logic khi Double Click
+                   AudioManager.Instance.PlaySFXOneShot("Button_High");
+                   ShowProductDetail();
 
-                // Reset lại lastClickTime để tránh click lần 3 cũng tính là double click
-                lastClickTime = 0f;
-            }
-            else
-            {
-                // Cập nhật lại thời gian cho lần click đơn này
-                lastClickTime = currentTime;
-            }
+                   // Reset lại lastClickTime để tránh click lần 3 cũng tính là double click
+                   lastClickTime = 0f;
+               }
+               else
+               {
+                   // Cập nhật lại thời gian cho lần click đơn này
+                   lastClickTime = currentTime;
+               }*/
+            AudioManager.Instance.PlaySFXOneShot("Button_High");
+            ShowProductDetail();
         });
 
         var buttonText = buyButton.GetComponentInChildren<TextMeshProUGUI>();

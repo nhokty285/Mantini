@@ -61,6 +61,7 @@ public class NameplateManager : MonoBehaviour
         }
     }
 
+
     /// <summary>
     /// Cập nhật text của nameplate cho một target cụ thể
     /// </summary>

@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using static MainMenuViewModel;
 using static System.Net.Mime.MediaTypeNames;
-
+using DG.Tweening;
 
 [System.Serializable]
 public struct CarouselPosition
@@ -360,9 +360,6 @@ public class ShopController : MonoBehaviour
         bool isInside = RectTransformUtility.RectangleContainsScreenPoint(
             ParticipantsContainer, screenPos, null);
 
-       /* if (debugTouchArea)
-            Debug.Log($"Touch at {screenPos} - Inside carousel area: {isInside}");*/
-
         return isInside;
     }
 
@@ -545,11 +542,11 @@ public class ShopController : MonoBehaviour
 
         switch (diff)
         {
-            case 0: return "penta_center";
+            case 0: return  "penta_center";
             case -1: return "penta_left_near";
-            case 1: return "penta_right_near";
+            case 1: return  "penta_right_near";
             case -2: return "penta_left_far";
-            case 2: return "penta_right_far";
+            case 2: return  "penta_right_far";
             default: return ""; // Should not happen if logic is correct
         }
     }
