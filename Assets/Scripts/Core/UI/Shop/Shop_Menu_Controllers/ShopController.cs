@@ -1,3 +1,4 @@
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -74,6 +75,12 @@ public class ShopController : MonoBehaviour
     [SerializeField] private float sideScale = 0.8f;
     [SerializeField] private float sideAlpha = 0.6f;
 
+    [Header("✅ Center Item DOTween Animation")]
+    [SerializeField] private bool enableCenterPunchAnimation = true;
+    [SerializeField] private float centerPunchDuration = 0.45f;
+    [SerializeField] private float centerPunchStrength = 0.18f; // scale punch amount
+    [SerializeField] private int centerPunchVibrato = 3;        // số lần nẩy
+    [SerializeField] private float centerPunchElasticity = 0.5f;
 
     [SerializeField] private RectTransform ParticipantsContainer;
     [SerializeField] private bool debugTouchArea = false;
@@ -696,17 +703,52 @@ public class ShopController : MonoBehaviour
         ApplyFixedPosition(go, currentCarouselItems.Count, itemIndex, carouselCenterIndex);
     }
 
+    /*  private void ApplyFixedPosition(GameObject go, int totalItems, int itemIndex, int centerIndex)
+      {
+          InitializeFixedPositions();
+          string key = GetPositionKey(totalItems, itemIndex, centerIndex);
+          if (!fixedPositions.TryGetValue(key, out var fp)) return;
+
+          var rt = go.transform as RectTransform;
+          if (rt != null)
+              rt.anchoredPosition = new Vector2(fp.position.x, fp.position.y);
+
+          go.transform.localScale = Vector3.one * fp.scale;
+
+          var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
+          cg.alpha = fp.alpha;
+
+          var ui = go.GetComponent<ShopItemUI>();
+          if (ui != null)
+              ui.SetCarouselMode(fp.isCenter);
+
+          // ✅ NEW: Set raycast target based on center position
+          SetRaycastTarget(go, fp.isCenter);
+
+          if (fp.isCenter)
+              AddCenterItemEffects(go);
+              PlayCenterPunchAnimation(go);
+      }
+  */
+
     private void ApplyFixedPosition(GameObject go, int totalItems, int itemIndex, int centerIndex)
     {
         InitializeFixedPositions();
         string key = GetPositionKey(totalItems, itemIndex, centerIndex);
         if (!fixedPositions.TryGetValue(key, out var fp)) return;
 
+        // ✅ Kill tweens cũ TRƯỚC KHI set bất cứ gì
+        go.transform.DOKill(complete: false);
+
         var rt = go.transform as RectTransform;
         if (rt != null)
             rt.anchoredPosition = new Vector2(fp.position.x, fp.position.y);
 
-        go.transform.localScale = Vector3.one * fp.scale;
+        // ✅ Set scale — chỉ cho non-center, center sẽ được DOTween handle
+        if (!fp.isCenter)
+        {
+            go.transform.localScale = Vector3.one * fp.scale;
+        }
 
         var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
         cg.alpha = fp.alpha;
@@ -715,13 +757,14 @@ public class ShopController : MonoBehaviour
         if (ui != null)
             ui.SetCarouselMode(fp.isCenter);
 
-        // ✅ NEW: Set raycast target based on center position
         SetRaycastTarget(go, fp.isCenter);
 
         if (fp.isCenter)
+        {
             AddCenterItemEffects(go);
+            PlayCenterPunchAnimation(go); // ← Chỉ center mới vào đây
+        }
     }
-
 
     private void SetRaycastTarget(GameObject itemGameObject, bool isCenter)
     {
@@ -795,6 +838,34 @@ public class ShopController : MonoBehaviour
             outline.effectDistance = new Vector2(2f, 2f);
         }
         outline.enabled = true;
+    }
+
+    private void PlayCenterPunchAnimation(GameObject centerItem)
+    {
+        if (!enableCenterPunchAnimation) return;
+        if (centerItem == null) return;
+
+        Transform t = centerItem.transform;
+
+        // ✅ Kill tất cả tweens đang chạy trên transform này
+        t.DOKill(complete: false);
+
+        // ✅ Force set lại đúng scale của penta_center TRƯỚC KHI punch
+        // Không dùng centerScale trực tiếp mà đọc từ fixedPositions để nhất quán
+        float targetScale = fixedPositions.TryGetValue("penta_center", out var cp)
+            ? cp.scale
+            : centerScale;
+        t.localScale = Vector3.one * targetScale;
+
+        // ✅ Punch từ đúng scale gốc, chỉ trên object này
+        t.DOPunchScale(
+            punch: Vector3.one * centerPunchStrength,
+            duration: centerPunchDuration,
+            vibrato: centerPunchVibrato,
+            elasticity: centerPunchElasticity
+        )
+        .SetId("center_punch_" + centerItem.GetInstanceID()) // ← ID unique per object
+        .SetUpdate(true);  // ← Chạy kể cả khi Time.timeScale = 0 (UI safe)
     }
 
 
@@ -942,24 +1013,41 @@ public class ShopController : MonoBehaviour
         }
     }
 
+    /*    private void ClearShopItems()
+        {
+            foreach (Transform child in shopItemsContainer)
+            {
+                // Remove outline effects before destroying
+                var outline = child.GetComponent<Outline>();
+                if (outline != null)
+                    outline.enabled = false;
+                Destroy(child.gameObject);
+            }
+
+            spawnedItems.Clear();
+            if (MainMenuViewModel.CurrentShopData != null)
+            {
+                MainMenuViewModel.CurrentShopData.ClearCache();
+            }
+        }*/
+
     private void ClearShopItems()
     {
+        // ✅ Kill tất cả tweens có tag "center_punch_*" trước
+        DOTween.KillAll(complete: false);  // Hoặc dùng loop nếu muốn selective
+
         foreach (Transform child in shopItemsContainer)
         {
-            // Remove outline effects before destroying
+            child.DOKill(complete: false); // defensive kill
             var outline = child.GetComponent<Outline>();
-            if (outline != null)
-                outline.enabled = false;
+            if (outline != null) outline.enabled = false;
             Destroy(child.gameObject);
         }
 
         spawnedItems.Clear();
         if (MainMenuViewModel.CurrentShopData != null)
-        {
             MainMenuViewModel.CurrentShopData.ClearCache();
-        }
     }
-
     public void Close_BT_Shop()
     {
         shopButton.gameObject.SetActive(false);
