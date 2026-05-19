@@ -74,6 +74,12 @@ public class ShopController : MonoBehaviour
     [SerializeField] private float centerScale = 1.2f;
     [SerializeField] private float sideScale = 0.8f;
     [SerializeField] private float sideAlpha = 0.6f;
+
+    [SerializeField] private float scaleTweenDurationCenter = 0.2f;
+    [SerializeField] private float scaleTweenDurationSide = 0.2f;
+    [SerializeField] private Ease centerScaleEase = Ease.OutBack;
+    [SerializeField] private Ease sideScaleEase = Ease.OutQuad;
+
     [SerializeField] private RectTransform ParticipantsContainer;
     [SerializeField] private bool debugTouchArea = false;
 
@@ -695,17 +701,50 @@ public class ShopController : MonoBehaviour
         ApplyFixedPosition(go, currentCarouselItems.Count, itemIndex, carouselCenterIndex);
     }
 
+    /* private void ApplyFixedPosition(GameObject go, int totalItems, int itemIndex, int centerIndex)
+     {
+         InitializeFixedPositions();
+         string key = GetPositionKey(totalItems, itemIndex, centerIndex);
+         if (!fixedPositions.TryGetValue(key, out var fp)) return;
+
+         var rt = go.transform as RectTransform;
+         if (rt != null)
+             rt.anchoredPosition = new Vector2(fp.position.x, fp.position.y);
+
+         go.transform.localScale = Vector3.one * fp.scale;
+
+         var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
+         cg.alpha = fp.alpha;
+
+         var ui = go.GetComponent<ShopItemUI>();
+         if (ui != null)
+             ui.SetCarouselMode(fp.isCenter);
+
+         // ✅ NEW: Set raycast target based on center position
+         SetRaycastTarget(go, fp.isCenter);
+
+         if (fp.isCenter)
+             AddCenterItemEffects(go);
+     }
+ */
     private void ApplyFixedPosition(GameObject go, int totalItems, int itemIndex, int centerIndex)
     {
         InitializeFixedPositions();
+
         string key = GetPositionKey(totalItems, itemIndex, centerIndex);
-        if (!fixedPositions.TryGetValue(key, out var fp)) return;
+        if (!fixedPositions.TryGetValue(key, out var fp))
+            return;
 
         var rt = go.transform as RectTransform;
         if (rt != null)
+        {
             rt.anchoredPosition = new Vector2(fp.position.x, fp.position.y);
+            // THAY vì set trực tiếp scale:
+            // go.transform.localScale = Vector3.one * fp.scale;
 
-        go.transform.localScale = Vector3.one * fp.scale;
+            // Tween scale dựa trên data trong CarouselPosition
+            TweenItemScale(go.transform, fp.scale, fp.isCenter);
+        }
 
         var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
         cg.alpha = fp.alpha;
@@ -714,14 +753,19 @@ public class ShopController : MonoBehaviour
         if (ui != null)
             ui.SetCarouselMode(fp.isCenter);
 
-        // ✅ NEW: Set raycast target based on center position
         SetRaycastTarget(go, fp.isCenter);
 
         if (fp.isCenter)
+        {
             AddCenterItemEffects(go);
+        }
+        else
+        {
+            RemoveCenterItemEffects(go);
+        }
+        // Nếu muốn, có thể thêm RemoveCenterItemEffects cho non-center item
     }
 
-    // ✅ NEW: Helper method to control raycast targeting
     private void SetRaycastTarget(GameObject itemGameObject, bool isCenter)
     {
         // Find the button component in children
@@ -783,9 +827,23 @@ public class ShopController : MonoBehaviour
         return displayIndices;
     }
 
+    /*    private void AddCenterItemEffects(GameObject centerItem)
+        {
+            // Add outline or shadow effect
+            var outline = centerItem.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = centerItem.AddComponent<Outline>();
+                outline.effectColor = Color.yellow;
+                outline.effectDistance = new Vector2(2f, 2f);
+            }
+            outline.enabled = true;
+        }*/
+
     private void AddCenterItemEffects(GameObject centerItem)
     {
-        // Add outline or shadow effect
+        if (centerItem == null) return;
+
         var outline = centerItem.GetComponent<Outline>();
         if (outline == null)
         {
@@ -794,6 +852,19 @@ public class ShopController : MonoBehaviour
             outline.effectDistance = new Vector2(2f, 2f);
         }
         outline.enabled = true;
+
+        var rt = centerItem.transform as RectTransform;
+        if (rt != null)
+        {
+            rt.DOKill();
+
+            // Optional: đảm bảo start từ sideScale cho đẹp
+            // nếu bạn muốn “pop lên” rõ ràng
+            // rt.localScale = Vector3.one * sideScale;
+
+            rt.DOScale(centerScale, scaleTweenDurationCenter)
+              .SetEase(centerScaleEase);
+        }
     }
 
     // ✅ THÊM: Handle carousel item clicks
@@ -1081,7 +1152,39 @@ public class ShopController : MonoBehaviour
             }
         }
     }
+    private void TweenItemScale(Transform target, float targetScale, bool isCenter)
+    {
+        if (target == null) return;
 
+        // Kill tween cũ trên transform này để tránh chồng tween
+        target.DOKill();
+
+        float duration = isCenter ? scaleTweenDurationCenter : scaleTweenDurationSide;
+        Ease ease = isCenter ? centerScaleEase : sideScaleEase;
+
+        // Không set trực tiếp scale; để transform giữ scale hiện tại,
+        // DOTween sẽ lerp từ scale hiện tại -> targetScale
+        target.DOScale(targetScale, duration)
+              .SetEase(ease);
+    }
+
+    private void RemoveCenterItemEffects(GameObject item)
+    {
+        if (item == null) return;
+
+        var rt = item.transform as RectTransform;
+        if (rt != null)
+        {
+            rt.DOKill();
+            rt.DOScale(sideScale, scaleTweenDurationSide)
+              .SetEase(sideScaleEase);
+        }
+
+        // Nếu muốn tắt outline khi không center:
+        var outline = item.GetComponent<Outline>();
+        if (outline != null)
+            outline.enabled = false;
+    }
 }
 
 
