@@ -82,6 +82,9 @@ public class ShopController : MonoBehaviour
     [SerializeField] private int centerPunchVibrato = 3;        // số lần nẩy
     [SerializeField] private float centerPunchElasticity = 0.5f;
 
+    [Header("✅ External UI References (outside prefab)")]
+    [SerializeField] private TextMeshProUGUI externalPriceText;
+
     [SerializeField] private RectTransform ParticipantsContainer;
     [SerializeField] private bool debugTouchArea = false;
 
@@ -683,6 +686,7 @@ public class ShopController : MonoBehaviour
             carouselIndicator?.UpdateDots(carouselCenterIndex, currentCarouselItems.Count);
         }
     }
+
     private void SetupSlot(int slot, int itemIndex)
     {
         if (slot < 0 || slot >= spawnedItems.Count) return;
@@ -696,40 +700,17 @@ public class ShopController : MonoBehaviour
         if (globalDefaultSprite != null)
             ui.SetDefaultSprite(globalDefaultSprite);
 
+        // ✅ Inject TRƯỚC ui.Setup() — chỉ inject cho center slot (slot 4)
+        if (slot == 4 && externalPriceText != null)
+            ui.SetExternalPriceText(externalPriceText);
+
         ui.Setup(item, () => OnCarouselItemClicked(item, itemIndex));
+
         if (item.GetAPIData() != null)
             ui.SetAPIData(item.GetAPIData());
 
         ApplyFixedPosition(go, currentCarouselItems.Count, itemIndex, carouselCenterIndex);
     }
-
-    /*  private void ApplyFixedPosition(GameObject go, int totalItems, int itemIndex, int centerIndex)
-      {
-          InitializeFixedPositions();
-          string key = GetPositionKey(totalItems, itemIndex, centerIndex);
-          if (!fixedPositions.TryGetValue(key, out var fp)) return;
-
-          var rt = go.transform as RectTransform;
-          if (rt != null)
-              rt.anchoredPosition = new Vector2(fp.position.x, fp.position.y);
-
-          go.transform.localScale = Vector3.one * fp.scale;
-
-          var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
-          cg.alpha = fp.alpha;
-
-          var ui = go.GetComponent<ShopItemUI>();
-          if (ui != null)
-              ui.SetCarouselMode(fp.isCenter);
-
-          // ✅ NEW: Set raycast target based on center position
-          SetRaycastTarget(go, fp.isCenter);
-
-          if (fp.isCenter)
-              AddCenterItemEffects(go);
-              PlayCenterPunchAnimation(go);
-      }
-  */
 
     private void ApplyFixedPosition(GameObject go, int totalItems, int itemIndex, int centerIndex)
     {

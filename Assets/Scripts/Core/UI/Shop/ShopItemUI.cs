@@ -12,7 +12,8 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
     [Header("UI References")]
     [SerializeField] private Image iconImage;
     [SerializeField] private TextMeshProUGUI nameText;
-    [SerializeField] private TextMeshProUGUI priceText;
+    private TextMeshProUGUI priceText;
+    string pendingPriceText = "";
     //[SerializeField] private TextMeshProUGUI regularPriceText;
     [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private Button buyButton;
@@ -36,7 +37,22 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
     [SerializeField] private CanvasGroup detailCanvasGroup; // Để fade in/out smooth
     [SerializeField] private Image backgroundImage; // Background để highlight
     [SerializeField] private GameObject infoPanel; // Panel chứa text elements
-    //private bool isCarouselMode = false;
+                                                   //private bool isCarouselMode = false;
+
+    public void SetExternalPriceText(TextMeshProUGUI external)
+    {
+        priceText = external;
+
+        // ✅ Sản phẩm đầu tiên: Setup() đã chạy rồi nhưng priceText lúc đó null
+        // → apply pending value ngay tại đây
+        if (priceText != null && !string.IsNullOrEmpty(pendingPriceText))
+        {
+            priceText.text = pendingPriceText;
+            priceText.gameObject.SetActive(isCarouselCenter); // sync lại visibility
+        }
+    }
+
+
 
     public void Setup(ShopItem shopItem, Action buyCallback)
     {
@@ -45,16 +61,17 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
         // Setup UI
         nameText.text = shopItem.itemName;
         nameMarquee?.StartScroll();
-        priceText.text = $"{shopItem.price:N0} VND";
-      /*  if(shopItem.regularPrice > shopItem.price)
-        {
-            regularPriceText.gameObject.SetActive(true);
-            regularPriceText.text = $"{shopItem.regularPrice:N0} VND";
-        }
-        else
-        {
-            regularPriceText.gameObject.SetActive(false);
-        }   */
+        if (priceText != null)
+            priceText.text = $"{shopItem.price:N0} VND";
+        /*  if(shopItem.regularPrice > shopItem.price)
+          {
+              regularPriceText.gameObject.SetActive(true);
+              regularPriceText.text = $"{shopItem.regularPrice:N0} VND";
+          }
+          else
+          {
+              regularPriceText.gameObject.SetActive(false);
+          }   */
         descriptionText.text = shopItem.description;
 
         SetupItemIcon(shopItem);
