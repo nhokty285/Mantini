@@ -21,6 +21,7 @@ using DG.Tweening;
 /// ShopController (cartButton click)  → TutorialGamePlay.Instance?.OnCartOpened()
 /// CartUI (addSelectedToCart ok)      → TutorialGamePlay.Instance?.OnAddSelectedToCartSuccess()
 /// </summary>
+
 public class TutorialGamePlay : MonoBehaviour
 {
     public static TutorialGamePlay Instance { get; private set; }
@@ -36,18 +37,18 @@ public class TutorialGamePlay : MonoBehaviour
     public enum TutorialStep
     {
         None = -1,
-        Step1_Intro = 0,   // Companion chào + arrow dẫn đường đến NPC
-        Step1_WaitNPCClick = 1,   // Đã vào range → Spotlight NPC, chờ bấm
-        Step2_Chat = 2,   // Shop mở → Spotlight chat input
-        Step2_SelectItem = 3,   // Spotlight khu vực item
-        Step2_InProductDetail = 4,   // ProductDetailUI mở → hướng dẫn chọn size
-        Step2_WaitAddToCart = 5,   // Chờ player bấm "Thêm vào giỏ"
+        Step1_Intro = 0,            // Companion chào + arrow dẫn đường đến NPC
+        Step1_WaitNPCClick = 1,     // Đã vào range → Spotlight NPC, chờ bấm
+        Step2_Chat = 2,             // Shop mở → Spotlight chat input
+        Step2_SelectItem = 3,       // Spotlight khu vực item
+        Step2_InProductDetail = 4,  // ProductDetailUI mở → hướng dẫn chọn size
+        Step2_WaitAddToCart = 5,    // Chờ player bấm "Thêm vào giỏ"
         Step2_WaitBackToShop = 6,   // Nhắc player bấm Back về shop
-        Step2_WaitOpenBag = 7,   // Spotlight cartButton, chờ bấm
-        Step2_OpenBag = 8,   // CartUI mở → spotlight từng phần
-        Step3_Checkout = 9,   // Hướng dẫn checkout
-        Step3_Reward = 10,  // Hiện badge thành công
-        Step4_Contextual = 99,  // Tooltip tự khám phá
+        Step2_WaitOpenBag = 7,      // Spotlight cartButton, chờ bấm
+        Step2_OpenBag = 8,          // CartUI mở → spotlight từng phần
+        Step3_Checkout = 9,         // Hướng dẫn checkout
+        Step3_Reward = 10,          // Hiện badge thành công
+        Step4_Contextual = 99,      // Tooltip tự khám phá
         Completed = 100
     }
 
@@ -119,7 +120,7 @@ public class TutorialGamePlay : MonoBehaviour
     [SerializeField] private RectTransform cartItemListRect;
     [SerializeField] private Button addSelectedToCartBtn;
     [SerializeField] private RectTransform checkoutButtonRect;
-
+    [SerializeField] private Button closeCart;
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — MESSAGES (chỉnh từ Inspector, không cần vào code)
     // ════════════════════════════════════════════════════════════════════════
@@ -617,12 +618,12 @@ public class TutorialGamePlay : MonoBehaviour
             HideSpotlight();
         }
 
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.1f);
 
         if (cartItemListRect != null)
         {
             ShowSpotlight(cartItemListRect);
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(1.5f);
             HideSpotlight();
         }
         // Đợi OnAddSelectedToCartSuccess()

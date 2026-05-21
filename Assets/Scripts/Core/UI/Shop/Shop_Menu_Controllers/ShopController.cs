@@ -99,6 +99,7 @@ public class ShopController : MonoBehaviour
     [SerializeField] private int maxSwipeSteps = 3;             // tối đa 3 items/swipe
     [SerializeField] private float stepAnimDuration = 0.18f;   // mỗi step mất bao lâu
     [SerializeField] private bool enableMomentumSwipe = true;
+    private Vector3 _containerOriginalPos;
 
     // Runtime state - O(1) memory
     private bool _isAnimating = false;
@@ -128,6 +129,7 @@ public class ShopController : MonoBehaviour
         this.MainMenuViewModel = viewModel;
         SetupEventListeners();
         SetupInitialState();
+        _containerOriginalPos = shopItemsContainer.localPosition;
     }
 
     private void SetupEventListeners()
@@ -945,42 +947,27 @@ public class ShopController : MonoBehaviour
         }
     }
 
-    // ✅ THÊM: Smooth transition animation
-    /* private IEnumerator AnimateCarouselTransition()
-     {
-         float duration = 0.3f;
-         float elapsed = 0f;
-
-         while (elapsed < duration)
-         {
-             elapsed += Time.deltaTime;
-             float t = elapsed / duration;
-             t = Mathf.SmoothStep(0f, 1f, t);
-
-             if (t >= 0.5f && elapsed <= duration * 0.6f)
-             {
-                 // Update layout at midpoint
-                 UpdateCarouselDisplay();
-                 break;
-             }
-
-             yield return null;
-         }
-     }*/
-
     private IEnumerator AnimateCarouselTransition(int direction, float duration)
     {
-        // 1. Snap items về target logical positions trước
+        // 1. Reset container về origin TRƯỚC (tránh drift tích lũy)
+        shopItemsContainer.DOKill(complete: false);
+        shopItemsContainer.localPosition = _containerOriginalPos;
+
+        // 2. Snap items về vị trí đúng
         UpdateCarouselDisplay();
 
-        // 2. Dùng DOTween punch nhẹ trên container để tạo feel
-        //    O(1): chỉ 1 DOTween tween duy nhất
-        float punchX = direction * -15f; // ngược chiều swipe = natural feel
+        // 3. Slide nhẹ: di chuyển từ offset → 0 (thay vì punch container)
+        float offsetX = direction * -30f;
+        shopItemsContainer.localPosition = new Vector3(offsetX, 0f, 0f);
         shopItemsContainer
-            .DOPunchPosition(new Vector3(punchX, 0f, 0f), duration, 1, 0.5f)
+            .DOLocalMoveX(0f, duration)
+            .SetEase(Ease.OutCubic)
             .SetUpdate(true);
 
         yield return new WaitForSeconds(duration);
+
+        // 4. Đảm bảo về đúng origin sau animation
+        shopItemsContainer.localPosition = Vector3.zero;
     }
 
     private enum SwipeDirection { Left, Right }
@@ -1108,8 +1095,8 @@ public class ShopController : MonoBehaviour
 
     private void ClearShopItems()
     {
-        // ✅ Kill tất cả tweens có tag "center_punch_*" trước
-        DOTween.KillAll(complete: false);  // Hoặc dùng loop nếu muốn selective
+        shopItemsContainer.DOKill(complete: false);
+        shopItemsContainer.localPosition = _containerOriginalPos;  // Hoặc dùng loop nếu muốn selective
 
         foreach (Transform child in shopItemsContainer)
         {
