@@ -80,7 +80,7 @@ public class TutorialGamePlay : MonoBehaviour
     [SerializeField] private Button companionContinueButton;
     [SerializeField] private Sprite tutorialCompanionSprite;
     [SerializeField] private float typewriterSpeed = 0.025f;
-
+    [SerializeField] private TextMeshProUGUI progressText;
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — SPOTLIGHT
     // ════════════════════════════════════════════════════════════════════════
@@ -121,6 +121,10 @@ public class TutorialGamePlay : MonoBehaviour
     [SerializeField] private Button addSelectedToCartBtn;
     [SerializeField] private RectTransform checkoutButtonRect;
     [SerializeField] private Button closeCart;
+
+    [Header("══════ Blockable Buttons ══════")]
+    [SerializeField] private Button[] allBlockableButtons;
+
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — MESSAGES (chỉnh từ Inspector, không cần vào code)
     // ════════════════════════════════════════════════════════════════════════
@@ -306,22 +310,25 @@ public class TutorialGamePlay : MonoBehaviour
 
         DebugLog($"SetStep → {step}");
         UpdateDebugUI();
-
+        UpdateProgressText(step);
 
         SetSpotlightForStep(step);
 
         switch (step)
         {
-            case TutorialStep.Step1_Intro:          StartCoroutine(RunStep1());                 break;
-            case TutorialStep.Step1_WaitNPCClick:    /* đợi OnPlayerClickedNPC() */             break;
+            case TutorialStep.Step1_Intro:          StartCoroutine(RunStep1());
+                                                    SetAllowedButtons();                        break;
+            case TutorialStep.Step1_WaitNPCClick:    /* đợi OnPlayerClickedNPC() */
+                                                    SetAllowedButtons();                        break;
             case TutorialStep.Step2_Chat:           StartCoroutine(RunStep2_Chat());            break;
             case TutorialStep.Step2_SelectItem:     StartCoroutine(RunStep2_SelectItem());      break;
             case TutorialStep.Step2_InProductDetail:StartCoroutine(RunStep2_InProductDetail()); break;
             case TutorialStep.Step2_WaitAddToCart:   /* đợi OnAddToCartSuccess() */             break;
             case TutorialStep.Step2_WaitBackToShop: StartCoroutine(RunStep2_WaitBackToShop());  break;
             case TutorialStep.Step2_WaitOpenBag:    StartCoroutine(RunStep2_WaitOpenBag());     break;
-            case TutorialStep.Step2_OpenBag:        StartCoroutine(RunStep2_OpenBag());         break;
-            case TutorialStep.Step3_Checkout:       StartCoroutine(RunStep3_Checkout());        break;
+            case TutorialStep.Step2_OpenBag:        StartCoroutine(RunStep2_OpenBag());
+                                                    SetAllowedButtons();                        break;
+            case TutorialStep.Step3_Checkout:       StartCoroutine(RunStep3_Checkout());        break;                             
             case TutorialStep.Step3_Reward:         StartCoroutine(RunStep3_Reward());          break;
             case TutorialStep.Step4_Contextual:     ActivateContextualTooltips();               break;
             case TutorialStep.Completed:            CompleteTutorial();                         break;
@@ -751,6 +758,41 @@ public class TutorialGamePlay : MonoBehaviour
         _continuePressed = false;
     }
 
+    private void SetAllowedButtons(params Button[] allowed)
+    {
+        if (allBlockableButtons == null) return;
+        var allowedSet = new System.Collections.Generic.HashSet<Button>(allowed);
+        foreach (var btn in allBlockableButtons)
+        {
+            if (btn == null) continue;
+            btn.interactable = allowedSet.Contains(btn);
+        }
+    }
+
+    private void UpdateProgressText(TutorialStep step)
+    {
+        if (progressText == null) return;
+
+        string text = step switch
+        {
+            TutorialStep.Step1_Intro => "📍 Bước 1/3: Di chuyển đến NPC",
+            TutorialStep.Step1_WaitNPCClick => "📍 Bước 1/3: Bấm vào NPC",
+            TutorialStep.Step2_Chat => "💬 Bước 2/3: Chat với AI",
+            TutorialStep.Step2_SelectItem => "🛍️ Bước 2/3: Chọn sản phẩm",
+            TutorialStep.Step2_InProductDetail => "👟 Bước 2/3: Chọn size",
+            TutorialStep.Step2_WaitAddToCart => "🛒 Bước 2/3: Thêm vào giỏ",
+            TutorialStep.Step2_WaitBackToShop => "↩️ Bước 2/3: Quay lại Shop",
+            TutorialStep.Step2_WaitOpenBag => "👜 Bước 2/3: Mở giỏ hàng",
+            TutorialStep.Step2_OpenBag => "📦 Bước 2/3: Chọn đơn hàng",
+            TutorialStep.Step3_Checkout => "💳 Bước 3/3: Thanh toán",
+            TutorialStep.Step3_Reward => "🏆 Hoàn thành!",
+            _ => ""
+        };
+
+        progressText.text = text;
+        progressText.gameObject.SetActive(text.Length > 0);
+    }
+
     #endregion
 
     // ════════════════════════════════════════════════════════════════════════
@@ -849,6 +891,10 @@ public class TutorialGamePlay : MonoBehaviour
         chatSendButton?.gameObject.SetActive(true);
         var sr = shopScrollViewRect?.GetComponent<ScrollRect>();
         if (sr != null) sr.enabled = true;
+
+        if (allBlockableButtons != null)
+            foreach (var btn in allBlockableButtons)
+                if (btn != null) btn.interactable = true;
     }
 
     private void SetCartUIInteractableExcept(Button allowed)
