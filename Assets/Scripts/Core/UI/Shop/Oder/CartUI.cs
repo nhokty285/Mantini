@@ -181,6 +181,7 @@ public class CartUI : MonoBehaviour
         {
             if (moreObject != null)
                 moreObject.SetActive(true);
+            selectAllToCartButton.onClick.Invoke(); // Tự động bật select mode khi mở menu "More"
         });
         closeMoreButton?.onClick.AddListener(() =>
         {

@@ -108,8 +108,9 @@ public class TutorialGamePlay : MonoBehaviour
     [SerializeField] private RectTransform shopItemsContainerRect;
     [SerializeField] private RectTransform shopScrollViewRect;
     [SerializeField] private Button cartButton;
-    [SerializeField] private GameObject cartPanel;
+    [SerializeField] private RectTransform cartPanel;
     [SerializeField] private GameObject productDetailPanel;
+    [SerializeField] private RectTransform moreButton;
 
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — CART UI
@@ -156,7 +157,7 @@ public class TutorialGamePlay : MonoBehaviour
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step2_Bag =
-        "🛒 Ngon lắm! Bây giờ hãy bấm vào nút\nTÚI HÀNG (🛒) để xem giỏ hàng của bạn!";
+        "🛒 Ngon lắm! Bây giờ hãy bấm vào nút\nTÚI (🛒) để xem giỏ hàng của bạn!";
 
     [TextArea(2, 4)]
     [SerializeField]
@@ -572,11 +573,12 @@ public class TutorialGamePlay : MonoBehaviour
     private IEnumerator RunStep2_WaitOpenBag()
     {
         //HideAllTutorialUI();
-        yield return ShowCompanionMessage(msg_Step2_Bag, wait: true);
-        yield return new WaitForSeconds(2f);
-        HideCompanionPanel();   
         if (cartButton != null)
             ShowSpotlight(cartButton.GetComponent<RectTransform>());
+        yield return ShowCompanionMessage(msg_Step2_Bag, wait: true);
+        yield return new WaitForSeconds(1f);
+        HideCompanionPanel();
+
     }
 
     /// <summary>Hook → ShopController (cartButton onClick → cartPanel active)</summary>
@@ -595,25 +597,33 @@ public class TutorialGamePlay : MonoBehaviour
 
     private IEnumerator RunStep2_OpenBag()
     {
-        yield return null; // Đợi CartUI render
-
+        //yield return null; // Đợi CartUI render
+        HideSpotlight();
         yield return ShowCompanionMessage(msg_Step2_Cart, wait: true);
-
+        yield return new WaitForSeconds(2f);
         // Spotlight 1: danh sách item
-        if (cartItemListRect != null)
+        if (moreButton != null)
         {
-            ShowSpotlight(cartItemListRect);
-            yield return new WaitForSeconds(2f);
+            ShowSpotlight(moreButton);
+            yield return new WaitUntil(() =>
+            {
+#if UNITY_ANDROID || UNITY_IOS
+                return Input.touchCount > 0 &&
+                       Input.GetTouch(0).phase == TouchPhase.Began;
+#else
+    return Input.GetMouseButtonDown(0);
+#endif
+            });
             HideSpotlight();
         }
 
         yield return new WaitForSeconds(0.3f);
 
-        // Spotlight 2: nút thêm đơn
-        if (addSelectedToCartBtn != null)
+        if (cartItemListRect != null)
         {
-            ShowSpotlight(addSelectedToCartBtn.GetComponent<RectTransform>());
-            SetCartUIInteractableExcept(addSelectedToCartBtn);
+            ShowSpotlight(cartItemListRect);
+            yield return new WaitForSeconds(1f);
+            HideSpotlight();
         }
         // Đợi OnAddSelectedToCartSuccess()
     }

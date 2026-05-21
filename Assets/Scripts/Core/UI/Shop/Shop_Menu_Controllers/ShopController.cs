@@ -94,6 +94,16 @@ public class ShopController : MonoBehaviour
     [SerializeField] private float maxSwipeTime = 0.5f;
     [SerializeField] private bool debugSwipe = false;
 
+    [Header("✅ Dynamic Multi-Step Swipe")]
+    [SerializeField] private float swipeStepThreshold = 80f;   // pixel/step
+    [SerializeField] private int maxSwipeSteps = 3;             // tối đa 3 items/swipe
+    [SerializeField] private float stepAnimDuration = 0.18f;   // mỗi step mất bao lâu
+    [SerializeField] private bool enableMomentumSwipe = true;
+
+    // Runtime state - O(1) memory
+    private bool _isAnimating = false;
+    private float _accumulatedDelta = 0f;  // tracking drag liên tục
+
     // Private variables
     private MainMenuViewModel MainMenuViewModel;
     private BaseNPC currentInteractingNPC;
@@ -273,30 +283,97 @@ public class ShopController : MonoBehaviour
     }
 
     // ✅ THÊM: Process swipe movement
+    /*   private void ProcessSwipeMovement(Vector2 currentPosition)
+       {
+           if (swipeProcessed) return;
+
+           Vector2 swipeDelta = currentPosition - swipeStartPos;
+           float swipeDistance = Mathf.Abs(swipeDelta.x);
+
+           // Check if swipe distance is sufficient
+           if (swipeDistance >= minSwipeDistance)
+           {
+               // Determine swipe direction
+               if (swipeDelta.x > 0)
+               {
+                   // Swipe right - go to previous item
+                   OnSwipeRight();
+               }
+               else
+               {
+                   // Swipe left - go to next item
+                   OnSwipeLeft();
+               }
+               swipeProcessed = true;
+               AudioManager.Instance.PlaySFXOneShot("Swipe");
+           }
+       }*/
+
     private void ProcessSwipeMovement(Vector2 currentPosition)
     {
         if (swipeProcessed) return;
+        if (_isAnimating && !enableMomentumSwipe) return;
 
         Vector2 swipeDelta = currentPosition - swipeStartPos;
-        float swipeDistance = Mathf.Abs(swipeDelta.x);
+        float rawDeltaX = swipeDelta.x;
+        float absDelta = Mathf.Abs(rawDeltaX);
 
-        // Check if swipe distance is sufficient
-        if (swipeDistance >= minSwipeDistance)
+        // Cộng dồn delta để tracking drag liên tục
+        _accumulatedDelta = rawDeltaX;
+
+        if (absDelta < minSwipeDistance) return;
+
+        // ─── Tính số steps dựa vào velocity của drag ───
+        // O(1): đơn thuần là phép chia
+        int rawSteps = Mathf.FloorToInt(absDelta / swipeStepThreshold);
+        int steps = Mathf.Clamp(rawSteps, 1, maxSwipeSteps);
+
+        bool goLeft = rawDeltaX < 0;
+
+        // Commit swipe ngay để block double-fire
+        swipeProcessed = true;
+        _accumulatedDelta = 0f;
+        AudioManager.Instance.PlaySFXOneShot("Swipe");
+
+        // ─── Animate multi-step, O(k) với k <= maxSwipeSteps ───
+        StartCoroutine(ExecuteMultiStepSwipe(goLeft ? -1 : 1, steps));
+    }
+
+    private IEnumerator ExecuteMultiStepSwipe(int direction, int steps)
+    {
+        _isAnimating = true;
+
+        for (int i = 0; i < steps; i++)
         {
-            // Determine swipe direction
-            if (swipeDelta.x > 0)
+            bool canContinue = direction < 0
+                ? carouselCenterIndex < currentCarouselItems.Count - 1
+                : carouselCenterIndex > 0;
+
+            if (!canContinue)
             {
-                // Swipe right - go to previous item
-                OnSwipeRight();
+                // Bounce effect khi chạm biên
+                if (i == 0)
+                    StartCoroutine(ShowBounceEffect(
+                        direction < 0 ? SwipeDirection.Left : SwipeDirection.Right));
+                break;
             }
-            else
-            {
-                // Swipe left - go to next item
-                OnSwipeLeft();
-            }
-            swipeProcessed = true;
-            AudioManager.Instance.PlaySFXOneShot("Swipe");
+
+            // Advance index
+            carouselCenterIndex = direction < 0
+                ? carouselCenterIndex + 1
+                : carouselCenterIndex - 1;
+
+            // Animate slide với DOTween - smooth hơn SmoothStep
+            yield return StartCoroutine(AnimateCarouselTransition(direction, stepAnimDuration));
+
+            // Haptic mỗi step (mobile only)
+#if UNITY_ANDROID || UNITY_IOS
+            if (SystemInfo.supportsVibration && i == 0)
+                Handheld.Vibrate();
+#endif
         }
+
+        _isAnimating = false;
     }
 
     // End swipe detection
@@ -481,7 +558,7 @@ public class ShopController : MonoBehaviour
         if (carouselCenterIndex > 0)
         {
             carouselCenterIndex--;
-            StartCoroutine(AnimateCarouselTransition());
+            StartCoroutine(AnimateCarouselTransition(-1, 0.3f));
         }
     }
 
@@ -490,7 +567,7 @@ public class ShopController : MonoBehaviour
         if (carouselCenterIndex < currentCarouselItems.Count - 1)
         {
             carouselCenterIndex++;
-            StartCoroutine(AnimateCarouselTransition());
+            StartCoroutine(AnimateCarouselTransition(1, 0.3f));
         }
     }
 
@@ -850,6 +927,8 @@ public class ShopController : MonoBehaviour
     }
 
 
+
+
     // ✅ THÊM: Handle carousel item clicks
     private void OnCarouselItemClicked(ShopItem shopItem, int itemIndex)
     {
@@ -862,31 +941,46 @@ public class ShopController : MonoBehaviour
         {
             // Side item clicked - move to center
             carouselCenterIndex = itemIndex;
-            StartCoroutine(AnimateCarouselTransition());
+            StartCoroutine(AnimateCarouselTransition(1, 0.3f));
         }
     }
 
     // ✅ THÊM: Smooth transition animation
-    private IEnumerator AnimateCarouselTransition()
+    /* private IEnumerator AnimateCarouselTransition()
+     {
+         float duration = 0.3f;
+         float elapsed = 0f;
+
+         while (elapsed < duration)
+         {
+             elapsed += Time.deltaTime;
+             float t = elapsed / duration;
+             t = Mathf.SmoothStep(0f, 1f, t);
+
+             if (t >= 0.5f && elapsed <= duration * 0.6f)
+             {
+                 // Update layout at midpoint
+                 UpdateCarouselDisplay();
+                 break;
+             }
+
+             yield return null;
+         }
+     }*/
+
+    private IEnumerator AnimateCarouselTransition(int direction, float duration)
     {
-        float duration = 0.3f;
-        float elapsed = 0f;
+        // 1. Snap items về target logical positions trước
+        UpdateCarouselDisplay();
 
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            t = Mathf.SmoothStep(0f, 1f, t);
+        // 2. Dùng DOTween punch nhẹ trên container để tạo feel
+        //    O(1): chỉ 1 DOTween tween duy nhất
+        float punchX = direction * -15f; // ngược chiều swipe = natural feel
+        shopItemsContainer
+            .DOPunchPosition(new Vector3(punchX, 0f, 0f), duration, 1, 0.5f)
+            .SetUpdate(true);
 
-            if (t >= 0.5f && elapsed <= duration * 0.6f)
-            {
-                // Update layout at midpoint
-                UpdateCarouselDisplay();
-                break;
-            }
-
-            yield return null;
-        }
+        yield return new WaitForSeconds(duration);
     }
 
     private enum SwipeDirection { Left, Right }
