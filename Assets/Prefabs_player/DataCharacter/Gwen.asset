@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Gwen
   m_EditorClassIdentifier: 
   characterName: Gwen
-  description: 
+  description: "T\xEDnh c\xE1ch: D\u1ECBu d\xE0ng, quy\u1EBFt \u0111o\xE1n\\nGi\u1EDBi
+    t\xEDnh: N\u1EEF\\n\u0110\u1EB7c \u0111i\u1EC3m: Th\u1EDDi trang n\u0103ng \u0111\u1ED9ng"
   previewPrefab: {fileID: 125603757700432931, guid: c3c4996a31919c343a256de02eb70d26, type: 3}
   characterIcon: {fileID: 21300000, guid: 1c8fe0d92ced15a4ba86c0474d0f3c99, type: 3}
   gameplayPrefab: {fileID: 2560452037557319963, guid: 6a82decdb8cfebd47a3239d7a88e6ffe, type: 3}

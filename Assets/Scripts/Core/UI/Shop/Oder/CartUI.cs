@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class CartUI : MonoBehaviour
+public class CartUI : MonoBehaviour 
 {
     [SerializeField] private GameObject moreObject;
     [SerializeField] private Button moreButton;
@@ -181,13 +181,16 @@ public class CartUI : MonoBehaviour
         {
             if (moreObject != null)
                 moreObject.SetActive(true);
-            selectAllToCartButton.onClick.Invoke(); // Tự động bật select mode khi mở menu "More"
+            // Gọi logic trực tiếp thay vì Invoke()
+            SetSelectAllButtonActive(true);
+            OnSelectAllToCartClicked();
         });
         closeMoreButton?.onClick.AddListener(() =>
         {
             if (moreObject != null)
                 moreObject.SetActive(false);
             ExitSelectModeVisualOnly();
+            ResetSelectAllButtonVisual();
         });
         checkoutButton?.onClick.AddListener(InputInfomation);
         continueShopButton?.onClick.AddListener(CloseCartPanel);
@@ -227,6 +230,20 @@ public class CartUI : MonoBehaviour
         });
     }
 
+    private void SetSelectAllButtonActive(bool active)
+    {
+        var colors = selectAllToCartButton.colors;
+        selectAllToCartButton.targetGraphic.color = active
+            ? colors.selectedColor  // hoặc colors.pressedColor tùy visual bạn muốn
+            : colors.normalColor;
+    }
+
+    private void ResetSelectAllButtonVisual()
+    {
+        if (selectAllToCartButton == null) return;
+        selectAllToCartButton.targetGraphic.color = selectAllToCartButton.colors.normalColor;
+    }
+
     private void OnSelectAllToCartClicked()
     {
 
@@ -247,6 +264,7 @@ public class CartUI : MonoBehaviour
 
         UpdateTotalAmount();
     }
+
 
     private void RefreshHighlightsFromSelection()
     {
@@ -509,6 +527,7 @@ public class CartUI : MonoBehaviour
 
     private void CloseCartPanel()
     {
+        ExitSelectModeVisualOnly();
         if (!shopController.activeInHierarchy && cartPanel.activeInHierarchy)
         {
             cartPanel.SetActive(false);

@@ -108,7 +108,7 @@ public class TutorialGamePlay : MonoBehaviour
     [SerializeField] private Button chatSendButton;
     [SerializeField] private RectTransform shopItemsContainerRect;
     [SerializeField] private RectTransform shopScrollViewRect;
-    [SerializeField] private Button cartButton;
+    [SerializeField] private Button quickCartButton;
     [SerializeField] private RectTransform cartPanel;
     [SerializeField] private GameObject productDetailPanel;
     [SerializeField] private RectTransform moreButton;
@@ -196,6 +196,7 @@ public class TutorialGamePlay : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        HideAllTutorialUI();
     }
 
     private void Start()
@@ -325,7 +326,8 @@ public class TutorialGamePlay : MonoBehaviour
             case TutorialStep.Step2_InProductDetail:StartCoroutine(RunStep2_InProductDetail()); break;
             case TutorialStep.Step2_WaitAddToCart:   /* đợi OnAddToCartSuccess() */             break;
             case TutorialStep.Step2_WaitBackToShop: StartCoroutine(RunStep2_WaitBackToShop());  break;
-            case TutorialStep.Step2_WaitOpenBag:    StartCoroutine(RunStep2_WaitOpenBag());     break;
+            case TutorialStep.Step2_WaitOpenBag:    SetAllowedButtons(quickCartButton);
+                                                    StartCoroutine(RunStep2_WaitOpenBag());     break;
             case TutorialStep.Step2_OpenBag:        StartCoroutine(RunStep2_OpenBag());
                                                     SetAllowedButtons();                        break;
             case TutorialStep.Step3_Checkout:       StartCoroutine(RunStep3_Checkout());        break;                             
@@ -366,22 +368,7 @@ public class TutorialGamePlay : MonoBehaviour
 
     private IEnumerator RunStep1()
     {
-        /*  HideAllTutorialUI();
-
-          // Phase A: Companion chào, không cần bấm Continue
-          yield return ShowCompanionMessage(msg_Step1_Intro, waitForContinue: false);
-          yield return new WaitForSeconds(3f);
-          HideCompanionPanel();
-
-          // Phase B: Arrow xoay về phía NPC liên tục
-          if (arrowNPC != null)
-          {
-              arrowNPC.SetActive(true);
-              _arrowDirectionRoutine = StartCoroutine(UpdateArrowDirectionToNPC());
-          }*/
-
-        HideAllTutorialUI();
-
+        spotlightOverlay.SetActive(true); 
         // ── Phase A: Companion chào (3 giây, không bấm Continue) ──────────────
         yield return ShowCompanionMessage(msg_Step1_Intro, wait: false);
         yield return new WaitForSeconds(2f);
@@ -508,12 +495,11 @@ public class TutorialGamePlay : MonoBehaviour
 
     private IEnumerator RunStep2_SelectItem()
     {
-        HideAllTutorialUI();
         ShowSpotlight(shopItemsContainerRect);
         yield return ShowCompanionMessage(msg_Step2_Item, wait: true);
         yield return new WaitForSeconds(1f);
         chatSendButton?.gameObject.SetActive(false);
-        if (cartButton != null) cartButton.interactable = false;
+        if (quickCartButton != null) quickCartButton.interactable = false;
     }
 
     /// <summary>Hook → ShopController.OnProductLinkCallback()</summary>
@@ -533,7 +519,8 @@ public class TutorialGamePlay : MonoBehaviour
 
     private IEnumerator RunStep2_InProductDetail()
     {
-        HideAllTutorialUI();
+        
+        spotlightOverlay.gameObject.SetActive(true);
         yield return ShowCompanionMessage(msg_Step2_Size, wait: true);
         // Chuyển state thủ công vì không gọi SetStep (tránh loop)
         _step = TutorialStep.Step2_WaitAddToCart;
@@ -558,9 +545,11 @@ public class TutorialGamePlay : MonoBehaviour
 
     private IEnumerator RunStep2_WaitBackToShop()
     {
+        spotlightOverlay.gameObject.SetActive(true);
         yield return ShowCompanionMessage(msg_Step2_Back, wait: false);
         yield return new WaitForSeconds(2f);
         HideCompanionPanel();
+        HideSpotlight();
         // Companion hiện, chờ player tự bấm Back
     }
 
@@ -581,12 +570,10 @@ public class TutorialGamePlay : MonoBehaviour
     private IEnumerator RunStep2_WaitOpenBag()
     {
         //HideAllTutorialUI();
-        if (cartButton != null)
-            ShowSpotlight(cartButton.GetComponent<RectTransform>());
+        ShowSpotlight(quickCartButton.GetComponent<RectTransform>());
         yield return ShowCompanionMessage(msg_Step2_Bag, wait: true);
         yield return new WaitForSeconds(1f);
-        HideCompanionPanel();
-
+        // Chờ player bấm vào cartButton → OnCartOpened()
     }
 
     /// <summary>Hook → ShopController (cartButton onClick → cartPanel active)</summary>
@@ -606,9 +593,9 @@ public class TutorialGamePlay : MonoBehaviour
     private IEnumerator RunStep2_OpenBag()
     {
         //yield return null; // Đợi CartUI render
-        HideSpotlight();
+        spotlightOverlay.gameObject.SetActive(true);
         yield return ShowCompanionMessage(msg_Step2_Cart, wait: true);
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1.3f);
         // Spotlight 1: danh sách item
         if (moreButton != null)
         {
@@ -653,6 +640,7 @@ public class TutorialGamePlay : MonoBehaviour
 
     private IEnumerator RunStep3_Checkout()
     {
+        spotlightOverlay.gameObject.SetActive(true);
         yield return ShowCompanionMessage(msg_Step3, wait: false);
         yield return new WaitForSeconds(2f);
         HideAllTutorialUI();
@@ -879,7 +867,7 @@ public class TutorialGamePlay : MonoBehaviour
 
     private void SetShopUIInteractableExcept(params Object[] _)
     {
-        if (cartButton != null) cartButton.interactable = false;
+        if (quickCartButton != null) quickCartButton.interactable = false;
         var sr = shopScrollViewRect?.GetComponent<ScrollRect>();
         if (sr != null) sr.enabled = false;
         productDetailPanel?.SetActive(false);
@@ -887,7 +875,7 @@ public class TutorialGamePlay : MonoBehaviour
 
     private void RestoreAllShopUI()
     {
-        if (cartButton != null) cartButton.interactable = true;
+        if (quickCartButton != null) quickCartButton.interactable = true;
         chatSendButton?.gameObject.SetActive(true);
         var sr = shopScrollViewRect?.GetComponent<ScrollRect>();
         if (sr != null) sr.enabled = true;
