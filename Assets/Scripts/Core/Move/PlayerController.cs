@@ -42,8 +42,14 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
+        // Lấy refresh rate thật của màn hình
+        var refreshRate = (int)Screen.currentResolution.refreshRateRatio.value;
+        // Unity 2022.2+ dùng refreshRateRatio, cũ hơn dùng Screen.currentResolution.refreshRate
+        // Ép target = ước số của refresh rate để frame pacing đều
+        if (refreshRate >= 120) Application.targetFrameRate = 60; // 1 frame / 2 vblank
+        else if (refreshRate >= 90) Application.targetFrameRate = 45; // hoặc 90
+        else Application.targetFrameRate = 60;
     }
     void Start()
     {
@@ -124,8 +130,10 @@ public class PlayerController : MonoBehaviour
         Quaternion targetRot = Quaternion.LookRotation(moveDir);
         rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime));
 
-        Vector3 newPosition = rb.position + moveDir * moveSpeed * Time.fixedDeltaTime;
-        rb.MovePosition(newPosition);
+        Vector3 targetVelocity = new Vector3(moveDir.x * moveSpeed, rb.linearVelocity.y, moveDir.z * moveSpeed);
+
+        // Tính lực cần thêm để đạt targetVelocity (ForceMode.VelocityChange bỏ qua mass)
+        rb.AddForce(targetVelocity - rb.linearVelocity, ForceMode.VelocityChange);
 
 
     }

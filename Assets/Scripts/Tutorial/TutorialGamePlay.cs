@@ -81,6 +81,7 @@ public class TutorialGamePlay : MonoBehaviour
     [SerializeField] private Sprite tutorialCompanionSprite;
     [SerializeField] private float typewriterSpeed = 0.025f;
     [SerializeField] private TextMeshProUGUI progressText;
+    [SerializeField] private DialogueAudioSync audioSync;
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — SPOTLIGHT
     // ════════════════════════════════════════════════════════════════════════
@@ -196,6 +197,7 @@ public class TutorialGamePlay : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        audioSync = FindAnyObjectByType<DialogueAudioSync>();
         HideAllTutorialUI();
     }
 
@@ -682,8 +684,7 @@ public class TutorialGamePlay : MonoBehaviour
     // ════════════════════════════════════════════════════════════════════════
     #region COMPANION HELPERS
     // ════════════════════════════════════════════════════════════════════════
-
-    private IEnumerator ShowCompanionMessage(string msg, bool wait, bool showPanel = true)
+    /*private IEnumerator ShowCompanionMessage(string msg, bool wait, bool showPanel = true)
     {
         if (companionPanel == null) yield break;
         companionPanel.SetActive(showPanel);
@@ -704,6 +705,7 @@ public class TutorialGamePlay : MonoBehaviour
             for (int i = 0; i <= msg.Length; i++)
             {
                 companionChatText.maxVisibleCharacters = i;
+                if (audioSync != null) audioSync.StartTypewriter(companionChatText, msg);
                 yield return new WaitForSeconds(typewriterSpeed);
             }
         }
@@ -721,26 +723,70 @@ public class TutorialGamePlay : MonoBehaviour
             companionContinueButton.gameObject.SetActive(false);
             yield return new WaitForSeconds(autoHideDelay);
         }
-        /*        if (wait)
-                {
-                    _continuePressed = false;                              // ← fix bug: reset về false TRƯỚC
-                    companionContinueButton?.gameObject.SetActive(true);
-                    yield return new WaitUntil(() => _continuePressed);   // ← giờ mới chờ thật sự
-                    HideCompanionPanel();
+    }*/
 
+    private IEnumerator ShowCompanionMessage(string msg, bool wait, bool showPanel = true)
+    {
+        if (companionPanel == null)
+            yield break;
+
+        companionPanel.SetActive(showPanel);
+
+        Vector3 originalScale = companionImage.transform.localScale;
+        companionImage.transform.localScale = Vector3.zero;
+        companionImage.transform.DOScale(originalScale, 0.5f).SetEase(Ease.OutBack);
+
+        if (companionImage != null && tutorialCompanionSprite != null)
+            companionImage.sprite = tutorialCompanionSprite;
+
+        if (companionChatText != null)
+        {
+            companionChatText.text = msg;
+            companionChatText.maxVisibleCharacters = 0;
+
+            for (int i = 0; i <= msg.Length; i++)
+            {
+                companionChatText.maxVisibleCharacters = i;
+
+                if (i < msg.Length)
+                {
+                    char currentChar = msg[i];
+                    bool shouldPlayTypewriter =
+                        !char.IsWhiteSpace(currentChar) &&
+                        !char.IsPunctuation(currentChar);
+
+                    if (shouldPlayTypewriter && audioSync != null && audioSync.typewriterSound != null)
+                    {
+                        AudioManager.Instance?.PlayTypewriter(audioSync.typewriterSound, 0.2f);
+                    }
+
+                    yield return new WaitForSeconds(typewriterSpeed);
                 }
-                else
-                {
-                    companionContinueButton?.gameObject.SetActive(false);
-                  //  yield return new WaitForSeconds(autoHideDelay);       // ← đợi 1s rồi tự tắt
+            }
 
-                }*/
+            AudioManager.Instance?.StopTypewriter();
+        }
+
+        if (wait)
+        {
+            companionContinueButton.gameObject.SetActive(true);
+            _continuePressed = true;
+            yield return new WaitUntil(() => _continuePressed);
+            HideCompanionPanel();
+            HideAllTutorialUI();
+        }
+        else
+        {
+            companionContinueButton.gameObject.SetActive(false);
+            yield return new WaitForSeconds(autoHideDelay);
+        }
     }
 
     private void OnContinuePressed() => _continuePressed = true;
 
     private void HideCompanionPanel()
     {
+        AudioManager.Instance?.StopTypewriter();
         companionPanel?.SetActive(false);
         companionContinueButton?.gameObject.SetActive(false);
         _continuePressed = false;

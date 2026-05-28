@@ -90,14 +90,16 @@ public class ShopController : MonoBehaviour
 
     [Header("✅ NEW: Swipe Control Settings")]
     [SerializeField] private bool enableSwipeControl = true;
-    [SerializeField] private float minSwipeDistance = 50f;
+    [SerializeField] private float minSwipeDistance = 40f;
     [SerializeField] private float maxSwipeTime = 0.5f;
     [SerializeField] private bool debugSwipe = false;
 
     [Header("✅ Dynamic Multi-Step Swipe")]
-    [SerializeField] private float swipeStepThreshold = 80f;   // pixel/step
-    [SerializeField] private int maxSwipeSteps = 3;             // tối đa 3 items/swipe
-    [SerializeField] private float stepAnimDuration = 0.18f;   // mỗi step mất bao lâu
+    [SerializeField] private float velocityStep1 = 800f;   // px/s
+    [SerializeField] private float velocityStep2 = 1600f;  // px/s
+    [SerializeField] private float velocityStep3 = 2400f;  // px/s
+    [SerializeField] private int maxSwipeSteps = 3;        // tối đa 3 items/swipe
+    [SerializeField] private float stepAnimDuration = 0.28f;
     [SerializeField] private bool enableMomentumSwipe = true;
     private Vector3 _containerOriginalPos;
 
@@ -254,7 +256,7 @@ public class ShopController : MonoBehaviour
     }
 
     // ✅ THÊM: Mouse swipe detection for desktop
-    private void DetectMouseSwipe()
+/*    private void DetectMouseSwipe()
     {
         if (Input.GetMouseButtonDown(0))
         {
@@ -268,7 +270,7 @@ public class ShopController : MonoBehaviour
         {
             EndSwipeDetection(Input.mousePosition);
         }
-    }
+    }*/
 
     // ✅ THÊM: Start swipe detection
     private void StartSwipeDetection(Vector2 position)
@@ -283,34 +285,29 @@ public class ShopController : MonoBehaviour
         if (debugSwipe)
             Debug.Log($"Swipe started at: {position}");
     }
+    private int CalculateSwipeSteps(float rawDeltaX)
+    {
+        float absDeltaX = Mathf.Abs(rawDeltaX);
 
-    // ✅ THÊM: Process swipe movement
-    /*   private void ProcessSwipeMovement(Vector2 currentPosition)
-       {
-           if (swipeProcessed) return;
+        if (absDeltaX < minSwipeDistance)
+            return 0;
 
-           Vector2 swipeDelta = currentPosition - swipeStartPos;
-           float swipeDistance = Mathf.Abs(swipeDelta.x);
+        float swipeTime = Mathf.Max(Time.time - swipeStartTime, 0.05f);
+        float absVelocityX = absDeltaX / swipeTime;
 
-           // Check if swipe distance is sufficient
-           if (swipeDistance >= minSwipeDistance)
-           {
-               // Determine swipe direction
-               if (swipeDelta.x > 0)
-               {
-                   // Swipe right - go to previous item
-                   OnSwipeRight();
-               }
-               else
-               {
-                   // Swipe left - go to next item
-                   OnSwipeLeft();
-               }
-               swipeProcessed = true;
-               AudioManager.Instance.PlaySFXOneShot("Swipe");
-           }
-       }*/
+        int steps = 1;
 
+        if (absVelocityX >= velocityStep3)
+            steps = 3;
+        else if (absVelocityX >= velocityStep2)
+            steps = 2;
+        else if (absVelocityX >= velocityStep1)
+            steps = 1;
+        else
+            return 0;
+
+        return Mathf.Clamp(steps, 1, maxSwipeSteps);
+    }
     private void ProcessSwipeMovement(Vector2 currentPosition)
     {
         if (swipeProcessed) return;
@@ -318,26 +315,25 @@ public class ShopController : MonoBehaviour
 
         Vector2 swipeDelta = currentPosition - swipeStartPos;
         float rawDeltaX = swipeDelta.x;
-        float absDelta = Mathf.Abs(rawDeltaX);
 
-        // Cộng dồn delta để tracking drag liên tục
         _accumulatedDelta = rawDeltaX;
 
-        if (absDelta < minSwipeDistance) return;
-
-        // ─── Tính số steps dựa vào velocity của drag ───
-        // O(1): đơn thuần là phép chia
-        int rawSteps = Mathf.FloorToInt(absDelta / swipeStepThreshold);
-        int steps = Mathf.Clamp(rawSteps, 1, maxSwipeSteps);
+        int steps = CalculateSwipeSteps(rawDeltaX);
+        if (steps <= 0) return;
 
         bool goLeft = rawDeltaX < 0;
 
-        // Commit swipe ngay để block double-fire
+        if (debugSwipe)
+        {
+            float swipeTime = Mathf.Max(Time.time - swipeStartTime, 0.05f);
+            float absVelocityX = Mathf.Abs(rawDeltaX) / swipeTime;
+            Debug.Log($"Swipe commit | deltaX={rawDeltaX:F1} | time={swipeTime:F3} | velocityX={absVelocityX:F1} | steps={steps}");
+        }
+
         swipeProcessed = true;
         _accumulatedDelta = 0f;
         AudioManager.Instance.PlaySFXOneShot("Swipe");
 
-        // ─── Animate multi-step, O(k) với k <= maxSwipeSteps ───
         StartCoroutine(ExecuteMultiStepSwipe(goLeft ? -1 : 1, steps));
     }
 
@@ -387,14 +383,18 @@ public class ShopController : MonoBehaviour
         if (debugSwipe)
         {
             Vector2 swipeDelta = swipeEndPos - swipeStartPos;
-            Debug.Log($"Swipe ended. Delta: {swipeDelta}, Distance: {swipeDelta.magnitude}, Time: {swipeTime}");
+            float velocityX = Mathf.Abs(swipeDelta.x) / Mathf.Max(swipeTime, 0.05f);
+
+            Debug.Log(
+                $"Swipe ended | Delta={swipeDelta} | Distance={swipeDelta.magnitude:F1} | Time={swipeTime:F3} | VelocityX={velocityX:F1}"
+            );
         }
 
         isSwipeActive = false;
         swipeProcessed = false;
     }
 
-    private void OnSwipeLeft()
+/*    private void OnSwipeLeft()
     {
         if (carouselCenterIndex < currentCarouselItems.Count - 1)
         {
@@ -441,7 +441,7 @@ public class ShopController : MonoBehaviour
                 Debug.Log("Already at first item");
             StartCoroutine(ShowBounceEffect(SwipeDirection.Right));
         }
-    }
+    }*/
     private bool IsPointerInCarouselArea(Vector2 screenPos)
     {
         if (ParticipantsContainer == null) return false;
@@ -590,25 +590,25 @@ public class ShopController : MonoBehaviour
         // Slot 0: Far Left (Lớp dưới cùng)
         fixedPositions["penta_left_far"] = new CarouselPosition(
             new Vector3(leftPosition_1, positionY_first, 0f),
-            sideScale * 0.8f, sideAlpha * 0.5f, false, 0
+            sideScale * 0.8f, 1f, false, 0
         );
 
         // Slot 1: Far Right (Lớp dưới cùng)
         fixedPositions["penta_right_far"] = new CarouselPosition(
             new Vector3(rightPosition_2, positionY_first, 0f),
-            sideScale * 0.8f, sideAlpha * 0.5f, false, 1
+            sideScale * 0.8f, 1f, false, 1
         );
 
         // Slot 2: Near Left (Lớp giữa)
         fixedPositions["penta_left_near"] = new CarouselPosition(
             new Vector3(leftPosition_3, positionY_between, 0f),
-            sideScale, sideAlpha, false, 2
+            sideScale, 1f, false, 2
         );
 
         // Slot 3: Near Right (Lớp giữa)
         fixedPositions["penta_right_near"] = new CarouselPosition(
             new Vector3(rightPosition_4, positionY_between, 0f),
-            sideScale, sideAlpha, false, 3
+            sideScale, 1f, false, 3
         );
 
         // Slot 4: Center (Lớp trên cùng - Render cuối cùng)
@@ -642,7 +642,7 @@ public class ShopController : MonoBehaviour
     }
 
     // ✅ FIXED: Sử dụng RectTransform.anchoredPosition
-    private void SpawnObjectAtFixedPosition(ShopItem shopItem, int itemIndex, int totalItems, int centerIndex)
+/*    private void SpawnObjectAtFixedPosition(ShopItem shopItem, int itemIndex, int totalItems, int centerIndex)
     {
         InitializeFixedPositions();
 
@@ -696,7 +696,7 @@ public class ShopController : MonoBehaviour
 
         Debug.Log($"✅ Spawned {shopItem.itemName} at position X={fixedPos.position.x}");
     }
-
+*/
     private readonly List<GameObject> spawnedItems = new();
     private void EnsureItemCount(int count)
     {
@@ -791,38 +791,75 @@ public class ShopController : MonoBehaviour
         ApplyFixedPosition(go, currentCarouselItems.Count, itemIndex, carouselCenterIndex);
     }
 
+    /* private void ApplyFixedPosition(GameObject go, int totalItems, int itemIndex, int centerIndex)
+     {
+         InitializeFixedPositions();
+         string key = GetPositionKey(totalItems, itemIndex, centerIndex);
+         if (!fixedPositions.TryGetValue(key, out var fp)) return;
+
+         // ✅ Kill tweens cũ TRƯỚC KHI set bất cứ gì
+         go.transform.DOKill(complete: false);
+
+         var rt = go.transform as RectTransform;
+         if (rt != null)
+             rt.anchoredPosition = new Vector2(fp.position.x, fp.position.y);
+
+         // ✅ Set scale — chỉ cho non-center, center sẽ được DOTween handle
+         if (!fp.isCenter)
+         {
+             go.transform.localScale = Vector3.one * fp.scale;
+         }
+
+         var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
+         cg.alpha = fp.alpha;
+
+         var ui = go.GetComponent<ShopItemUI>();
+         if (ui != null)
+             ui.SetCarouselMode(fp.isCenter);
+
+         SetRaycastTarget(go, fp.isCenter);
+
+         if (fp.isCenter)
+         {
+             AddCenterItemEffects(go);
+             PlayCenterPunchAnimation(go); // ← Chỉ center mới vào đây
+         }
+     }
+ */
+
     private void ApplyFixedPosition(GameObject go, int totalItems, int itemIndex, int centerIndex)
     {
         InitializeFixedPositions();
         string key = GetPositionKey(totalItems, itemIndex, centerIndex);
         if (!fixedPositions.TryGetValue(key, out var fp)) return;
 
-        // ✅ Kill tweens cũ TRƯỚC KHI set bất cứ gì
         go.transform.DOKill(complete: false);
 
         var rt = go.transform as RectTransform;
         if (rt != null)
             rt.anchoredPosition = new Vector2(fp.position.x, fp.position.y);
 
-        // ✅ Set scale — chỉ cho non-center, center sẽ được DOTween handle
         if (!fp.isCenter)
         {
             go.transform.localScale = Vector3.one * fp.scale;
         }
 
         var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
-        cg.alpha = fp.alpha;
+        cg.alpha = 1f; // không dùng alpha để dim nữa
 
         var ui = go.GetComponent<ShopItemUI>();
         if (ui != null)
+        {
             ui.SetCarouselMode(fp.isCenter);
+            ui.ApplyCarouselBackgroundState(fp.isCenter);
+        }
 
         SetRaycastTarget(go, fp.isCenter);
 
         if (fp.isCenter)
         {
             AddCenterItemEffects(go);
-            PlayCenterPunchAnimation(go); // ← Chỉ center mới vào đây
+            PlayCenterPunchAnimation(go);
         }
     }
 

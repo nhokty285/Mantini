@@ -39,6 +39,36 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
     [SerializeField] private GameObject infoPanel; // Panel chứa text elements
                                                    //private bool isCarouselMode = false;
 
+    [Header("Carousel Visual")]
+    [SerializeField] private Color sideBackgroundColor = new Color32(0x6D, 0x6D, 0x6D, 0xFF);
+
+    private Color originalBackgroundColor;
+    private bool hasCachedOriginalBackgroundColor;
+
+    private void Awake()
+    {
+        CacheOriginalBackgroundColor();
+    }
+
+    private void CacheOriginalBackgroundColor()
+    {
+        if (hasCachedOriginalBackgroundColor || backgroundImage == null) return;
+
+        originalBackgroundColor = backgroundImage.color;
+        hasCachedOriginalBackgroundColor = true;
+    }
+
+    public void ApplyCarouselBackgroundState(bool isCenter)
+    {
+        CacheOriginalBackgroundColor();
+
+        if (backgroundImage == null) return;
+
+        backgroundImage.color = isCenter
+            ? originalBackgroundColor
+            : sideBackgroundColor;
+    }
+
     public void SetExternalPriceText(TextMeshProUGUI external)
     {
         priceText = external;
@@ -330,4 +360,6 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
         // Cancel any ongoing image loading
         isLoadingImage = false;
     }
+
+
 }

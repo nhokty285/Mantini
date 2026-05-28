@@ -77,7 +77,7 @@ public class CartUI : MonoBehaviour
     private readonly Dictionary<(string productId, string size), CartImageItem> _cellLookup
     = new Dictionary<(string productId, string size), CartImageItem>();
 
-
+    private int ignoreOutsideClickUntilFrame = -1;
     private void Start()
     {
         SetupEventListeners();
@@ -103,6 +103,8 @@ public class CartUI : MonoBehaviour
 
         if (!cartPanel.activeSelf) return;
         if (!Input.GetMouseButtonDown(0)) return;
+
+        if (Time.frameCount <= ignoreOutsideClickUntilFrame) return;
 
         bool insideZone = false;
 
@@ -409,6 +411,7 @@ public class CartUI : MonoBehaviour
 
     private void OnItemClicked(CartItem item)
     {
+        ignoreOutsideClickUntilFrame = Time.frameCount + 1;
         float currentTime = Time.time;
 
         // 🆕 Nhánh multi-select tối ưu
