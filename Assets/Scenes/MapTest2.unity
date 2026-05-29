@@ -7533,7 +7533,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000011444092}
+  m_AnchoredPosition: {x: 0, y: -0.000011444092}
   m_SizeDelta: {x: 0, y: 38.5778}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &264474902
@@ -32794,7 +32794,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -344.18427, y: 89.615974}
+  m_AnchoredPosition: {x: 338.97485, y: 197.12204}
   m_SizeDelta: {x: 290.7177, y: 179.23}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1381773236
@@ -33976,7 +33976,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1413439786
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34098,6 +34098,7 @@ MonoBehaviour:
   tutorialCompanionSprite: {fileID: 21300000, guid: f0f6fae0368a52948b7d228d2dfff0e9, type: 3}
   typewriterSpeed: 0.025
   progressText: {fileID: 541189332}
+  audioSync: {fileID: 0}
   spotlightOverlay: {fileID: 1837895535}
   spotlightHole: {fileID: 2103126908}
   spotlightPadding: {x: 20, y: 20}
@@ -61843,7 +61844,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147509048421
 GameObject:
   m_ObjectHideFlags: 0
@@ -61950,7 +61951,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147533486941
 GameObject:
   m_ObjectHideFlags: 0
@@ -62076,7 +62077,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147560982399
 GameObject:
   m_ObjectHideFlags: 0
@@ -62183,7 +62184,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147604531224
 GameObject:
   m_ObjectHideFlags: 0
@@ -62252,7 +62253,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147630895340
 GameObject:
   m_ObjectHideFlags: 0
@@ -62454,7 +62455,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147696507240
 GameObject:
   m_ObjectHideFlags: 0
@@ -62732,7 +62733,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147767494715
 GameObject:
   m_ObjectHideFlags: 0
@@ -62763,7 +62764,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147773830186
 GameObject:
   m_ObjectHideFlags: 0
@@ -62850,7 +62851,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147806961396
 GameObject:
   m_ObjectHideFlags: 0
@@ -62938,7 +62939,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147836933960
 GameObject:
   m_ObjectHideFlags: 0
@@ -63007,7 +63008,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147848769692
 GameObject:
   m_ObjectHideFlags: 0
@@ -63114,7 +63115,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147871260281
 GameObject:
   m_ObjectHideFlags: 0
@@ -63183,7 +63184,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147909179570
 GameObject:
   m_ObjectHideFlags: 0
@@ -63232,7 +63233,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147911766049
 GameObject:
   m_ObjectHideFlags: 0
@@ -63320,7 +63321,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132147957423497
 GameObject:
   m_ObjectHideFlags: 0
@@ -63521,7 +63522,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148015328272
 GameObject:
   m_ObjectHideFlags: 0
@@ -63590,7 +63591,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148049751554
 GameObject:
   m_ObjectHideFlags: 0
@@ -63827,7 +63828,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148131652922
 GameObject:
   m_ObjectHideFlags: 0
@@ -63953,7 +63954,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148177138159
 GameObject:
   m_ObjectHideFlags: 0
@@ -64211,7 +64212,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148233366858
 GameObject:
   m_ObjectHideFlags: 0
@@ -64432,7 +64433,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148319696619
 GameObject:
   m_ObjectHideFlags: 0
@@ -64520,7 +64521,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148331708976
 GameObject:
   m_ObjectHideFlags: 0
@@ -64627,7 +64628,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148379722226
 GameObject:
   m_ObjectHideFlags: 0
@@ -64765,7 +64766,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148402498171
 GameObject:
   m_ObjectHideFlags: 0
@@ -64834,7 +64835,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148405621583
 GameObject:
   m_ObjectHideFlags: 0
@@ -64922,7 +64923,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148416238564
 GameObject:
   m_ObjectHideFlags: 0
@@ -64972,7 +64973,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148426157526
 GameObject:
   m_ObjectHideFlags: 0
@@ -65003,7 +65004,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148434056765
 GameObject:
   m_ObjectHideFlags: 0
@@ -65167,7 +65168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148479244853
 GameObject:
   m_ObjectHideFlags: 0
@@ -65217,7 +65218,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148519432138
 GameObject:
   m_ObjectHideFlags: 0
@@ -65267,7 +65268,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148523674233
 GameObject:
   m_ObjectHideFlags: 0
@@ -65298,7 +65299,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148526595759
 GameObject:
   m_ObjectHideFlags: 0
@@ -65595,7 +65596,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148604831328
 GameObject:
   m_ObjectHideFlags: 0
@@ -65870,7 +65871,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148691714696
 GameObject:
   m_ObjectHideFlags: 0
@@ -66015,7 +66016,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148741280384
 GameObject:
   m_ObjectHideFlags: 0
@@ -66065,7 +66066,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148745795028
 GameObject:
   m_ObjectHideFlags: 0
@@ -66134,7 +66135,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148768216799
 GameObject:
   m_ObjectHideFlags: 0
@@ -66203,7 +66204,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148792541218
 GameObject:
   m_ObjectHideFlags: 0
@@ -66271,7 +66272,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148809860746
 GameObject:
   m_ObjectHideFlags: 0
@@ -66359,7 +66360,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148862678353
 GameObject:
   m_ObjectHideFlags: 0
@@ -66409,7 +66410,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148869060677
 GameObject:
   m_ObjectHideFlags: 0
@@ -66570,7 +66571,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148925972673
 GameObject:
   m_ObjectHideFlags: 0
@@ -66771,7 +66772,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132148983754067
 GameObject:
   m_ObjectHideFlags: 0
@@ -66954,7 +66955,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149016069095
 GameObject:
   m_ObjectHideFlags: 0
@@ -67061,7 +67062,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149039947695
 GameObject:
   m_ObjectHideFlags: 0
@@ -67243,7 +67244,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149073062410
 GameObject:
   m_ObjectHideFlags: 0
@@ -67293,7 +67294,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149081248185
 GameObject:
   m_ObjectHideFlags: 0
@@ -67343,7 +67344,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149094167558
 GameObject:
   m_ObjectHideFlags: 0
@@ -67393,7 +67394,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149101949913
 GameObject:
   m_ObjectHideFlags: 0
@@ -67644,7 +67645,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149175094342
 GameObject:
   m_ObjectHideFlags: 0
@@ -67955,7 +67956,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149261062583
 GameObject:
   m_ObjectHideFlags: 0
@@ -68005,7 +68006,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149281947952
 GameObject:
   m_ObjectHideFlags: 0
@@ -68338,7 +68339,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149380024990
 GameObject:
   m_ObjectHideFlags: 0
@@ -68369,7 +68370,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149393220691
 GameObject:
   m_ObjectHideFlags: 0
@@ -68530,7 +68531,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149432680502
 GameObject:
   m_ObjectHideFlags: 0
@@ -68599,7 +68600,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149447363952
 GameObject:
   m_ObjectHideFlags: 0
@@ -68723,7 +68724,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149479612506
 GameObject:
   m_ObjectHideFlags: 0
@@ -68773,7 +68774,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149488184831
 GameObject:
   m_ObjectHideFlags: 0
@@ -68991,7 +68992,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149530169843
 GameObject:
   m_ObjectHideFlags: 0
@@ -69060,7 +69061,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149564347686
 GameObject:
   m_ObjectHideFlags: 0
@@ -69148,7 +69149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149579739702
 GameObject:
   m_ObjectHideFlags: 0
@@ -69179,7 +69180,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &919132149579991644
 GameObject:
   m_ObjectHideFlags: 0
@@ -69267,7 +69268,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   occludedAlpha: 0.035
-  fadeSpeed: 1
+  fadeSpeed: 10
 --- !u!1 &928060507255842072
 GameObject:
   m_ObjectHideFlags: 0
