@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
-public class CartImageItem : MonoBehaviour
+public class CartImageItem : MonoBehaviour,
+    IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
 {
     [SerializeField] private Image productImage;
     [SerializeField] private Button button;
@@ -20,16 +22,31 @@ public class CartImageItem : MonoBehaviour
 
     [SerializeField] private CartItem itemData;
     private Action<CartItem> onClickCallback;
+    private CartUI cartUI; // ← ref đến CartUI để check long press
     private bool isHighlighted = false;
 
     private static CartImageItem currentHighlightedItem;
     private static readonly HashSet<CartImageItem> _highlighted = new HashSet<CartImageItem>();
+    public void OnPointerDown(PointerEventData eventData) => cartUI?.BeginLongPress(itemData);
+    public void OnPointerUp(PointerEventData eventData) => cartUI?.CancelLongPress();
+    public void OnPointerExit(PointerEventData eventData) => cartUI?.CancelLongPress();
 
-    public void Setup(CartItem item, Action<CartItem> clickCallback)
+    public void Setup(CartItem item, Action<CartItem> clickCallback, CartUI cartUIRef = null)
     {
         itemData = item;
         onClickCallback = clickCallback;
+        cartUI = cartUIRef;          // ← lưu ref
 
+     /*   if (button != null)
+        {
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() =>
+            {
+                if (cartUI != null && cartUI.IsLongPressConsumed()) return; // guard
+                AudioManager.Instance.PlaySFXOneShot("Button_High");
+                onClickCallback?.Invoke(itemData);
+            });
+        }*/
         // Setup click event
         if (button != null)
         {

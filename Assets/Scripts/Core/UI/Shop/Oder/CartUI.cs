@@ -78,6 +78,49 @@ public class CartUI : MonoBehaviour
     = new Dictionary<(string productId, string size), CartImageItem>();
 
     private int ignoreOutsideClickUntilFrame = -1;
+
+    [Header("Long Press")]
+    [SerializeField] private float longPressThreshold = 0.5f;
+
+    // State
+    private CartItem _longPressCandidate;
+    private float _longPressTimer;
+    private bool _longPressConsumed;
+
+    // CartImageItem gọi từ OnPointerDown
+    public void BeginLongPress(CartItem item)
+    {
+        Debug.Log($"[LongPress] Begin: {item.productName}");
+        _longPressCandidate = item;
+        _longPressTimer = 0f;
+        _longPressConsumed = false;
+    }
+
+    // CartImageItem gọi từ OnPointerUp / OnPointerExit
+    public void CancelLongPress()
+    {
+        _longPressCandidate = null;
+        _longPressTimer = 0f;
+    }
+
+    public bool IsLongPressConsumed() => _longPressConsumed;
+
+    // Trong Update()
+    private void HandleLongPress()
+    {
+        if (_longPressCandidate == null || _longPressConsumed) return;
+
+        _longPressTimer += Time.deltaTime;
+        if (_longPressTimer < longPressThreshold) return;
+
+        var item = _longPressCandidate;
+        _longPressConsumed = true;
+        _longPressCandidate = null;
+        _longPressTimer = 0f;
+
+        ShowProductDetailInMainUI(item);   // ← thay thế double-click
+    }
+
     private void Start()
     {
         SetupEventListeners();
@@ -85,7 +128,7 @@ public class CartUI : MonoBehaviour
         InitializeUI();
 
         BindIconToButtonState(selectAllToCartButton, selectAllIcon);
-        //BindIconToButtonState(addSelectedToCartButton, addSelectedIcon);
+        if (moreObject != null) moreObject.SetActive(false);
     }
 
     // Trong CartUI.cs - Thêm vào cuối Update() hoặc LateUpdate()
@@ -267,7 +310,10 @@ public class CartUI : MonoBehaviour
         UpdateTotalAmount();
     }
 
-
+    private void Update()
+    {
+        HandleLongPress();   // ← phải có dòng này thì long press mới chạy
+    }
     private void RefreshHighlightsFromSelection()
     {
         if (_cellLookup == null || _cellLookup.Count == 0) return;
@@ -350,6 +396,7 @@ public class CartUI : MonoBehaviour
         if (cartPanel != null) cartPanel.SetActive(false);
         SwitchTab(InventoryTab.Unpaid);
         if (moreObject != null) moreObject.SetActive(false);
+        if (moreButton != null) moreButton.interactable = false;
         if (customerInfoPanel != null) customerInfoPanel.SetActive(false);
     }
 
@@ -390,7 +437,7 @@ public class CartUI : MonoBehaviour
             var imageItemUI = itemGO.GetComponent<CartImageItem>();
             if (imageItemUI != null)
             {
-                imageItemUI.Setup(item, OnItemClicked);
+                imageItemUI.Setup(item, OnItemClicked, this); 
                 imageItemUI.RefreshCartIndicator();
 
                 var key = (item.productId, item.selectedSize);
@@ -409,71 +456,94 @@ public class CartUI : MonoBehaviour
         }
     }
 
+    /* private void OnItemClicked(CartItem item)
+     {
+         ignoreOutsideClickUntilFrame = Time.frameCount + 1;
+         float currentTime = Time.time;
+
+         // 🆕 Nhánh multi-select tối ưu
+         if (isSelectMode)
+         {
+             // Lookup cell O(1) bằng (productId, size)
+             CartImageItem clickedCell = null;
+             if (!_cellLookup.TryGetValue((item.productId, item.selectedSize), out clickedCell) || clickedCell == null)
+             {
+                 // Fallback an toàn: nếu vì lý do gì đó dictionary chưa sync, có thể
+                 // (optionally) fallback sang loop nếu bạn muốn.
+                 return;
+             }
+
+             // Toggle highlight (multi-select, không ảnh hưởng item khác)
+             clickedCell.ToggleHighlightMultiSelect();
+             bool nowHighlighted = clickedCell.IsHighlighted();
+
+             // Đồng bộ state xuống ShoppingCart (isSelectedForCheckout)
+             if (ShoppingCart.Instance != null)
+             {
+                 ShoppingCart.Instance.SelectItemForCheckout(
+                     item.productId,
+                     item.selectedSize,
+                     nowHighlighted
+                 );
+             }
+
+             // Cập nhật overlay/icon "đã chọn"
+             clickedCell.RefreshCartIndicator();
+
+             // Tổng tiền & số món sẽ dùng currentSelectedTotal (ở bước 2)
+             UpdateTotalAmount();
+
+             lastClickedItem = null;
+             return;
+         }
+
+         // ==== Phần dưới: single-select + double-click mở detail giữ nguyên ====
+
+         selectedItem = item;
+
+         foreach (Transform child in cartItemsContainer)
+         {
+             var cell = child.GetComponent<CartImageItem>();
+             if (cell != null && cell.GetCurrentItem() == item)
+             {
+                 cell.SelectThisItem();
+                 break;
+             }
+         }
+
+         if (lastClickedItem == item && (currentTime - lastClickTime) < doubleClickThreshold)
+         {
+             ShowProductDetailInMainUI(item);
+             lastClickedItem = null;
+         }
+         else
+         {
+             lastClickedItem = item;
+             lastClickTime = currentTime;
+         }
+     }*/
+
     private void OnItemClicked(CartItem item)
     {
-        ignoreOutsideClickUntilFrame = Time.frameCount + 1;
-        float currentTime = Time.time;
-
-        // 🆕 Nhánh multi-select tối ưu
-        if (isSelectMode)
+        // Guard: nếu long press vừa fire → bỏ qua click này
+        if (_longPressConsumed)
         {
-            // Lookup cell O(1) bằng (productId, size)
-            CartImageItem clickedCell = null;
-            if (!_cellLookup.TryGetValue((item.productId, item.selectedSize), out clickedCell) || clickedCell == null)
-            {
-                // Fallback an toàn: nếu vì lý do gì đó dictionary chưa sync, có thể
-                // (optionally) fallback sang loop nếu bạn muốn.
-                return;
-            }
-
-            // Toggle highlight (multi-select, không ảnh hưởng item khác)
-            clickedCell.ToggleHighlightMultiSelect();
-            bool nowHighlighted = clickedCell.IsHighlighted();
-
-            // Đồng bộ state xuống ShoppingCart (isSelectedForCheckout)
-            if (ShoppingCart.Instance != null)
-            {
-                ShoppingCart.Instance.SelectItemForCheckout(
-                    item.productId,
-                    item.selectedSize,
-                    nowHighlighted
-                );
-            }
-
-            // Cập nhật overlay/icon "đã chọn"
-            clickedCell.RefreshCartIndicator();
-
-            // Tổng tiền & số món sẽ dùng currentSelectedTotal (ở bước 2)
-            UpdateTotalAmount();
-
-            lastClickedItem = null;
+            _longPressConsumed = false;
             return;
         }
 
-        // ==== Phần dưới: single-select + double-click mở detail giữ nguyên ====
+        ignoreOutsideClickUntilFrame = Time.frameCount + 1;
 
-        selectedItem = item;
+        // isSelectMode luôn = true → chỉ còn nhánh multi-select
+        if (!_cellLookup.TryGetValue((item.productId, item.selectedSize), out var clickedCell)
+            || clickedCell == null) return;
 
-        foreach (Transform child in cartItemsContainer)
-        {
-            var cell = child.GetComponent<CartImageItem>();
-            if (cell != null && cell.GetCurrentItem() == item)
-            {
-                cell.SelectThisItem();
-                break;
-            }
-        }
+        clickedCell.ToggleHighlightMultiSelect();
+        bool nowHighlighted = clickedCell.IsHighlighted();
 
-        if (lastClickedItem == item && (currentTime - lastClickTime) < doubleClickThreshold)
-        {
-            ShowProductDetailInMainUI(item);
-            lastClickedItem = null;
-        }
-        else
-        {
-            lastClickedItem = item;
-            lastClickTime = currentTime;
-        }
+        ShoppingCart.Instance?.SelectItemForCheckout(item.productId, item.selectedSize, nowHighlighted);
+        clickedCell.RefreshCartIndicator();
+        UpdateTotalAmount();
     }
 
     // ✅ MỚI: Gọi ProductDetailUI để hiển thị thông tin
@@ -516,16 +586,33 @@ public class CartUI : MonoBehaviour
         totalAmountText.text = $"Tổng: {count} món\n{total:N0} VND";
     }
 
+    /* private void ToggleCartPanel()
+     {
+         if (cartPanel != null)
+         {
+             bool isActive = !cartPanel.activeSelf;
+             cartPanel.SetActive(isActive);
+             this.enabled = isActive;
+             if (isActive) RefreshCurrentTabContent();
+             PlayerController.Instance?.SetCanMove(!isActive);
+         }
+     }*/
+
     private void ToggleCartPanel()
     {
-        if (cartPanel != null)
+        if (cartPanel == null) return;
+
+        bool isActive = !cartPanel.activeSelf;
+        cartPanel.SetActive(isActive);
+        this.enabled = isActive;
+
+        if (isActive)
         {
-            bool isActive = !cartPanel.activeSelf;
-            cartPanel.SetActive(isActive);
-            this.enabled = isActive;
-            if (isActive) RefreshCurrentTabContent();
-            PlayerController.Instance?.SetCanMove(!isActive);
+            isSelectMode = true;           // ← THÊM: luôn vào select mode khi mở
+            RefreshCurrentTabContent();
         }
+
+        PlayerController.Instance?.SetCanMove(!isActive);
     }
 
     private void CloseCartPanel()

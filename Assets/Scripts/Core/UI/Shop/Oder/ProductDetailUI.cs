@@ -146,6 +146,7 @@ public class ProductDetailUI : MonoBehaviour
 
     private MultiChatManager _chatManager;
 
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -445,7 +446,8 @@ public class ProductDetailUI : MonoBehaviour
             if (imgComp != null)
             {
                 imgComp.preserveAspect = true;
-                // ✅ START SAFE COROUTINE
+                imgComp.type = Image.Type.Simple;
+
                 StartCoroutine(LoadImage(url, imgComp));
             }
             imagePages.Add(page);
@@ -559,6 +561,11 @@ public class ProductDetailUI : MonoBehaviour
                 Debug.LogError($"[LoadImage] Sprite creation failed: {e.Message}");
             }
         }
+
+        Debug.Log($"[DEBUG] MainImage color: {productMainImage.color}");
+        Debug.Log($"[DEBUG] MainImage sprite: {productMainImage.sprite}");
+        Debug.Log($"[DEBUG] MainImage enabled: {productMainImage.enabled}");
+        Debug.Log($"[DEBUG] MainImage GO active: {productMainImage.gameObject.activeInHierarchy}");
     }
 
 
