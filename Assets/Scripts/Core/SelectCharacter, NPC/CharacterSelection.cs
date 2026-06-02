@@ -28,26 +28,10 @@ public class CharacterSelection : MonoBehaviour
     {
         // Đăng ký CharacterData vào PlayerDataManager
         PlayerDataManager.Instance.RegisterCharacterData(characterDataArray);
-
         InitializeCharacters();
         UpdateCharacterPositions();
         createCharacterButton.onClick.AddListener(OnCreateCharacterButtonClicked);
     }
-
-    /*  void InitializeCharacters()
-      {
-          instantiatedCharacters = new GameObject[3];
-
-          // Tạo 3 preview instances từ previewPrefab
-          for (int i = 0; i < 3 && i < characterDataArray.Length; i++)
-          {
-              // Dùng previewPrefab (RawImage) cho selection screen
-              GameObject previewPrefab = characterDataArray[i].previewPrefab;
-              instantiatedCharacters[i] = Instantiate(previewPrefab, characterPositions[i]);
-              instantiatedCharacters[i].transform.localPosition = Vector3.zero;
-          }
-      }
-  */
 
     void InitializeCharacters()
     {
@@ -279,10 +263,10 @@ public class CharacterSelection : MonoBehaviour
     {
         RawImage[] imgs = character
             .GetComponentsInChildren<RawImage>(true);
-        foreach (var img in imgs)
+        for (int i = 0; i < imgs.Length; i++)
         {
+            var img = imgs[i];
             Color c = img.color;
-
             if (isCenter)
             {
                 // Màu gốc, sáng bình thường
@@ -293,10 +277,20 @@ public class CharacterSelection : MonoBehaviour
             }
             else
             {
-                // Ám xám: giảm saturation + hơi mờ
-                // Ví dụ tint về xám nhạt
-                c = Color.Lerp(c, new Color(0.5f, 0.5f, 0.5f, 0f),1f);
-                //c.a = 0.7f;   // nhẹ mờ hơn trung tâm
+                // Ám xám: giảm saturation + hơi mờ cho các RawImage mặc định
+                // Giữ logic cũ cho các RawImage khác
+                if (i == 1)
+                {
+                    // Nếu đây là RawImage con thứ 2 trong thứ tự hierarchy, áp dụng alpha riêng
+                    // Tint về xám nhạt nhưng set alpha theo sideChildAlpha để "làm mờ" với giá trị riêng
+                    c = Color.Lerp(c, new Color(0.5f, 0.5f, 0.5f, 0f), 1f);
+                }
+                else
+                {
+                    // các RawImage khác: giữ nền tối hơn như trước
+                    c = Color.Lerp(c, new Color(0.5f, 0.5f, 0.5f, 1f), 1f);
+  
+                }
             }
 
             img.color = c;

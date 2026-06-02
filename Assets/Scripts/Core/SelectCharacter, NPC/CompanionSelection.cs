@@ -36,7 +36,8 @@ public class CompanionSelection : MonoBehaviour
     [Header("Dialogue UI")]
     public GameObject dialoguePanel;
     public Button dialogueContinueButton;
-        
+    public DialogueAudioSync dialogueAudioSync;
+
     [Header("UI Resources")]
     public Sprite normalSprite;   // Kéo ảnh trạng thái thường vào đây  
     public Sprite selectedSprite; // Kéo ảnh trạng thái được chọn (sáng lên) vào đây
@@ -258,14 +259,12 @@ public class CompanionSelection : MonoBehaviour
     {
         var companionData = companionDataArray[selectedIndex];
 
-        if (greetingText)
-            greetingText.text = $"Xin chào mình là {companionData.characterName}, mình sẽ đồng hành cùng bạn";
-
         if (infoNameText)
             infoNameText.text = companionData.characterName;
 
         if (npcDescriptionText)
             npcDescriptionText.text = companionData.description;
+        dialogueAudioSync.StartTypewriter(npcDescriptionText, npcDescriptionText.text);
     }
     #endregion
 
@@ -366,7 +365,7 @@ public class CompanionSelection : MonoBehaviour
 
         PlayerDataManager.Instance.SaveCompanionIndex(selectedIndex);
         Debug.Log($"[CompanionSelection] Starting game with companion: {companionDataArray[selectedIndex].characterName}");
-
+        dialogueAudioSync.StopTypewriter();
         // *** THÊM: Sync lên server trước khi vào gameplay ***
         var syncer = FindFirstObjectByType<PlayerApiService>();
         if (syncer != null)

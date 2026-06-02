@@ -146,6 +146,7 @@ public class ProductDetailUI : MonoBehaviour
 
     private MultiChatManager _chatManager;
 
+    private Coroutine _mainImageCoroutine;
 
     private void Awake()
     {
@@ -273,10 +274,16 @@ public class ProductDetailUI : MonoBehaviour
         }
 
         // 3. Images
-        if (productMainImage != null && !string.IsNullOrEmpty(currentDetail.mainImageUrl))
-            StartCoroutine(LoadImage(currentDetail.mainImageUrl, productMainImage));
+        /*  if (productMainImage != null && !string.IsNullOrEmpty(currentDetail.mainImageUrl))
+              StartCoroutine(LoadImage(currentDetail.mainImageUrl, productMainImage));
+
+          SetupSwipeableGallery(currentDetail.galleryUrls);*/
 
         SetupSwipeableGallery(currentDetail.galleryUrls);
+
+        // ✅ BƯỚC 2: Load mainImage SAU — an toàn, không bị kill nữa
+        if (productMainImage != null && !string.IsNullOrEmpty(currentDetail.mainImageUrl))
+            StartCoroutine(LoadImage(currentDetail.mainImageUrl, productMainImage));
     }
 
     // Setup UI cho hàng ĐÃ MUA (Khóa nút mua, hiện size đã chọn)
@@ -417,41 +424,89 @@ public class ProductDetailUI : MonoBehaviour
          ResetGalleryScroll();
      }*/
 
+    /* private void SetupSwipeableGallery(List<string> images)
+     {
+         if (imageScrollContent == null || imagePagePrefab == null) return;
+
+         // ✅ STOP COROUTINES TRƯỚC KHI DESTROY
+         //StopAllCoroutines();
+
+         // ✅ SAFE DESTROY cũ
+         for (int i = imageScrollContent.childCount - 1; i >= 0; i--)
+         {
+             Transform child = imageScrollContent.GetChild(i);
+             if (child != null) Destroy(child.gameObject);
+         }
+
+         imagePages.Clear();
+
+         if (images == null || images.Count == 0) return;
+
+         foreach (var url in images)
+         {
+             if (string.IsNullOrEmpty(url)) continue;
+
+             var page = Instantiate(imagePagePrefab, imageScrollContent);
+             var imgComp = page.GetComponent<Image>();
+
+             if (imgComp != null)
+             {
+                 imgComp.preserveAspect = true;
+                 imgComp.type = Image.Type.Simple;
+
+                 StartCoroutine(LoadImage(url, imgComp));
+             }
+             imagePages.Add(page);
+         }
+
+         ResetGalleryScroll();
+     }*/
+
     private void SetupSwipeableGallery(List<string> images)
     {
         if (imageScrollContent == null || imagePagePrefab == null) return;
-
-        // ✅ STOP COROUTINES TRƯỚC KHI DESTROY
         StopAllCoroutines();
 
-        // ✅ SAFE DESTROY cũ
         for (int i = imageScrollContent.childCount - 1; i >= 0; i--)
-        {
-            Transform child = imageScrollContent.GetChild(i);
-            if (child != null)
-                Destroy(child.gameObject);
-        }
-
+            Destroy(imageScrollContent.GetChild(i).gameObject);
         imagePages.Clear();
 
         if (images == null || images.Count == 0) return;
 
+        // ✅ Tạo TẤT CẢ pages trước
+        var targetImages = new List<Image>();
         foreach (var url in images)
         {
             if (string.IsNullOrEmpty(url)) continue;
-
             var page = Instantiate(imagePagePrefab, imageScrollContent);
             var imgComp = page.GetComponent<Image>();
-
             if (imgComp != null)
             {
                 imgComp.preserveAspect = true;
                 imgComp.type = Image.Type.Simple;
-
-                StartCoroutine(LoadImage(url, imgComp));
+                targetImages.Add(imgComp);
             }
             imagePages.Add(page);
         }
+
+        // ✅ Force layout rebuild TRƯỚC khi load ảnh
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(
+            imageScrollContent as RectTransform
+        );
+
+        // ✅ Load ảnh SAU khi layout đã đúng vị trí
+        for (int i = 0; i < targetImages.Count; i++)
+        {
+            // Dùng index thay vì foreach để tránh closure issue
+            int index = i;
+            string url = images[index];
+            StartCoroutine(LoadImage(url, targetImages[index]));
+        }
+
+        // ✅ Load productMainImage SAU CÙNG
+        if (productMainImage != null && !string.IsNullOrEmpty(currentDetail?.mainImageUrl))
+            StartCoroutine(LoadImage(currentDetail.mainImageUrl, productMainImage));
 
         ResetGalleryScroll();
     }
@@ -534,12 +589,6 @@ public class ProductDetailUI : MonoBehaviour
                 yield break;
             }
 
-            // ✅ CHECK GAMEOBJECT CÒN ACTIVE trong hierarchy
-            if (!target.gameObject.activeInHierarchy)
-            {
-                Debug.LogWarning("[LoadImage] Target inactive in hierarchy");
-                yield break;
-            }
 
             // ✅ SAFE ASSIGN SPRITE
             try
@@ -551,8 +600,10 @@ public class ProductDetailUI : MonoBehaviour
                         texture,
                         new Rect(0, 0, texture.width, texture.height),
                         new Vector2(0.5f, 0.5f)
+
                     );
-                    target.preserveAspect = true;
+                  
+                    
                     Debug.Log($"[LoadImage] Success: {url}");
                 }
             }

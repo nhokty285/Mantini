@@ -112,7 +112,6 @@ public class TutorialGamePlay : MonoBehaviour
     [SerializeField] private Button quickCartButton;
     [SerializeField] private RectTransform cartPanel;
     [SerializeField] private GameObject productDetailPanel;
-    [SerializeField] private RectTransform moreButton;
 
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — CART UI
@@ -598,21 +597,6 @@ public class TutorialGamePlay : MonoBehaviour
         spotlightOverlay.gameObject.SetActive(true);
         yield return ShowCompanionMessage(msg_Step2_Cart, wait: true);
         yield return new WaitForSeconds(1.3f);
-        // Spotlight 1: danh sách item
-        if (moreButton != null)
-        {
-            ShowSpotlight(moreButton);
-            yield return new WaitUntil(() =>
-            {
-#if UNITY_ANDROID || UNITY_IOS
-                return Input.touchCount > 0 &&
-                       Input.GetTouch(0).phase == TouchPhase.Began;
-#else
-    return Input.GetMouseButtonDown(0);
-#endif
-            });
-            HideSpotlight();
-        }
 
         yield return new WaitForSeconds(0.1f);
 
@@ -757,7 +741,7 @@ public class TutorialGamePlay : MonoBehaviour
 
                     if (shouldPlayTypewriter && audioSync != null && audioSync.typewriterSound != null)
                     {
-                        AudioManager.Instance?.PlayTypewriter(audioSync.typewriterSound, 0.2f);
+                        AudioManager.Instance?.PlayTypewriter(audioSync.typewriterSound, 0.4f);
                     }
 
                     yield return new WaitForSeconds(typewriterSpeed);
