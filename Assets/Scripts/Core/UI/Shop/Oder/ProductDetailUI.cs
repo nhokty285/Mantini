@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +29,7 @@ public class ProductDetail
 
     // Dữ liệu gốc (chỉ dùng khi cần logic sâu hơn)
     public APIProductItem originalShopItem;
- 
+
 
     // Constructor 1: Tạo từ API Shop (Hàng chưa mua)
     public ProductDetail(APIProductItem shopItem)
@@ -166,7 +166,8 @@ public class ProductDetailUI : MonoBehaviour
             PopupManager.Instance.ShowPopup(
                 "Xác nhận",
                 "Bạn có muốn thêm vật phẩm này vào giỏ hàng không?",
-                () => {
+                () =>
+                {
                     // Khi bấm "Đồng ý" trên Popup thì mới chạy hàm này
                     OnAddToCartClicked();
                     TutorialGamePlay.Instance?.OnAddToCartSuccess();
@@ -212,7 +213,8 @@ public class ProductDetailUI : MonoBehaviour
         string detailUrl = $"https://data.storims.c1.hubcom.tech/api/v1/TenantProduct/45A26BFC-F2B2-4CA2-AB49-9EE8E9ADCFEC/{customId}";
 
         APIClient.Instance.GetFull(detailUrl,
-            json => {
+            json =>
+            {
                 var shopItem = JsonUtility.FromJson<APIProductItem>(json);
                 currentDetail = new ProductDetail(shopItem);
                 currentDetail.selectedSize = _lastSelectedSize;
@@ -224,7 +226,8 @@ public class ProductDetailUI : MonoBehaviour
                 _chatManager?.ReparentChatPanelTo(chatAnchor);
                 _chatManager?.ShowProductWelcome();
             },
-            error => {
+            error =>
+            {
                 Debug.LogError($"[ProductDetail] Failed to load detail: {error}");
                 // Có thể hiển thị thông báo lỗi lên UI tại đây
             }
@@ -272,12 +275,6 @@ public class ProductDetailUI : MonoBehaviour
                 productOriginalPriceText.gameObject.SetActive(false);
             }
         }
-
-        // 3. Images
-        /*  if (productMainImage != null && !string.IsNullOrEmpty(currentDetail.mainImageUrl))
-              StartCoroutine(LoadImage(currentDetail.mainImageUrl, productMainImage));
-
-          SetupSwipeableGallery(currentDetail.galleryUrls);*/
 
         SetupSwipeableGallery(currentDetail.galleryUrls);
 
@@ -401,66 +398,6 @@ public class ProductDetailUI : MonoBehaviour
     // =================================================================================
     // IMAGE GALLERY SYSTEM
     // =================================================================================
-    /* private void SetupSwipeableGallery(List<string> images)
-     {
-         if (imageScrollContent == null || imagePagePrefab == null) return;
-
-         foreach (Transform child in imageScrollContent) Destroy(child.gameObject);
-         imagePages.Clear();
-
-         if (images == null) return;
-
-         foreach (var url in images)
-         {
-             var page = Instantiate(imagePagePrefab, imageScrollContent);
-             var imgComp = page.GetComponent<Image>();
-             if (imgComp != null)
-             {
-                 imgComp.preserveAspect = true;
-                 StartCoroutine(LoadImage(url, imgComp));
-             }
-             imagePages.Add(page);
-         }
-         ResetGalleryScroll();
-     }*/
-
-    /* private void SetupSwipeableGallery(List<string> images)
-     {
-         if (imageScrollContent == null || imagePagePrefab == null) return;
-
-         // ✅ STOP COROUTINES TRƯỚC KHI DESTROY
-         //StopAllCoroutines();
-
-         // ✅ SAFE DESTROY cũ
-         for (int i = imageScrollContent.childCount - 1; i >= 0; i--)
-         {
-             Transform child = imageScrollContent.GetChild(i);
-             if (child != null) Destroy(child.gameObject);
-         }
-
-         imagePages.Clear();
-
-         if (images == null || images.Count == 0) return;
-
-         foreach (var url in images)
-         {
-             if (string.IsNullOrEmpty(url)) continue;
-
-             var page = Instantiate(imagePagePrefab, imageScrollContent);
-             var imgComp = page.GetComponent<Image>();
-
-             if (imgComp != null)
-             {
-                 imgComp.preserveAspect = true;
-                 imgComp.type = Image.Type.Simple;
-
-                 StartCoroutine(LoadImage(url, imgComp));
-             }
-             imagePages.Add(page);
-         }
-
-         ResetGalleryScroll();
-     }*/
 
     private void SetupSwipeableGallery(List<string> images)
     {
@@ -557,45 +494,11 @@ public class ProductDetailUI : MonoBehaviour
             yield break;
         }
 
-        using (var request = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url))
-        {
-            yield return request.SendWebRequest();
-
-            // ✅ CHECK REQUEST THÀNH CÔNG
-            if (request.result != UnityEngine.Networking.UnityWebRequest.Result.Success)
-            {
-                Debug.LogWarning($"[LoadImage] Failed to load {url}: {request.error}");
-                yield break;
-            }
-
-            if (target == null || target.gameObject == null)
-            {
-                Debug.LogWarning("[LoadImage] Target destroyed during download");
-                yield break;
-            }
-
-
-            try
-            {
-                var texture = UnityEngine.Networking.DownloadHandlerTexture.GetContent(request);
-                if (texture != null)
-                {
-                    target.sprite = Sprite.Create(
-                        texture,
-                        new Rect(0, 0, texture.width, texture.height),
-                        new Vector2(0.5f, 0.5f)
-
-                    );
-                  
-                    
-                    Debug.Log($"[LoadImage] Success: {url}");
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[LoadImage] Sprite creation failed: {e.Message}");
-            }
-        }
+        ImageDownloadManager.Instance.DownloadImage(
+     url,
+     tex => {*//* apply to Image *//* },
+     err => {*//* log error, set default sprite nếu muốn *//* }
+        );
 
         Debug.Log($"[DEBUG] MainImage color: {productMainImage.color}");
         Debug.Log($"[DEBUG] MainImage sprite: {productMainImage.sprite}");
@@ -652,13 +555,6 @@ public class ProductDetailUI : MonoBehaviour
         if (buyNowButton != null) buyNowButton.interactable = hasSize;
     }
 
-    /*public void CloseProductDetail()
-    {
-        if (productDetailPanel != null) productDetailPanel.SetActive(false);
-        currentSelectedSize = "";
-        ResetGalleryScroll();
-    }*/
-
     public void CloseProductDetail()
     {
         // ✅ STOP TẤT CẢ COROUTINES (AN TOÀN 100%)
@@ -672,7 +568,6 @@ public class ProductDetailUI : MonoBehaviour
         PlayerController.Instance?.SetCanMove(true);
 
 
-        //currentSelectedSize = "";
         ResetGalleryScroll();
         imagePages.Clear();
         //Debug.Log("[ProductDetailUI] Panel closed safely");
@@ -710,7 +605,648 @@ public class ProductDetailUI : MonoBehaviour
 
     }
 
-    
 
 
+
+}
+
+
+*/
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+using static MainMenuViewModel;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Adapter: data class chuẩn hóa để hiển thị UI
+// ─────────────────────────────────────────────────────────────────────────────
+[System.Serializable]
+public class ProductDetail
+{
+    public string title;
+    public string brandName;
+    public float price;
+    public float originalPrice;
+    public string description;
+    public float reviewScore;
+    public int reviewCount;
+    public string mainImageUrl;
+    public List<string> galleryUrls = new List<string>();
+
+    public bool isPaidItem;
+    public string selectedSize;
+    public string customId;
+    public APIProductItem originalShopItem;
+
+    // ── Constructor 1: từ Shop API (chưa mua) ────────────────────────────────
+    public ProductDetail(APIProductItem shopItem)
+    {
+        title = shopItem.title;
+        brandName = shopItem.brandName;
+        price = shopItem.price;
+        originalPrice = shopItem.regularPrice;
+        selectedSize = shopItem.selectSize;
+
+        description = $"Product ID: {shopItem.customId}\n";
+        description += $"Brand: {shopItem.brandName}\n";
+        description += $"Reviews: {shopItem.totalReviews} customers rated {shopItem.reviewStatFiveScale}★";
+
+        reviewScore = shopItem.reviewStatFiveScale;
+        reviewCount = shopItem.totalReviews;
+
+        if (shopItem.images != null && shopItem.images.Count > 0)
+        {
+            mainImageUrl = shopItem.images[0].origin;
+            foreach (var img in shopItem.images)
+                if (!string.IsNullOrEmpty(img.origin)) galleryUrls.Add(img.origin);
+        }
+
+        isPaidItem = false;
+        customId = shopItem.customId;
+        originalShopItem = shopItem;
+    }
+
+    // ── Constructor 2: từ Inventory (đã mua) ────────────────────────────────
+    public ProductDetail(CartItem paidItem)
+    {
+        title = paidItem.productName;
+        price = paidItem.price;
+        originalPrice = 0;
+
+        brandName = !string.IsNullOrEmpty(paidItem.brandName) ? paidItem.brandName : "Unknown Brand";
+        selectedSize = !string.IsNullOrEmpty(paidItem.selectedSize) ? paidItem.selectedSize : "Freesize";
+
+        description = "ĐÃ SỞ HỮU\n";
+        description += "----------------------\n";
+        description += $"Thương hiệu: {brandName}\n";
+        description += $"Kích thước: {selectedSize}\n";
+        if (paidItem.purchaseDate != default(DateTime))
+            description += $"Ngày mua: {paidItem.purchaseDate:dd/MM/yyyy}\n";
+
+        reviewScore = 5;
+        reviewCount = 1;
+
+        mainImageUrl = paidItem.imageUrl;
+        if (!string.IsNullOrEmpty(paidItem.imageUrl)) galleryUrls.Add(paidItem.imageUrl);
+
+        isPaidItem = true;
+        customId = paidItem.customId;
+        originalShopItem = null;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ProductDetailUI – refactored
+// ─────────────────────────────────────────────────────────────────────────────
+public class ProductDetailUI : MonoBehaviour
+{
+    public static ProductDetailUI Instance { get; private set; }
+
+    // ── Serialized fields ────────────────────────────────────────────────────
+
+    [Header("Product Detail UI")]
+    [SerializeField] private GameObject productDetailPanel;
+    [SerializeField] private Image productMainImage;
+    [SerializeField] private TextMeshProUGUI productNameText;
+    [SerializeField] private TextMeshProUGUI productBrandText;
+    [SerializeField] private TextMeshProUGUI productPriceText;
+    [SerializeField] private TextMeshProUGUI productOriginalPriceText;
+    [SerializeField] private TextMeshProUGUI productDescriptionText;
+    [SerializeField] private TextMeshProUGUI productReviewsText;
+
+    [Header("Size Selection")]
+    [SerializeField] private TMP_Dropdown sizeDropdown;
+    [SerializeField] private TextMeshProUGUI selectedSizeText;
+
+    [Header("Buttons")]
+    [SerializeField] private Button addToCartButton;
+    [SerializeField] private Button buyNowButton;
+    [SerializeField] private Button closeDetailButton;
+    [SerializeField] private Button deleteButton;
+
+    [Header("Image Gallery")]
+    [SerializeField] private Transform imageScrollContent;
+    [SerializeField] private GameObject imagePagePrefab;
+    [SerializeField] private float snapSpeed = 10f;
+    [SerializeField] private ScrollRect imageScrollRect;
+    [SerializeField] private CarouselIndicator carouselIndicator;
+
+    [Header("Chat Integration")]
+    [SerializeField] private RectTransform chatAnchor;
+
+    // ── Runtime state ─────────────────────────────────────────────────────────
+
+    private List<GameObject> imagePages = new List<GameObject>();
+    private ProductDetail currentDetail;
+    private CartItem currentCartItem;
+    private string currentSelectedSize = "";
+    private string currentVariantId = "";
+    private string _lastSelectedSize = "";
+
+    // Main-image CTS (cancel khi mở sản phẩm mới hoặc đóng panel)
+    private CancellationTokenSource _mainImageCts;
+    private bool _ownsMainSprite;
+
+    // Preload window: load ngay page 0..1, lazy-load phần còn lại khi swipe
+    private const int PreloadPages = 2;
+    private int _lastLoadedPageIndex = -1;
+
+    private MultiChatManager _chatManager;
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else { Destroy(gameObject); return; }
+
+        _chatManager = FindAnyObjectByType<MultiChatManager>();
+        InitializeUI();
+    }
+
+    private void InitializeUI()
+    {
+        addToCartButton?.onClick.AddListener(() =>
+        {
+            PopupManager.Instance.ShowPopup(
+                "Xác nhận",
+                "Bạn có muốn thêm vật phẩm này vào giỏ hàng không?",
+                () =>
+                {
+                    OnAddToCartClicked();
+                    TutorialGamePlay.Instance?.OnAddToCartSuccess();
+                }
+            );
+        });
+
+        closeDetailButton?.onClick.AddListener(CloseProductDetail);
+        sizeDropdown.onValueChanged.RemoveAllListeners();
+        sizeDropdown.onValueChanged.AddListener(OnSizeChanged);
+
+        if (productDetailPanel != null) productDetailPanel.SetActive(false);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // PUBLIC API
+    // ═════════════════════════════════════════════════════════════════════════
+
+    /// <summary>Hiển thị sản phẩm đã mua (từ Inventory).</summary>
+    public void ShowPaidProductDetail(CartItem paidItem)
+    {
+        Debug.Log($"[ProductDetail] Showing PAID item: {paidItem.productName}");
+        currentDetail = new ProductDetail(paidItem);
+        OpenPanel();
+        PopulateCommonUI();
+        SetupPaidItemUI();
+    }
+
+    /// <summary>Hiển thị sản phẩm chưa mua (từ Shop) – có gọi API.</summary>
+    public void ShowUnpaidProductDetail(string customId, string preSelectedSize = "")
+    {
+        Debug.Log($"[ProductDetail] Fetching shop item: {customId}");
+        OpenPanel();
+        _lastSelectedSize = preSelectedSize;
+
+        currentCartItem = ShoppingCart.Instance?.GetUnpaidItems()
+            .Find(i => i.customId == customId && i.selectedSize == preSelectedSize);
+
+        string detailUrl =
+            $"https://data.storims.c1.hubcom.tech/api/v1/TenantProduct/45A26BFC-F2B2-4CA2-AB49-9EE8E9ADCFEC/{customId}";
+
+        APIClient.Instance.GetFull(
+            detailUrl,
+            json =>
+            {
+                var shopItem = JsonUtility.FromJson<APIProductItem>(json);
+                currentDetail = new ProductDetail(shopItem)
+                {
+                    selectedSize = _lastSelectedSize
+                };
+
+                PopulateCommonUI();
+                SetupUnpaidItemUI();
+
+                _chatManager?.SetProductContext(currentDetail);
+                _chatManager?.ReparentChatPanelTo(chatAnchor);
+                _chatManager?.ShowProductWelcome();
+            },
+            error => Debug.LogError($"[ProductDetail] Failed to load detail: {error}")
+        );
+    }
+
+    /// <summary>Shortcut gọi từ shop item click.</summary>
+    public void ShowProductDetail(APIProductItem item)
+    {
+        if (item == null) return;
+        if (!string.IsNullOrEmpty(item.customId))
+            ShowUnpaidProductDetail(item.customId, item.selectSize);
+        else
+            Debug.LogWarning("[ProductDetailUI] ShowProductDetail: item missing customId.");
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // CORE UI
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private void OpenPanel()
+    {
+        // Hủy mọi download đang chạy từ panel trước
+        CancelMainImage();
+        ReleaseAllGallerySprites();
+
+        if (productDetailPanel != null) productDetailPanel.SetActive(true);
+        PlayerController.Instance?.SetCanMove(false);
+    }
+
+    private void PopulateCommonUI()
+    {
+        if (currentDetail == null) return;
+
+        // ── Text ──────────────────────────────────────────────────────────────
+        if (productNameText != null) productNameText.text = currentDetail.title;
+        if (productBrandText != null) productBrandText.text = $"Brand: {currentDetail.brandName}";
+        if (productDescriptionText != null) productDescriptionText.text = currentDetail.description;
+        if (productReviewsText != null)
+            productReviewsText.text = $"⭐ {currentDetail.reviewScore}/5 ({currentDetail.reviewCount} reviews)";
+
+        // ── Price ─────────────────────────────────────────────────────────────
+        if (productPriceText != null)
+            productPriceText.text = $"{currentDetail.price:N0} VND";
+
+        if (productOriginalPriceText != null)
+        {
+            bool hasDiscount = currentDetail.originalPrice > currentDetail.price && !currentDetail.isPaidItem;
+            productOriginalPriceText.gameObject.SetActive(hasDiscount);
+            if (hasDiscount)
+            {
+                productOriginalPriceText.text = $"{currentDetail.originalPrice:N0} VND";
+                productOriginalPriceText.fontStyle = FontStyles.Strikethrough;
+            }
+        }
+
+        // ── Gallery + Main Image ──────────────────────────────────────────────
+        SetupSwipeableGallery(currentDetail.galleryUrls);
+        LoadMainImage(currentDetail.mainImageUrl);
+    }
+
+    private void SetupPaidItemUI()
+    {
+        if (addToCartButton != null) addToCartButton.gameObject.SetActive(false);
+        if (buyNowButton != null) buyNowButton.gameObject.SetActive(false);
+        if (deleteButton != null) deleteButton.gameObject.SetActive(false);
+
+        if (sizeDropdown != null)
+        {
+            sizeDropdown.ClearOptions();
+            sizeDropdown.AddOptions(new List<string> { currentDetail.selectedSize });
+            sizeDropdown.interactable = false;
+        }
+
+        if (selectedSizeText != null)
+            selectedSizeText.text = $"Đã chọn: {currentDetail.selectedSize}";
+    }
+
+    private void SetupUnpaidItemUI()
+    {
+        if (addToCartButton != null) addToCartButton.gameObject.SetActive(true);
+        if (buyNowButton != null) buyNowButton.gameObject.SetActive(true);
+
+        if (deleteButton != null)
+        {
+            deleteButton.gameObject.SetActive(currentCartItem != null);
+            deleteButton.onClick.RemoveAllListeners();
+            deleteButton.onClick.AddListener(() => ShoppingCart.Instance.ClearUnpaidItems(currentCartItem));
+        }
+
+        if (sizeDropdown != null)
+        {
+            sizeDropdown.interactable = true;
+            sizeDropdown.ClearOptions();
+
+            var targetGroup = currentDetail.originalShopItem?.attributeGroups?
+                .FirstOrDefault(g => g.attributes != null && g.attributes.Count > 0);
+
+            string defaultText = targetGroup != null ? targetGroup.name : "Size";
+            var options = new List<string> { defaultText };
+            if (targetGroup != null)
+                foreach (var attr in targetGroup.attributes) options.Add(attr.name);
+
+            sizeDropdown.AddOptions(options);
+            SizeCustomer(options);
+        }
+
+        UpdateButtonsState();
+    }
+
+    private void SizeCustomer(List<string> sizeOptions)
+    {
+        if (!string.IsNullOrEmpty(currentDetail.selectedSize))
+        {
+            int idx = sizeOptions.FindIndex(s =>
+                s.Equals(currentDetail.selectedSize, StringComparison.OrdinalIgnoreCase));
+
+            if (idx > 0)
+            {
+                sizeDropdown.value = idx;
+                currentSelectedSize = currentDetail.selectedSize;
+            }
+            else
+            {
+                sizeDropdown.value = 0;
+                currentSelectedSize = "";
+            }
+        }
+        else
+        {
+            sizeDropdown.value = 0;
+            currentSelectedSize = "";
+        }
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // IMAGE LOADING – dùng ImageDownloadManager (shared cache)
+    // ═════════════════════════════════════════════════════════════════════════
+
+    /// <summary>Load ảnh main (lớn, bên phải). Cancel load trước đó nếu có.</summary>
+    private void LoadMainImage(string url)
+    {
+        CancelMainImage();
+        if (string.IsNullOrEmpty(url) || productMainImage == null) return;
+
+        _mainImageCts = new CancellationTokenSource();
+        var token = _mainImageCts.Token;
+
+        ImageDownloadManager.Instance.DownloadImage(
+            url,
+            texture =>
+            {
+                if (token.IsCancellationRequested) return;
+                if (productDetailPanel == null || !productDetailPanel.activeInHierarchy) return;
+                ApplyTextureToImage(texture, productMainImage, ref _ownsMainSprite);
+            },
+            error => Debug.LogWarning($"[Detail] Main image failed: {url} | {error}")
+        );
+    }
+
+    private void CancelMainImage()
+    {
+        if (_mainImageCts == null) return;
+        _mainImageCts.Cancel();
+        _mainImageCts.Dispose();
+        _mainImageCts = null;
+    }
+
+    /// <summary>
+    /// Tạo Sprite từ texture đã có trong cache.
+    /// Chỉ destroy sprite cũ (local), KHÔNG destroy texture (thuộc CacheService).
+    /// </summary>
+    private void ApplyTextureToImage(Texture2D texture, Image target, ref bool ownsFlag)
+    {
+        if (texture == null || target == null) return;
+
+        if (ownsFlag && target.sprite != null)
+        {
+            Destroy(target.sprite);
+            target.sprite = null;
+        }
+
+        target.sprite = Sprite.Create(
+            texture,
+            new Rect(0, 0, texture.width, texture.height),
+            new Vector2(0.5f, 0.5f)
+        );
+        ownsFlag = true;
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // GALLERY SYSTEM – lazy-load với preload window
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private void SetupSwipeableGallery(List<string> images)
+    {
+        if (imageScrollContent == null || imagePagePrefab == null) return;
+
+        // Dọn pages cũ (DetailGalleryImage.OnDestroy tự release sprite)
+        for (int i = imageScrollContent.childCount - 1; i >= 0; i--)
+            Destroy(imageScrollContent.GetChild(i).gameObject);
+        imagePages.Clear();
+        _lastLoadedPageIndex = -1;
+
+        if (images == null || images.Count == 0) return;
+
+        // Tạo tất cả page objects (chưa load ảnh)
+        foreach (var url in images)
+        {
+            if (string.IsNullOrEmpty(url)) continue;
+
+            var page = Instantiate(imagePagePrefab, imageScrollContent);
+            var imgComp = page.GetComponent<Image>();
+
+            if (imgComp != null)
+            {
+                imgComp.preserveAspect = true;
+                imgComp.type = Image.Type.Simple;
+
+                // Gắn component quản lý sprite
+                var holder = page.AddComponent<DetailGalleryImage>();
+                holder.targetImage = imgComp;
+            }
+
+            imagePages.Add(page);
+        }
+
+        // Force layout rebuild trước khi load ảnh
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(imageScrollContent as RectTransform);
+
+        // Preload window ban đầu (page 0 .. PreloadPages-1)
+        for (int i = 0; i < Mathf.Min(PreloadPages, images.Count); i++)
+            RequestPageLoad(i, images);
+
+        _lastLoadedPageIndex = Mathf.Min(PreloadPages - 1, images.Count - 1);
+
+        ResetGalleryScroll();
+    }
+
+    /// <summary>Yêu cầu load ảnh cho page index nếu chưa load.</summary>
+    private void RequestPageLoad(int pageIndex, List<string> urls)
+    {
+        if (pageIndex < 0 || pageIndex >= imagePages.Count) return;
+        if (pageIndex >= urls.Count) return;
+
+        var holder = imagePages[pageIndex].GetComponent<DetailGalleryImage>();
+        if (holder == null) return;
+
+        // Nếu đã có sprite thì skip (đã load rồi)
+        if (holder.targetImage != null && holder.targetImage.sprite != null) return;
+
+        holder.LoadImage(urls[pageIndex]);
+    }
+
+    private void ResetGalleryScroll()
+    {
+        if (imageScrollRect != null)
+            imageScrollRect.horizontalNormalizedPosition = 0f;
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // UPDATE – snap + lazy-load trigger
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private void Update()
+    {
+        if (imageScrollRect == null || imagePages.Count == 0) return;
+
+        SnapToNearestPage();
+        TryLazyLoadNextPage();
+    }
+
+    private void SnapToNearestPage()
+    {
+        float pageWidth = 1f / Mathf.Max(imagePages.Count - 1, 1);
+        int currentPageIndex = Mathf.RoundToInt(
+            imageScrollRect.horizontalNormalizedPosition / pageWidth);
+
+        float target = currentPageIndex * pageWidth;
+        imageScrollRect.horizontalNormalizedPosition = Mathf.Lerp(
+            imageScrollRect.horizontalNormalizedPosition, target, Time.deltaTime * snapSpeed);
+
+        carouselIndicator.UpdateDots(currentPageIndex, imagePages.Count);
+    }
+
+    /// <summary>Khi user swipe đến gần cuối vùng đã load → load thêm PreloadPages.</summary>
+    private void TryLazyLoadNextPage()
+    {
+        if (currentDetail?.galleryUrls == null) return;
+
+        float pageWidth = 1f / Mathf.Max(imagePages.Count - 1, 1);
+        int visiblePage = Mathf.RoundToInt(imageScrollRect.horizontalNormalizedPosition / pageWidth);
+        int wantUpTo = visiblePage + PreloadPages;
+
+        if (wantUpTo <= _lastLoadedPageIndex) return;
+
+        for (int i = _lastLoadedPageIndex + 1; i <= wantUpTo; i++)
+            RequestPageLoad(i, currentDetail.galleryUrls);
+
+        _lastLoadedPageIndex = Mathf.Max(_lastLoadedPageIndex, wantUpTo);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // CLOSE & CLEANUP
+    // ═════════════════════════════════════════════════════════════════════════
+
+    public void CloseProductDetail()
+    {
+        // 1. Cancel tất cả download đang bay
+        CancelMainImage();
+
+        // 2. Đóng panel
+        _chatManager?.ClearProductContext();
+        _chatManager?.RestoreChatPanel();
+
+        if (productDetailPanel != null) productDetailPanel.SetActive(false);
+
+        PlayerController.Instance?.SetCanMove(true);
+
+        // 3. Release sprite local (texture vẫn ở CacheService)
+        ReleaseMainSprite();
+        ReleaseAllGallerySprites();
+
+        // 4. Xóa pages
+        ResetGalleryScroll();
+        imagePages.Clear();
+
+        TutorialGamePlay.Instance?.OnPlayerBackToShop();
+    }
+
+    private void ReleaseMainSprite()
+    {
+        if (_ownsMainSprite && productMainImage != null && productMainImage.sprite != null)
+        {
+            Destroy(productMainImage.sprite);
+            productMainImage.sprite = null;
+        }
+        _ownsMainSprite = false;
+    }
+
+    private void ReleaseAllGallerySprites()
+    {
+        foreach (var page in imagePages)
+        {
+            if (page == null) continue;
+            var holder = page.GetComponent<DetailGalleryImage>();
+            holder?.ReleaseSprite();
+        }
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // INTERACTION – size dropdown, add to cart, buy now
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private void OnSizeChanged(int index)
+    {
+        AudioManager.Instance.PlaySFXOneShot("Button_High");
+        if (currentDetail.isPaidItem) return;
+
+        if (index > 0 && sizeDropdown != null)
+        {
+            currentSelectedSize = sizeDropdown.options[index].text;
+            currentVariantId = GetVariantIdForSize(currentSelectedSize);
+        }
+        else
+        {
+            currentSelectedSize = "";
+            currentVariantId = "";
+        }
+
+        UpdateButtonsState();
+    }
+
+    private string GetVariantIdForSize(string sizeName)
+    {
+        var item = currentDetail.originalShopItem;
+        if (item?.attributeGroups == null) return "";
+
+        foreach (var group in item.attributeGroups)
+        {
+            if (group.attributes == null) continue;
+            var attr = group.attributes.Find(a =>
+                a.name.Equals(sizeName, StringComparison.OrdinalIgnoreCase));
+            if (attr != null) return attr.id ?? "";
+        }
+        return "";
+    }
+
+    private void UpdateButtonsState()
+    {
+        bool canBuy = !string.IsNullOrEmpty(currentSelectedSize);
+        if (addToCartButton != null) addToCartButton.interactable = canBuy;
+        if (buyNowButton != null) buyNowButton.interactable = canBuy;
+    }
+
+    private void OnAddToCartClicked()
+    {
+        if (currentDetail == null || string.IsNullOrEmpty(currentSelectedSize))
+        {
+            Debug.LogWarning("[ProductDetail] No size selected.");
+            return;
+        }
+
+        ShoppingCart.Instance?.AddItem(new CartItem
+        {
+            customId = currentDetail.customId,
+            productName = currentDetail.title,
+            brandName = currentDetail.brandName,
+            price = currentDetail.price,
+            selectedSize = currentSelectedSize,
+            imageUrl = currentDetail.mainImageUrl
+        });
+
+        Debug.Log($"[ProductDetail] Added to cart: {currentDetail.title} – {currentSelectedSize}");
+    }
 }

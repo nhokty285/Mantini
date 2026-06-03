@@ -10,7 +10,7 @@ public class ImageDownloadManager : MonoBehaviour
     public static ImageDownloadManager Instance { get; private set; }
 
     [Header("Download Settings")]
-    [SerializeField] private int maxConcurrentDownloads = 3;
+    [SerializeField] private int maxConcurrentDownloads = 5;
     [SerializeField] private int maxRetryAttempts = 1;
     [SerializeField] private float retryDelaySeconds = 2f;
     [SerializeField] private int timeoutSeconds = 10;
