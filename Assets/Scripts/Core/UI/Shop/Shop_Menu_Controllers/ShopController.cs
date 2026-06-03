@@ -186,12 +186,12 @@ public class ShopController : MonoBehaviour
                 inputPos = Input.GetTouch(0).position;
                 hasValidInput = true;
             }
-#else
+/*#else
             if (Input.GetMouseButton(0) || Input.GetMouseButtonDown(0) || Input.GetMouseButtonUp(0))
             {
                 inputPos = Input.mousePosition;
                 hasValidInput = true;
-            }
+            }*/
 #endif
 
             // ✅ CHỈ PROCESS SWIPE KHI TRONG VÙNG CAROUSEL

@@ -194,6 +194,8 @@ public class GameplayPlayerSpawner : MonoBehaviour
     private GameObject spawnedPlayer;
     private GameObject spawnedCompanion;
     private TextMeshProUGUI playerNameText; // Cache reference tới text component
+    public static GameplayPlayerSpawner Instance { get; private set; }
+    public GameObject SpawnedPlayer => spawnedPlayer;
 
     void Start()
     {
@@ -201,6 +203,7 @@ public class GameplayPlayerSpawner : MonoBehaviour
 
         // ✅ Sau khi spawn, gọi API để lấy profile mới nhất từ server
         LoadPlayerProfileFromServer();
+        Instance = this;
     }
 
     private void Update()
@@ -223,6 +226,7 @@ public class GameplayPlayerSpawner : MonoBehaviour
         Vector3 tempSpawnPos = defaultSpawnPoint != null ? defaultSpawnPoint.position : Vector3.zero;
         spawnedPlayer = Instantiate(selectedCharacter.gameplayPrefab, tempSpawnPos, Quaternion.identity);
         spawnedPlayer.name = "Player_" + selectedCharacter.characterName;
+        spawnedPlayer.tag = "Player";
 
         // ✅ Cập nhật text hiển thị lần đầu (dùng character name)
         SetPlayerNameInUI(selectedCharacter.characterName);
