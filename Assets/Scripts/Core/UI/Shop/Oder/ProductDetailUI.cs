@@ -541,20 +541,6 @@ public class ProductDetailUI : MonoBehaviour
         carouselIndicator.UpdateDots(currentPageIndex, imagePages.Count);
     }
 
-    /* private IEnumerator LoadImage(string url, Image target)
-     {
-         using (var request = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url))
-         {
-             yield return request.SendWebRequest();
-             if (request.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
-             {
-                 var texture = UnityEngine.Networking.DownloadHandlerTexture.GetContent(request);
-                 target.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f);
-                 target.preserveAspect = true;
-             }
-         }
-     }*/
-
     private IEnumerator LoadImage(string url, Image target)
     {
         // ✅ CHECK NULL + ACTIVE ngay đầu (QUAN TRỌNG)
@@ -582,7 +568,6 @@ public class ProductDetailUI : MonoBehaviour
                 yield break;
             }
 
-            // ✅ CHECK LẠI TARGET TRƯỚC KHI ASSIGN (CRITICAL!)
             if (target == null || target.gameObject == null)
             {
                 Debug.LogWarning("[LoadImage] Target destroyed during download");
@@ -590,7 +575,6 @@ public class ProductDetailUI : MonoBehaviour
             }
 
 
-            // ✅ SAFE ASSIGN SPRITE
             try
             {
                 var texture = UnityEngine.Networking.DownloadHandlerTexture.GetContent(request);

@@ -7534,7 +7534,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0000076293945}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 38.5778}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &264474902
@@ -33977,7 +33977,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1413439786
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -63465,8 +63465,8 @@ GameObject:
   m_Component:
   - component: {fileID: 543450651673769069}
   - component: {fileID: 3469287837671046088}
-  - component: {fileID: 1711813854950313730}
   - component: {fileID: 3469287837671046089}
+  - component: {fileID: 1711813854950313730}
   m_Layer: 9
   m_Name: sm_fence_park_01 (2)
   m_TagString: Untagged

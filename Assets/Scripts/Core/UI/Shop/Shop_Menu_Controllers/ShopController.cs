@@ -1132,18 +1132,42 @@ public class ShopController : MonoBehaviour
 
     private void ClearShopItems()
     {
-        shopItemsContainer.DOKill(complete: false);
-        shopItemsContainer.localPosition = _containerOriginalPos;  // Hoặc dùng loop nếu muốn selective
+        /*  shopItemsContainer.DOKill(complete: false);
+          shopItemsContainer.localPosition = _containerOriginalPos;  // Hoặc dùng loop nếu muốn selective
 
-        foreach (Transform child in shopItemsContainer)
+          foreach (Transform child in shopItemsContainer)
+          {
+              child.DOKill(complete: false); // defensive kill
+              var outline = child.GetComponent<Outline>();
+              if (outline != null) outline.enabled = false;
+              Destroy(child.gameObject);
+          }
+
+          spawnedItems.Clear();
+          if (MainMenuViewModel.CurrentShopData != null)
+              MainMenuViewModel.CurrentShopData.ClearCache();*/
+        shopItemsContainer.DOKill(complete: false);
+        shopItemsContainer.localPosition = _containerOriginalPos;
+
+        foreach (var go in spawnedItems)
         {
-            child.DOKill(complete: false); // defensive kill
-            var outline = child.GetComponent<Outline>();
+            if (go == null) continue;
+            go.transform.DOKill(complete: false);
+
+            var outline = go.GetComponent<Outline>();
             if (outline != null) outline.enabled = false;
-            Destroy(child.gameObject);
+
+            var cg = go.GetComponent<CanvasGroup>();
+            if (cg != null)
+            {
+                cg.alpha = 1f;
+                cg.blocksRaycasts = false;
+            }
+
+            go.SetActive(false);
         }
 
-        spawnedItems.Clear();
+        // KHÔNG Destroy children, KHÔNG Clear spawnedItems
         if (MainMenuViewModel.CurrentShopData != null)
             MainMenuViewModel.CurrentShopData.ClearCache();
     }
@@ -1177,9 +1201,7 @@ public class ShopController : MonoBehaviour
 
             case nameof(MainMenuViewModel.IsShopVisible):
                 shopPanel.SetActive(MainMenuViewModel.IsShopVisible);
-                Debug.Log($"IsShopVisible changed to: {MainMenuViewModel.IsShopVisible}");
                 PlayerController.Instance?.SetCanMove(!MainMenuViewModel.IsShopVisible);
-
                 closeShopButton.gameObject.SetActive(MainMenuViewModel.IsShopVisible);
 
                 if (playerImage != null)
@@ -1193,6 +1215,10 @@ public class ShopController : MonoBehaviour
                 }
                 else
                 {
+
+                    StopAllCoroutines();        
+                    isSwipeActive = false;
+                    swipeProcessed = false;
                     ClearShopItems();
                     Close_BT_Shop();
                     if (shopHeaderText != null)

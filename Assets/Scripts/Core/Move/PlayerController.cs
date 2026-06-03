@@ -48,7 +48,7 @@ public class PlayerController : MonoBehaviour
         // Unity 2022.2+ dùng refreshRateRatio, cũ hơn dùng Screen.currentResolution.refreshRate
         // Ép target = ước số của refresh rate để frame pacing đều
         if (refreshRate >= 120) Application.targetFrameRate = 60; // 1 frame / 2 vblank
-        else if (refreshRate >= 90) Application.targetFrameRate = 45; // hoặc 90
+        else if (refreshRate >= 90) Application.targetFrameRate = 60; // hoặc 90
         else Application.targetFrameRate = 60;
     }
     void Start()

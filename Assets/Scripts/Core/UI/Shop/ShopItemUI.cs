@@ -238,28 +238,6 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
 
         currentImageUrl = imageUrl;
         isLoadingImage = true;
-
-        /*// Use ImageDownloadManager instead of direct coroutine
-        if (ImageDownloadManager.Instance != null)
-        {
-            ImageDownloadManager.Instance.DownloadImage(
-                imageUrl,
-                texture => {
-                    isLoadingImage = false;
-                    ApplyTextureToIcon(texture, shopItem, imageUrl, false);
-                },
-                error => {
-                    isLoadingImage = false;
-                    Debug.LogWarning($"Failed to load image for {shopItem.itemName}: {error}");
-                }
-            );
-        }
-        else
-        {
-            // Fallback to old method if ImageDownloadManager not available
-            StartCoroutine(LoadImageFromAPI(imageUrl, shopItem));
-        }*/
-
         StartCoroutine(DelayedImageLoad(imageUrl, shopItem));
     }
 
@@ -328,25 +306,35 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
     {
         if (texture == null || shopItem == null) return;
 
-        // Only create sprite if not from cache (cache already has sprite)
-        Sprite sprite;
-        if (fromCache)
-        {
-            // Find existing sprite for this texture
-            sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f);
-        }
-        else
-        {
-            sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f);
-        }
+        /*  // Only create sprite if not from cache (cache already has sprite)
+          Sprite sprite;
+          if (fromCache)
+          {
+              // Find existing sprite for this texture
+              sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f);
+          }
+          else
+          {
+              sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f);
+          }
+
+          if (sprite != null)
+          {
+              iconImage.sprite = sprite;
+              shopItem.icon = sprite; // Cache in ShopItem for future use
+
+              string source = fromCache ? "cache" : "API";
+              Debug.Log($"Applied texture from {source} for {shopItem.itemName}");
+          }*/
+        Sprite sprite = Sprite.Create(texture,
+         new Rect(0, 0, texture.width, texture.height),
+         Vector2.one * 0.5f);
 
         if (sprite != null)
         {
             iconImage.sprite = sprite;
-            shopItem.icon = sprite; // Cache in ShopItem for future use
-
-            string source = fromCache ? "cache" : "API";
-            Debug.Log($"Applied texture from {source} for {shopItem.itemName}");
+            shopItem.icon = sprite;
+            ownsSprite = true;
         }
     }
 
@@ -354,11 +342,15 @@ public class ShopItemUI : MonoBehaviour /*IPointerClickHandler*/
     {
         defaultItemSprite = defaultSprite;
     }
-
+    private bool ownsSprite = false;
     private void OnDestroy()
     {
         // Cancel any ongoing image loading
         isLoadingImage = false;
+        if (ownsSprite && iconImage != null && iconImage.sprite != null)
+        {
+            Destroy(iconImage.sprite);
+        }
     }
 
 
