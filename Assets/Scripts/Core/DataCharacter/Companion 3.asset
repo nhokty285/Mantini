@@ -10,13 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4b3a4b641e2109458df28dfc9e52cc8, type: 3}
-  m_Name: Jin
+  m_Name: Companion 3
   m_EditorClassIdentifier: 
-  characterName: Jin
-  description: "T\xEDnh c\xE1ch: Th\xE2n thi\u1EC7n, vui v\u1EBB\\nGi\u1EDBi t\xEDnh:  
-    Nam\\n\u0110\u1EB7c \u0111i\u1EC3m: Th\xEDch \u0111i\u1EC1u m\u1EDBi m\u1EBB"
-  previewPrefab: {fileID: 2429150463335008110, guid: 25df37f274f75d5449939378e64cbdc1, type: 3}
+  characterName: Cat
+  description: "M\xE8o m\xE9o meow meow meow!"
+  previewPrefab: {fileID: 2773000067718624586, guid: 036f174d8ea7f51448431660211b578e, type: 3}
   characterIcon: {fileID: 21300000, guid: 1c8fe0d92ced15a4ba86c0474d0f3c99, type: 3}
-  gameplayPrefab: {fileID: 1013255603687130543, guid: 56183682d94b89040b93cdacffd26576, type: 3}
-  moveSpeed: 3
+  gameplayPrefab: {fileID: 406496115097517265, guid: d159e300b7bc9ae42b331d8a480c2e1a, type: 3}
+  moveSpeed: 5
   maxHealth: 100

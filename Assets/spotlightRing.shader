@@ -82,11 +82,6 @@
                 overlay.a         *= overlayAlpha;
 
                 // ── 2. Ring nhấp nháy sát cạnh ──────────────────────────
-                // Chỉ vẽ khi d trong khoảng [-_RingWidth, +_RingWidth]
-                // = vành quanh cạnh hình chữ nhật (cả trong lẫn ngoài)
-
-                // Gần cạnh (d ≈ 0) → ringMask ≈ 1
-                // Xa cạnh          → ringMask ≈ 0
                 float ringMask = 1.0 - saturate(abs(d) / _RingWidth);
                 ringMask       = smoothstep(0.0, 1.0, ringMask);
 
@@ -99,9 +94,6 @@
                 ringCol.a     *= ringMask;
 
                 // ── 3. Kết hợp: overlay + ring ───────────────────────────
-                // Alpha cuối:
-                //   - Bên ngoài lỗ : overlay tối + ring glow ở cạnh
-                //   - Bên trong lỗ : trong suốt + ring glow ở cạnh
                 fixed4 result;
                 result.rgb = lerp(ringCol.rgb, overlay.rgb, overlay.a * (1.0 - ringMask));
                 result.a   = max(overlay.a, ringCol.a);

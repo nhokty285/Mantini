@@ -1,8 +1,9 @@
-﻿using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using System;
 using System.Collections;
-using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 
 public class ProfileData : MonoBehaviour
@@ -135,17 +136,33 @@ public class ProfileData : MonoBehaviour
                 // Đồng bộ companion selection với server
                 apiService.SyncSelectionToServer();
 
-                // Thông báo restart để cập nhật thay đổi
-                PopupManager.Instance.ShowPopup(
-                    "Thông báo",
-                    "Game sẽ khởi động lại để cập nhật thay đổi.",
-                    () => 
-                    { 
-                        LevelLoader.Instance.LoadLevel("MapTest2");
-                    }
-                );
+                ShowRestartMessageOrFallback();
             },
             onError: (err) => Debug.LogError("Lỗi: " + err)
         );
+    }
+    private void ShowRestartMessageOrFallback()
+    {
+        if (PopupManager.Instance != null)
+        {
+            PopupManager.Instance.ShowPopup(
+                "Thông báo",
+                "Game sẽ khởi động lại để cập nhật thay đổi.",
+                RestartFlow
+            );
+            return;
+        }
+
+        Debug.LogWarning("[ProfileData] PopupManager is null.");
+        RestartFlow();
+    }
+
+    private void RestartFlow()
+    {
+        if (SceneManager.GetActiveScene().name == "CreateCharacter")
+            return;
+
+        if (LevelLoader.Instance != null)
+            LevelLoader.Instance.LoadLevel("MapTest2");
     }
 }

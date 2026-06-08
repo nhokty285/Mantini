@@ -13,8 +13,11 @@ MonoBehaviour:
   m_Name: Companion 1
   m_EditorClassIdentifier: 
   characterName: Female
-  description: "Xin ch\xE0o, m\xECnh l\xE0 Female, m\xECnh s\u1EBD \u0111\u1ED3ng
-    h\xE0nh v\u1EDBi b\u1EA1n trong th\xE0nh ph\u1ED1 n\xE0y, v.v"
+  description: "Ch\xE0o b\u1EA1n, m\xECnh l\xE0 Lily. M\xECnh th\xEDch gi\xFAp b\u1EA1n
+    ch\u1ECDn m\xF3n \u0111\u1EB9p, d\u1EC5 d\xF9ng, ph\xF9 h\u1EE3p v\u1EDBi gu
+    c\u1EE7a b\u1EA1n. Mua s\u1EAFm vui h\u01A1n n\u1EBFu b\u1EA1n kh\xF4ng ph\xE2n
+    v\xE2n qu\xE1 l\xE2u, m\xECnh \u1EDF \u0111\xE2y \u0111\u1EC3 g\u1EE3i \xFD nh\u1EB9
+    nh\xE0ng m\xE0 \u01B0ng \xFD ngay \u0111\u1EA5y."
   previewPrefab: {fileID: 2429150463335008110, guid: 27a094a35981f1044927bb475de18710, type: 3}
   characterIcon: {fileID: 21300000, guid: 1c8fe0d92ced15a4ba86c0474d0f3c99, type: 3}
   gameplayPrefab: {fileID: 7377491498598919582, guid: ece7c127710a1c343999d7b230503696, type: 3}

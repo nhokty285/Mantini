@@ -62,8 +62,8 @@ public class CompanionSelection : MonoBehaviour
         // Load saved selection
         selectedIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, 0);
 
-      
-            dialoguePanel.SetActive(false);
+        // Load profile data
+        dialoguePanel.SetActive(false);
             if (dialogueContinueButton)
             {
                 dialogueContinueButton.onClick.RemoveAllListeners();
@@ -362,11 +362,9 @@ public class CompanionSelection : MonoBehaviour
         /*HidePopup();*/
 
         // Lưu companion selection qua PlayerDataManager
-
         PlayerDataManager.Instance.SaveCompanionIndex(selectedIndex);
         Debug.Log($"[CompanionSelection] Starting game with companion: {companionDataArray[selectedIndex].characterName}");
         dialogueAudioSync.StopTypewriter();
-        // *** THÊM: Sync lên server trước khi vào gameplay ***
         var syncer = FindFirstObjectByType<PlayerApiService>();
         if (syncer != null)
         {
