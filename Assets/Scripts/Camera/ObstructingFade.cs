@@ -185,7 +185,7 @@ public class CameraWallOcclusion : MonoBehaviour
         // ✅ Tìm player 1 lần duy nhất trong Start, không tìm lại mỗi frame
         if (player == null)
         {
-           var player = GameplayPlayerSpawner.Instance?.SpawnedPlayer;
+           player = PlayerController.Instance.gameObject ?? GameObject.FindGameObjectWithTag("Player");
         }
     }
 

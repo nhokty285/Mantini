@@ -96,11 +96,11 @@ public class TutorialGamePlay : MonoBehaviour
     [Header("══════ Step 1: Di chuyển đến NPC ══════")]
     [SerializeField] private Transform firstNPCWorldTransform;
     [SerializeField] private RectTransform firstNPCScreenRect;
-    [SerializeField] private GameObject arrowNPC;
     [SerializeField] private float arrowUpdateInterval = 0.08f;
-    [SerializeField] private Vector3 npcSpotlightOffset = new Vector3(0f, 1f, 0f); // ★ Chỉnh từ Inspector
+/*    [SerializeField] private Vector3 npcSpotlightOffset = new Vector3(0f, 1f, 0f); // ★ Chỉnh từ Inspector
     [SerializeField] private Vector2 npcSpotlightSize = new Vector2(120f, 120f);
-    private Coroutine _spotlightTrackRoutine;
+    private Coroutine _spotlightTrackRoutine;*/
+    [SerializeField] private GameObject spotlightEffectPrefab; // ★ Hiệu ứng spotlight (optional)
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — SHOP UI
     // ════════════════════════════════════════════════════════════════════════
@@ -198,6 +198,7 @@ public class TutorialGamePlay : MonoBehaviour
         Instance = this;
         audioSync = FindAnyObjectByType<DialogueAudioSync>();
         HideAllTutorialUI();
+        spotlightEffectPrefab.SetActive(false); 
     }
 
     private void Start()
@@ -374,25 +375,27 @@ public class TutorialGamePlay : MonoBehaviour
         yield return ShowCompanionMessage(msg_Step1_Intro, wait: false);
         yield return new WaitForSeconds(2f);
         HideCompanionPanel();
-
+        HideSpotlight();
         // ── Phase B: Dark overlay + Spotlight bám NPC trong world space ───────
         // Arrow xoay về NPC + spotlight chiếu vào NPC ngay sau khi companion tắt
-        if (firstNPCWorldTransform != null)
-        {
-            // Size spotlight: ước lượng theo NPC — chỉnh trong Inspector nếu cần
-            ShowSpotlightOnWorld(firstNPCWorldTransform, npcSpotlightSize);
-        }
+        /*     if (firstNPCWorldTransform != null)
+             {
+                 // Size spotlight: ước lượng theo NPC — chỉnh trong Inspector nếu cần
+                 ShowSpotlightOnWorld(firstNPCWorldTransform, npcSpotlightSize);
+             }*/
 
-        if (arrowNPC != null)
-        {
-            arrowNPC.SetActive(true);
-            _arrowDirectionRoutine = StartCoroutine(UpdateArrowDirectionToNPC());
-        }
+        /*        if (arrowNPC != null)
+                {
+                    arrowNPC.SetActive(true);
+                    _arrowDirectionRoutine = StartCoroutine(UpdateArrowDirectionToNPC());
+                }
+        */
 
+        spotlightEffectPrefab.SetActive(true);  
         // Đợi player di chuyển → OnPlayerEnterNPCRange() callback
     }
 
-    private IEnumerator UpdateArrowDirectionToNPC()
+/*    private IEnumerator UpdateArrowDirectionToNPC()
     {
         if (arrowNPC == null || firstNPCWorldTransform == null) yield break;
         Camera cam = Camera.main;
@@ -411,7 +414,7 @@ public class TutorialGamePlay : MonoBehaviour
             yield return new WaitForSeconds(arrowUpdateInterval);
         }
     }
-
+*/
     /// <summary>Hook → VendorNPC.OnPlayerEnterRange()</summary>
     public void OnPlayerEnterNPCRange()
     {
@@ -440,7 +443,7 @@ public class TutorialGamePlay : MonoBehaviour
         StopArrowBounce();
         HideSpotlight();
         HideAllTutorialUI();
-        arrowNPC?.SetActive(false);
+        spotlightEffectPrefab.SetActive(false);
         if (_arrowDirectionRoutine != null)
         {
             StopCoroutine(_arrowDirectionRoutine);
@@ -821,13 +824,14 @@ public class TutorialGamePlay : MonoBehaviour
     {
         if (spotlightOverlay == null || spotlightHole == null || target == null) return;
         spotlightHole.gameObject.SetActive(true);
-        StopSpotlightTracking(); // Dừng tracking cũ nếu có
+        //StopSpotlightTracking(); // Dừng tracking cũ nếu có
         spotlightOverlay.SetActive(true);
+        AudioManager.Instance.PlaySFXOneShot("Whoosh");
         spotlightHole.position = target.position;
         spotlightHole.sizeDelta = target.rect.size + spotlightPadding;
     }
 
-    private void ShowSpotlightOnWorld(Transform worldTarget, Vector2 size)
+ /*   private void ShowSpotlightOnWorld(Transform worldTarget, Vector2 size)
     {
         if (spotlightOverlay == null || spotlightHole == null || worldTarget == null) return;
         spotlightHole.gameObject.SetActive(true);
@@ -881,10 +885,10 @@ public class TutorialGamePlay : MonoBehaviour
             StopCoroutine(_spotlightTrackRoutine);
             _spotlightTrackRoutine = null;
         }
-    }
+    }*/
     private void HideSpotlight()
     {
-        StopSpotlightTracking(); // NEW: dừng tracking khi ẩn
+        //StopSpotlightTracking(); // NEW: dừng tracking khi ẩn
         spotlightOverlay?.SetActive(false);
         spotlightHole?.gameObject.SetActive(false); 
     }
@@ -960,7 +964,6 @@ public class TutorialGamePlay : MonoBehaviour
         HideCompanionPanel();
         HideSpotlight();
         StopArrowBounce();
-        arrowNPC?.SetActive(false);
     }
 
     private void CompleteTutorial()
