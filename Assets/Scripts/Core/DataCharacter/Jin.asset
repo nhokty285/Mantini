@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Jin
   m_EditorClassIdentifier: 
   characterName: Jin
-  description: "T\xEDnh c\xE1ch: Th\xE2n thi\u1EC7n, vui v\u1EBB\\nGi\u1EDBi t\xEDnh:
-    Nam"
+  description:
+  - "T\xEDnh c\xE1ch: nhanh nh\u1EB9n, m\u1EA1nh m\u1EBD n\\Gi\u1EDBi t\xEDnh:Nam"
   previewPrefab: {fileID: 2429150463335008110, guid: 25df37f274f75d5449939378e64cbdc1, type: 3}
   characterIcon: {fileID: 21300000, guid: 646fc2698ef4a544491eb0ae8f63cf1d, type: 3}
   gameplayPrefab: {fileID: 1013255603687130543, guid: 56183682d94b89040b93cdacffd26576, type: 3}

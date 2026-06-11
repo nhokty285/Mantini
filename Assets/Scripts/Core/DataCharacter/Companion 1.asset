@@ -12,12 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4b3a4b641e2109458df28dfc9e52cc8, type: 3}
   m_Name: Companion 1
   m_EditorClassIdentifier: 
-  characterName: Female
-  description: "Ch\xE0o b\u1EA1n, m\xECnh l\xE0 Lily. M\xECnh th\xEDch gi\xFAp b\u1EA1n
-    ch\u1ECDn m\xF3n \u0111\u1EB9p, d\u1EC5 d\xF9ng, ph\xF9 h\u1EE3p v\u1EDBi gu
-    c\u1EE7a b\u1EA1n. Mua s\u1EAFm vui h\u01A1n n\u1EBFu b\u1EA1n kh\xF4ng ph\xE2n
-    v\xE2n qu\xE1 l\xE2u, m\xECnh \u1EDF \u0111\xE2y \u0111\u1EC3 g\u1EE3i \xFD nh\u1EB9
-    nh\xE0ng m\xE0 \u01B0ng \xFD ngay \u0111\u1EA5y."
+  characterName: Lucian
+  description:
+  - "Xin ch\xE0o, m\xECnh l\xE0 Lucian r\u1EA5t vui \u0111\u01B0\u1EE3c g\u1EB7p
+    b\u1EA1n."
+  - "\u0110i mua s\u1EAFm v\u1EDBi t\u1EDB l\xE0 chu\u1EA9n b\xE0i r\u1ED3i! T\u1EDB
+    v\u1EEBa l\xE0 stylist t\u01B0 v\u1EA5n gu c\u1EF1c \u0111\u1EC9nh, v\u1EEBa
+    l\xE0 chuy\xEAn gia s\u0103n deal, l\u1EA1i c\xF2n s\u1EB5n s\xE0ng ch\u1EE5p
+    cho c\u1EADu ngh\xECn t\u1EA5m \u1EA3nh s\u1ED1ng \u1EA3o n\u1EEFa!"
   previewPrefab: {fileID: 2429150463335008110, guid: 27a094a35981f1044927bb475de18710, type: 3}
   characterIcon: {fileID: 21300000, guid: 1c8fe0d92ced15a4ba86c0474d0f3c99, type: 3}
   gameplayPrefab: {fileID: 7377491498598919582, guid: ece7c127710a1c343999d7b230503696, type: 3}

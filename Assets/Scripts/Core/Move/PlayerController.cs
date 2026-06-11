@@ -41,7 +41,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 _cachedInputDirection;
     private void Awake()
     {
-        Instance = this;
+       /* Instance = this;
         QualitySettings.vSyncCount = 0;
         // Lấy refresh rate thật của màn hình
         var refreshRate = (int)Screen.currentResolution.refreshRateRatio.value;
@@ -49,7 +49,7 @@ public class PlayerController : MonoBehaviour
         // Ép target = ước số của refresh rate để frame pacing đều
         if (refreshRate >= 120) Application.targetFrameRate = 60; // 1 frame / 2 vblank
         else if (refreshRate >= 90) Application.targetFrameRate = 60; // hoặc 90
-        else Application.targetFrameRate = 60;
+        else Application.targetFrameRate = 60;*/
     }
     void Start()
     {

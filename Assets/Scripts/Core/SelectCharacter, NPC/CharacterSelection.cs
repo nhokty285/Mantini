@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,7 +15,7 @@ public class CharacterSelection : MonoBehaviour
     public TextMeshProUGUI characterNameText;
     public TextMeshProUGUI characterDetailText;
 
-    private GameObject[] instantiatedCharacters; // Preview instances
+    private GameObject[] instantiatedCharacters;
     private int currentCharacterIndex = 1;
     private Vector2 startTouchPosition;
     private float swipeThreshold = 50f;
@@ -26,7 +26,6 @@ public class CharacterSelection : MonoBehaviour
 
     void Start()
     {
-        // Đăng ký CharacterData vào PlayerDataManager
         PlayerDataManager.Instance.RegisterCharacterData(characterDataArray);
         InitializeCharacters();
         UpdateCharacterPositions();
@@ -35,7 +34,6 @@ public class CharacterSelection : MonoBehaviour
 
     void InitializeCharacters()
     {
-        // 2 nhân vật: 0 = Nam, 1 = Nữ (hoặc ngược lại tùy bạn setup trong Inspector)
         instantiatedCharacters = new GameObject[2];
 
         for (int i = 0; i < instantiatedCharacters.Length && i < characterDataArray.Length; i++)
@@ -45,15 +43,11 @@ public class CharacterSelection : MonoBehaviour
             instantiatedCharacters[i].transform.localPosition = Vector3.zero;
         }
 
-        // Trạng thái khởi đầu: ví dụ Nữ được chọn
-        currentCharacterIndex = 0; // 1 = Nữ, 0 = Nam (tùy cách bạn đặt trong array)
+        currentCharacterIndex = 0;
 
-        // Nữ ở giữa, Nam bên trái (giống hình 1)
         ApplyLayoutForCurrentIndex();
         UpdateCharacterInfo();
     }
-
-
 
     private void OnDestroy()
     {
@@ -75,7 +69,7 @@ public class CharacterSelection : MonoBehaviour
 
     void Update()
     {
-            HandleSwipeInput();                     
+        HandleSwipeInput();
     }
 
     void HandleSwipeInput()
@@ -96,13 +90,9 @@ public class CharacterSelection : MonoBehaviour
                 if (Mathf.Abs(swipeDirection.x) > swipeThreshold)
                 {
                     if (swipeDirection.x > 0)
-                    {
                         SwitchToPreviousCharacter();
-                    }
                     else
-                    {
                         SwitchToNextCharacter();
-                    }
                 }
             }
         }
@@ -110,12 +100,11 @@ public class CharacterSelection : MonoBehaviour
 
     void SwitchToNextCharacter()
     {
-        // Vuốt trái: chỉ cho đi tới nếu còn “next”
         if (currentCharacterIndex >= characterDataArray.Length - 1)
             return;
 
-            AudioManager.Instance.PlaySFXOneShot("Swipe");
-        
+        AudioManager.Instance.PlaySFXOneShot("Swipe");
+
         currentCharacterIndex++;
         ApplyLayoutForCurrentIndex();
         UpdateCharacterInfo();
@@ -123,20 +112,17 @@ public class CharacterSelection : MonoBehaviour
 
     void SwitchToPreviousCharacter()
     {
-        // Vuốt phải: chỉ cho lùi nếu còn “previous”
         if (currentCharacterIndex <= 0)
             return;
-    
-            AudioManager.Instance.PlaySFXOneShot("Swipe");
-        
+
+        AudioManager.Instance.PlaySFXOneShot("Swipe");
+
         currentCharacterIndex--;
         ApplyLayoutForCurrentIndex();
         UpdateCharacterInfo();
     }
 
 
-    // currentCharacterIndex: 0 = Nam, 1 = Nữ (ví dụ)
-    // characterPositions[0] = trái, [1] = giữa, [2] = phải
     void ApplyLayoutForCurrentIndex()
     {
         if (instantiatedCharacters == null || instantiatedCharacters.Length < 2)
@@ -145,19 +131,14 @@ public class CharacterSelection : MonoBehaviour
         GameObject male = instantiatedCharacters[0];
         GameObject female = instantiatedCharacters[1];
 
-        // Clear con cũ trong 3 vị trí
         for (int i = 0; i < characterPositions.Length; i++)
         {
             foreach (Transform child in characterPositions[i])
-            {
                 child.SetParent(null);
-            }
         }
 
         if (currentCharacterIndex == 1)
         {
-            // Trạng thái A: Nữ được chọn
-            // Nữ ở giữa, Nam bên trái
             female.transform.SetParent(characterPositions[1], false);
             female.transform.localPosition = Vector3.zero;
 
@@ -166,8 +147,6 @@ public class CharacterSelection : MonoBehaviour
         }
         else
         {
-            // Trạng thái B: Nam được chọn
-            // Nam ở giữa, Nữ bên phải
             male.transform.SetParent(characterPositions[1], false);
             male.transform.localPosition = Vector3.zero;
 
@@ -175,156 +154,85 @@ public class CharacterSelection : MonoBehaviour
             female.transform.localPosition = Vector3.zero;
         }
 
-        UpdateCharacterPositions(); // scale + layer
+        UpdateCharacterPositions();
     }
-
-    /* void RearrangeCharacters(bool moveRight)
-     {
-         GameObject[] tempCharacters = new GameObject[3];
-
-         if (moveRight)
-         {
-             tempCharacters[0] = instantiatedCharacters[1];
-             tempCharacters[1] = instantiatedCharacters[2];
-             tempCharacters[2] = instantiatedCharacters[0];
-         }
-         else
-         {
-             tempCharacters[0] = instantiatedCharacters[2];
-             tempCharacters[1] = instantiatedCharacters[0];
-             tempCharacters[2] = instantiatedCharacters[1];
-         }
-
-         for (int i = 0; i < 3; i++)
-         {
-             tempCharacters[i].transform.SetParent(characterPositions[i]);
-             tempCharacters[i].transform.localPosition = Vector3.zero;
-         }
-
-         instantiatedCharacters = tempCharacters;
-     }*/
-
-    /*  void UpdateCharacterPositions()
-      {
-          for (int i = 0; i < instantiatedCharacters.Length; i++)
-          {
-              if (i == 1) // Character ở giữa
-              {
-                  instantiatedCharacters[i].transform.localScale = Vector3.one;
-                  SetCharacterLayerOrder(instantiatedCharacters[i], 10);
-              }
-              else // Characters ở 2 bên
-              {
-                  instantiatedCharacters[i].transform.localScale = Vector3.one * 0.8f;
-                  SetCharacterLayerOrder(instantiatedCharacters[i], 5);
-              }
-          }
-      }*/
 
     void UpdateCharacterPositions()
     {
-        // Duyệt 3 vị trí
         for (int i = 0; i < characterPositions.Length; i++)
         {
             foreach (Transform child in characterPositions[i])
             {
-                bool isCenter = (i == 1); // vị trí giữa
+                bool isCenter = (i == 1);
 
                 child.localScale = isCenter ? Vector3.one : Vector3.one * 0.8f;
                 SetCharacterLayerOrder(child.gameObject, isCenter ? 10 : 5);
-
                 SetCharacterText(child.gameObject, isCenter);
-
-                // Sáng nếu ở giữa, tối nếu ở 2 bên
                 SetCharacterBrightness(child.gameObject, isCenter);
-
             }
         }
     }
 
     void SetCharacterText(GameObject character, bool isCenter)
     {
-        // Nếu dùng TextMeshPro
         TextMeshProUGUI[] tmpTexts = character.GetComponentsInChildren<TextMeshProUGUI>(true);
         foreach (var tmp in tmpTexts)
-        {
             tmp.gameObject.SetActive(isCenter);
-        }
 
-        // Nếu trong prefab có dùng Text thường của Unity UI
         Text[] uiTexts = character.GetComponentsInChildren<Text>(true);
         foreach (var txt in uiTexts)
-        {
             txt.gameObject.SetActive(isCenter);
-        }
     }
 
     void SetCharacterBrightness(GameObject character, bool isCenter)
     {
-        RawImage[] imgs = character
-            .GetComponentsInChildren<RawImage>(true);
+        RawImage[] imgs = character.GetComponentsInChildren<RawImage>(true);
         for (int i = 0; i < imgs.Length; i++)
         {
             var img = imgs[i];
             Color c = img.color;
             if (isCenter)
             {
-                // Màu gốc, sáng bình thường
-                c.r = 1f;
-                c.g = 1f;
-                c.b = 1f;
-                c.a = 1f;
+                c.r = 1f; c.g = 1f; c.b = 1f; c.a = 1f;
             }
             else
             {
-                // Ám xám: giảm saturation + hơi mờ cho các RawImage mặc định
-                // Giữ logic cũ cho các RawImage khác
                 if (i == 1)
-                {
-                    // Nếu đây là RawImage con thứ 2 trong thứ tự hierarchy, áp dụng alpha riêng
-                    // Tint về xám nhạt nhưng set alpha theo sideChildAlpha để "làm mờ" với giá trị riêng
                     c = Color.Lerp(c, new Color(0.5f, 0.5f, 0.5f, 0f), 1f);
-                }
                 else
-                {
-                    // các RawImage khác: giữ nền tối hơn như trước
                     c = Color.Lerp(c, new Color(0.5f, 0.5f, 0.5f, 1f), 1f);
-  
-                }
             }
 
             img.color = c;
         }
     }
+
     void SetCharacterLayerOrder(GameObject character, int order)
     {
         Renderer[] renderers = character.GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
-        {
             renderer.sortingOrder = order;
-        }
     }
 
     void UpdateCharacterInfo()
     {
         if (characterNameText != null && currentCharacterIndex < characterDataArray.Length)
-        {
             characterNameText.text = characterDataArray[currentCharacterIndex].characterName;
-        }
+
         if (characterDetailText != null)
         {
-            characterDetailText.text = characterDataArray[currentCharacterIndex].description;
+            // description giờ là string[] — lấy phần tử [0] với null/empty guard
+            var desc = characterDataArray[currentCharacterIndex].description;
+            characterDetailText.text = (desc != null && desc.Length > 0) ? desc[0] : "";
         }
         UpdateCharacterPositions();
     }
 
     void OnCreateCharacterButtonClicked()
     {
-        
-        // Lưu index vào PlayerDataManager
         PlayerDataManager.Instance.SaveCharacterIndex(currentCharacterIndex);
 
-        Debug.Log($"Player đã chọn character: {characterDataArray[currentCharacterIndex].characterName}");
+        Debug.Log($"[CharacterSelection] Player đã chọn character: {characterDataArray[currentCharacterIndex].characterName}");
 
         TransitionToCompanionSelection();
     }
@@ -332,15 +240,11 @@ public class CharacterSelection : MonoBehaviour
     void TransitionToCompanionSelection()
     {
         if (playerCharacterPanel != null)
-        {
             playerCharacterPanel.SetActive(false);
-        }
 
         if (companionSelectionPanel != null)
-        {
             companionSelectionPanel.SetActive(true);
-        }
 
-        Debug.Log("Chuyển sang Companion Selection");
+        Debug.Log("[CharacterSelection] Chuyển sang Companion Selection");
     }
 }

@@ -12,12 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4b3a4b641e2109458df28dfc9e52cc8, type: 3}
   m_Name: Companion 2
   m_EditorClassIdentifier: 
-  characterName: Male
-  description: "M\xECnh l\xE0 Alex, b\u1EA1n \u0111\u1ED3ng h\xE0nh c\u1EE7a b\u1EA1n
-    trong Mantini. B\u1EA1n c\u1EA7n g\xEC th\xEC m\xECnh g\u1EE3i \xFD ngay, kh\xF4ng
-    lan man, ch\u1EC9 \u0111\xFAng m\xF3n h\u1EE3p b\u1EA1n th\xF4i. Mua h\xE0ng
-    b\u1EDBt c\u0103ng th\u1EB3ng \u0111i, m\xECnh lo ph\u1EA7n t\u01B0 v\u1EA5n,
-    b\u1EA1n ch\u1EC9 vi\u1EC7c ch\u1ED1t."
+  characterName: Max
+  description:
+  - "Ch\xE0o, m\xECnh l\xE0 Max , ng\u01B0\u1EDDi b\u1EA1n th\xE2n nh\u1EA5t c\u1EE7a
+    c\u1EADu \u0111\xE2y."
+  - "C\u1EE9 y\xEAn t\xE2m ch\u1ECDn \u0111\u1ED3 \u0111i, t\u1EDB lo h\u1EBFt! M\u1EAFt
+    nh\xECn c\u1EE7a t\u1EDB chu\u1EA9n, m\u1EB7c x\u1EA5u t\u1EDB n\xF3i ngay. L\u1EA1i
+    c\xF2n ki\xEAm lu\xF4n tay x\xE1ch \u0111\u1ED3 v\xE0 'm\xE1y t\xEDnh s\u1ED1ng'
+    canh sale cho c\u1EADu n\u1EEFa!"
   previewPrefab: {fileID: 125603757700432931, guid: 268a924089e92614daa83525a3e0d0ff, type: 3}
   characterIcon: {fileID: 21300000, guid: 1c8fe0d92ced15a4ba86c0474d0f3c99, type: 3}
   gameplayPrefab: {fileID: 607424605589875335, guid: e56eed90cbe27ed4bb2d8c10642f7f50, type: 3}

@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Companion 3
   m_EditorClassIdentifier: 
   characterName: Cat
-  description: "M\xE8o m\xE9o meow meow meow!"
+  description:
+  - "M\xE8o m\xE9o meo m\xE8o meo."
   previewPrefab: {fileID: 2773000067718624586, guid: 036f174d8ea7f51448431660211b578e, type: 3}
   characterIcon: {fileID: 21300000, guid: 1c8fe0d92ced15a4ba86c0474d0f3c99, type: 3}
   gameplayPrefab: {fileID: 406496115097517265, guid: d159e300b7bc9ae42b331d8a480c2e1a, type: 3}

@@ -1,9 +1,8 @@
-﻿using TMPro;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
-   // Cấu trúc cho mỗi đoạn hội thoại
-   
+
 public class Onboarding : MonoBehaviour
 {
     [Header("UI References")]
@@ -14,15 +13,21 @@ public class Onboarding : MonoBehaviour
     [SerializeField] private Button continueButton;
     [SerializeField] private GameObject characterSelectionPanel;
     [SerializeField] private ProfileData profileData;
+
+    [Header("Character Chat")]
+    [SerializeField] private GameObject characterChat;
+
     [Header("NPC Images")]
-    [SerializeField] private Sprite[] npcSprites; // Các sprite NPC khác nhau cho mỗi đoạn hội thoại
-     [System.Serializable]
-        public class DialogueData
-        {
-            [TextArea(3, 5)]
-            public string dialogue;
-            public int npcSpriteIndex; // Index của sprite NPC trong mảng npcSprites
-        }
+    [SerializeField] private Sprite[] npcSprites;
+
+    [System.Serializable]
+    public class DialogueData
+    {
+        [TextArea(3, 5)]
+        public string dialogue;
+        public int npcSpriteIndex;
+    }
+
     [Header("Dialogue Settings")]
     [SerializeField] private float typingSpeed = 0.05f;
 
@@ -33,61 +38,68 @@ public class Onboarding : MonoBehaviour
     [Header("Dialogues")]
     [SerializeField] private DialogueData[] dialogues;
 
-    private int currentDialogueIndex = 0;
-    private bool isTyping = false;
-    private string currentFullText = "";
+    private int _currentDialogueIndex = 0;
+    private bool _isTyping = false;
+    private string _currentFullText = "";
+
     [SerializeField] private DialogueAudioSync audioSync;
     [SerializeField] private AudioClip helloSound;
+
     void Start()
     {
-        // Khởi tạo test
         if (onboardingPanel != null)
             onboardingPanel.SetActive(false);
 
         if (characterSelectionPanel != null)
             characterSelectionPanel.SetActive(false);
 
-        // Gắn sự kiện cho nút Continue
+        if (characterChat != null)
+            characterChat.SetActive(false);
+
         if (continueChatButton != null)
-        {
             continueChatButton.onClick.AddListener(OnContinueButtonClicked);
-        }
+
         audioSync = FindAnyObjectByType<DialogueAudioSync>();
+
         continueButton.onClick.AddListener(() =>
         {
             SkipOnboarding();
             profileData.SaveProfile();
         });
+
         if (voiceNameInput != null)
             voiceNameInput.OnSpeechResult += (name) => nameInputField.text = name;
     }
-
 
     // Hiển thị đoạn hội thoại
     public void ShowDialogue(int index)
     {
         if (index >= dialogues.Length)
         {
+            OnAllDialoguesCompleted();
             return;
         }
+
         DialogueData currentDialogue = dialogues[index];
-        AudioManager.Instance.PlayDialogue(helloSound,0.6f);
-        // Cập nhật hình ảnh NPC
+        AudioManager.Instance.PlayDialogue(helloSound, 0.6f);
+
         if (npcImage != null && npcSprites != null && currentDialogue.npcSpriteIndex < npcSprites.Length)
-        {
             npcImage.sprite = npcSprites[currentDialogue.npcSpriteIndex];
-        }
+
         StopAllCoroutines();
         UpdateContinueButtonText("...");
 
         if (audioSync != null)
-        {
-            // Gọi AudioSync chạy chữ (nó sẽ tự lo việc phát tiếng và chạy từng chữ)
-            // audioSync.StartTypewriter(UI Text, Nội dung, Âm thanh);
             audioSync.StartTypewriter(dialogueText, currentDialogue.dialogue);
-        }
+    }
 
+    // Gọi khi tất cả dialogue đã chạy xong
+    private void OnAllDialoguesCompleted()
+    {
+        Debug.Log("[Onboarding] All dialogues completed. Showing characterChat.");
 
+        if (characterChat != null)
+            characterChat.SetActive(true);
     }
 
     // Cập nhật text của nút Continue
@@ -97,9 +109,7 @@ public class Onboarding : MonoBehaviour
         {
             TextMeshProUGUI buttonText = continueChatButton.GetComponentInChildren<TextMeshProUGUI>();
             if (buttonText != null)
-            {
                 buttonText.text = text;
-            }
         }
     }
 
@@ -110,38 +120,35 @@ public class Onboarding : MonoBehaviour
 
         if (isRunning)
         {
-            // Nếu đang typing thì hiển thị hết text luôn
-            dialogueText.text = currentFullText;
+            dialogueText.text = _currentFullText;
             UpdateContinueButtonText("Tiếp tục");
             audioSync.StopTypewriter();
         }
         else
         {
-            // Chuyển sang đoạn hội thoại tiếp theo
-            currentDialogueIndex++;
-            ShowDialogue(currentDialogueIndex);
+            _currentDialogueIndex++;
+            ShowDialogue(_currentDialogueIndex);
         }
     }
 
     // Kết thúc onboarding
     private void EndOnboarding()
     {
-        Debug.Log("Onboarding completed!");
+        Debug.Log("[Onboarding] Onboarding completed!");
         audioSync.StopTypeSound();
         LevelLoader.Instance.ShowLoadingThenSwitch(onboardingPanel, characterSelectionPanel, 1.5f);
-        // Ẩn panel onboarding
+
         if (onboardingPanel != null)
             onboardingPanel.SetActive(false);
 
-        // Hiển thị panel chọn nhân vật
         if (characterSelectionPanel != null)
             characterSelectionPanel.SetActive(true);
     }
 
-    // Hàm khởi động onboarding (gọi sau khi đăng nhập thành công)
+    // Hàm khởi động onboarding
     public void StartOnboarding()
     {
-        currentDialogueIndex = 0;
+        _currentDialogueIndex = 0;
 
         if (onboardingPanel != null)
             onboardingPanel.SetActive(true);
@@ -149,10 +156,10 @@ public class Onboarding : MonoBehaviour
         if (characterSelectionPanel != null)
             characterSelectionPanel.SetActive(false);
 
-        ShowDialogue(currentDialogueIndex);
+        ShowDialogue(_currentDialogueIndex);
     }
 
-    // Hàm bỏ qua onboarding (optional)
+    // Hàm bỏ qua onboarding
     public void SkipOnboarding()
     {
         StopAllCoroutines();
