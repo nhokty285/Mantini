@@ -420,29 +420,63 @@ public class CartUI : MonoBehaviour
         if (currentTab == InventoryTab.Paid)
             UpdateCartDisplay(items);
     }
-
+    private readonly List<CartImageItem> _spawnedCells = new();
     private void UpdateCartDisplay(List<CartItem> items)
     {
+        /*  if (cartItemsContainer == null || cartImageItemPrefab == null) return;
+
+          foreach (Transform child in cartItemsContainer)
+              Destroy(child.gameObject);
+
+          _cellLookup.Clear();
+
+          foreach (var item in items)
+          {
+              var itemGO = Instantiate(cartImageItemPrefab, cartItemsContainer);
+              // Giả định tên class là CartImageItemUI dựa trên ngữ cảnh
+              var imageItemUI = itemGO.GetComponent<CartImageItem>();
+              if (imageItemUI != null)
+              {
+                  imageItemUI.Setup(item, OnItemClicked, this); 
+                  imageItemUI.RefreshCartIndicator();
+
+                  var key = (item.productId, item.selectedSize);
+                  _cellLookup[key] = imageItemUI;
+              }
+          }*/
+
         if (cartItemsContainer == null || cartImageItemPrefab == null) return;
 
-        foreach (Transform child in cartItemsContainer)
-            Destroy(child.gameObject);
-
+        // Clear previous lookup so we rebuild mapping for current items
         _cellLookup.Clear();
 
-        foreach (var item in items)
+        // Instantiate only the missing cells (pooling)
+        while (_spawnedCells.Count < items.Count)
         {
-            var itemGO = Instantiate(cartImageItemPrefab, cartItemsContainer);
-            // Giả định tên class là CartImageItemUI dựa trên ngữ cảnh
-            var imageItemUI = itemGO.GetComponent<CartImageItem>();
-            if (imageItemUI != null)
-            {
-                imageItemUI.Setup(item, OnItemClicked, this); 
-                imageItemUI.RefreshCartIndicator();
+            var go = Instantiate(cartImageItemPrefab, cartItemsContainer);
+            var cell = go.GetComponent<CartImageItem>();
+            _spawnedCells.Add(cell);
+        }
 
-                var key = (item.productId, item.selectedSize);
-                _cellLookup[key] = imageItemUI;
-            }
+        // Configure each spawned cell: activate those within items.Count, deactivate extras.
+        for (int i = 0; i < _spawnedCells.Count; i++)
+        {
+            var cell = _spawnedCells[i];
+            if (cell == null) continue;
+
+            bool active = i < items.Count;
+            if (cell.gameObject.activeSelf != active)
+                cell.gameObject.SetActive(active);
+
+            if (!active) continue;
+
+            var item = items[i];
+            // Pass the required click callback and CartUI reference to match Setup signature
+            cell.Setup(item, OnItemClicked, this);
+
+            // Use tuple key (productId, selectedSize) to match dictionary type
+            var key = (productId: item.productId, size: item.selectedSize);
+            _cellLookup[key] = cell;
         }
         UpdateTotalAmount();
     }

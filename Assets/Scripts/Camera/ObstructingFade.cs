@@ -162,6 +162,7 @@ using UnityEngine;
 public class CameraWallOcclusion : MonoBehaviour
 {
     public GameObject player;
+    public bool findPlayerByTag = false; // Tùy chọn tìm Player bằng tag nếu chưa gán
     public LayerMask wallMask;
     public float sphereRadius = 0.25f;
     public float targetHeightOffset = 1.2f;
@@ -182,17 +183,21 @@ public class CameraWallOcclusion : MonoBehaviour
 
     private void Start()
     {
-        // ✅ Tìm player 1 lần duy nhất trong Start, không tìm lại mỗi frame
-        if (player == null)
-        {
-           player = PlayerController.Instance.gameObject ?? GameObject.FindGameObjectWithTag("Player");
-        }
+        findPlayerByTag = false;
     }
 
     private void LateUpdate()
     {
-        if (player == null) return;
+        if (!findPlayerByTag)
+        {
+            // Tìm Player bằng Tag (nhanh hơn FindByName)
+            player = GameObject.FindWithTag("Player");
 
+            if (player != null)
+            {
+                findPlayerByTag = true;
+            }
+        }
         // ✅ Throttle: skip frame nếu chưa đến interval
         if (Time.time < _nextCastTime) return;
         _nextCastTime = Time.time + castInterval;

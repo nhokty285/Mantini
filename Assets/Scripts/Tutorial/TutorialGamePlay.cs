@@ -391,7 +391,8 @@ public class TutorialGamePlay : MonoBehaviour
                 }
         */
 
-        spotlightEffectPrefab.SetActive(true);  
+        spotlightEffectPrefab.SetActive(true);
+        AudioManager.Instance.PlaySFXOneShot("Whoosh");
         // Đợi player di chuyển → OnPlayerEnterNPCRange() callback
     }
 
@@ -826,7 +827,6 @@ public class TutorialGamePlay : MonoBehaviour
         spotlightHole.gameObject.SetActive(true);
         //StopSpotlightTracking(); // Dừng tracking cũ nếu có
         spotlightOverlay.SetActive(true);
-        AudioManager.Instance.PlaySFXOneShot("Whoosh");
         spotlightHole.position = target.position;
         spotlightHole.sizeDelta = target.rect.size + spotlightPadding;
     }

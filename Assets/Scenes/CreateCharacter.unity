@@ -11155,6 +11155,8 @@ GameObject:
   - component: {fileID: 1707675880}
   - component: {fileID: 1707675879}
   - component: {fileID: 1707675881}
+  - component: {fileID: 1707675882}
+  - component: {fileID: 1707675883}
   m_Layer: 0
   m_Name: API Client
   m_TagString: Untagged
@@ -11284,6 +11286,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ceaead879b841a144877d1deb30c94d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1707675882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1707675873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5691fb22982b4947838e2e3fe5f9664, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1707675883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1707675873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94e6c0d791650af42a283a4ca1c99201, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lowAsset: {fileID: 11400000, guid: 7ce58e0ab98c61241a029cd71f6f8bc2, type: 2}
+  mediumAsset: {fileID: 11400000, guid: 4b83569d67af61e458304325a23e5dfd, type: 2}
+  highAsset: {fileID: 11400000, guid: 91b7cf8d458031345b00cb2e3515ddb5, type: 2}
+  lowRamMB: 3500
+  highRamMB: 6500
+  lowGpuMemMB: 1024
+  lowTierFps: 30
+  defaultFps: 60
 --- !u!1 &1725646895
 GameObject:
   m_ObjectHideFlags: 0

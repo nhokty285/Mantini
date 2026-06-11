@@ -66,6 +66,26 @@ public class ProfileData : MonoBehaviour
         );
     }
 
+    public void SetDefaultAvatar(Sprite defaultIcon)
+    {
+        if (AvatarSprite != null)
+        {
+            // Đã có avatar rồi (có thể API load xong trước), bỏ qua
+            return;
+        }
+
+        AvatarSprite = defaultIcon;
+
+        // Cập nhật RawImage preview nếu đang hiển thị
+        if (avatarPreview != null && defaultIcon != null)
+        {
+            avatarPreview.texture = defaultIcon.texture;
+        }
+
+        OnAvatarChanged?.Invoke(AvatarSprite);
+        Debug.Log("[ProfileData] Default avatar applied from CharacterData icon.");
+    }
+
     IEnumerator LoadAvatarFromUrl(string url)
     {
         using (var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url))

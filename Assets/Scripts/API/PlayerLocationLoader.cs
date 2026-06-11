@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
+using System.Collections;
 public class PlayerLocationLoaderFullUrl : MonoBehaviour
 {
     [Header("References")]
@@ -44,15 +44,24 @@ public class PlayerLocationLoaderFullUrl : MonoBehaviour
     void Awake()
     {
         currentInterval = UnityEngine.Random.Range(timeMinSeconds, timeMaxSeconds);
-
-        // Nếu playerTransform được gán trong Inspector, tự động load vị trí cho nó
-        if (playerTransform != null)
+        if (playerTransform != null) LoadAndApplyPosition(playerTransform);
+        StartCoroutine(SaveCheckLoop());
+    }
+    private IEnumerator SaveCheckLoop()
+    {
+        var wait = new WaitForSeconds(1f); // cache 1 lần — zero alloc per loop
+        while (true)
         {
-            LoadAndApplyPosition(playerTransform);
+            yield return wait;
+            if (playerTransform == null || !isPositionLoadedFromServer || isSaving) continue;
+
+            float dist = DistanceFromLastSaved(playerTransform.position);
+            if (dist >= distanceThresholdMeters || Time.time - lastPutTime >= currentInterval)
+                SaveCurrentLocation(SceneManager.GetActiveScene().name);
         }
     }
 
-    void FixedUpdate()
+/*    void FixedUpdate()
     {
         if (playerTransform == null) return;
 
@@ -66,7 +75,7 @@ public class PlayerLocationLoaderFullUrl : MonoBehaviour
             string sceneName = SceneManager.GetActiveScene().name;
             SaveCurrentLocation(sceneName);
         }
-    }
+    }*/
 
     /// <summary>
     /// Public method để GameplayPlayerSpawner gọi: GET vị trí từ backend và set cho target transform.

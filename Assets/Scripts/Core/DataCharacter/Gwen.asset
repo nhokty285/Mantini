@@ -16,7 +16,7 @@ MonoBehaviour:
   description: "T\xEDnh c\xE1ch: D\u1ECBu d\xE0ng, h\xF2a \u0111\u1ED3ng\\nGi\u1EDBi
     t\xEDnh: N\u1EEF"
   previewPrefab: {fileID: 125603757700432931, guid: c3c4996a31919c343a256de02eb70d26, type: 3}
-  characterIcon: {fileID: 21300000, guid: 1c8fe0d92ced15a4ba86c0474d0f3c99, type: 3}
+  characterIcon: {fileID: 21300000, guid: 7ba07b2987e8d0e45822ae966f2fa449, type: 3}
   gameplayPrefab: {fileID: 2560452037557319963, guid: 6a82decdb8cfebd47a3239d7a88e6ffe, type: 3}
   moveSpeed: 3
   maxHealth: 100

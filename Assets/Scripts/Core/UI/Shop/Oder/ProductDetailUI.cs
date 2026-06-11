@@ -1101,22 +1101,42 @@ public class ProductDetailUI : MonoBehaviour
     private void Update()
     {
         if (imageScrollRect == null || imagePages.Count == 0) return;
+        if (productDetailPanel == null || !productDetailPanel.activeSelf) return;
 
         SnapToNearestPage();
         TryLazyLoadNextPage();
     }
-
+    private int _lastDotIndex = -1;
     private void SnapToNearestPage()
     {
+        /* float pageWidth = 1f / Mathf.Max(imagePages.Count - 1, 1);
+         int currentPageIndex = Mathf.RoundToInt(
+             imageScrollRect.horizontalNormalizedPosition / pageWidth);
+
+         float target = currentPageIndex * pageWidth;
+         imageScrollRect.horizontalNormalizedPosition = Mathf.Lerp(
+             imageScrollRect.horizontalNormalizedPosition, target, Time.deltaTime * snapSpeed);
+
+         carouselIndicator.UpdateDots(currentPageIndex, imagePages.Count);*/
         float pageWidth = 1f / Mathf.Max(imagePages.Count - 1, 1);
         int currentPageIndex = Mathf.RoundToInt(
             imageScrollRect.horizontalNormalizedPosition / pageWidth);
 
         float target = currentPageIndex * pageWidth;
-        imageScrollRect.horizontalNormalizedPosition = Mathf.Lerp(
-            imageScrollRect.horizontalNormalizedPosition, target, Time.deltaTime * snapSpeed);
+        float current = imageScrollRect.horizontalNormalizedPosition;
 
-        carouselIndicator.UpdateDots(currentPageIndex, imagePages.Count);
+        // ✅ Đã snap xong → đừng Lerp nữa (Lerp gần đích gây dirty layout mỗi frame)
+        if (Mathf.Abs(current - target) > 0.0005f)
+            imageScrollRect.horizontalNormalizedPosition =
+                Mathf.Lerp(current, target, Time.deltaTime * snapSpeed);
+
+        // ✅ Chỉ update dots khi index THAY ĐỔI, không phải mỗi frame
+        if (currentPageIndex != _lastDotIndex)
+        {
+            _lastDotIndex = currentPageIndex;
+            carouselIndicator.UpdateDots(currentPageIndex, imagePages.Count);
+        }
+
     }
 
     /// <summary>Khi user swipe đến gần cuối vùng đã load → load thêm PreloadPages.</summary>

@@ -3,44 +3,80 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
-using System.Threading;
 
+/// <summary>
+/// Tải ảnh qua network + tự quản lý texture cache với memory budget.
+/// Public API giữ nguyên: DownloadImage(url, onSuccess, onError).
+///
+/// Tối ưu so với bản cũ:
+///  1. Downscale ảnh về maxTextureSize (512px) trước khi cache
+///     → 1024x1024 (8MB readable) → 512x512 GPU-only (~1MB) = giảm ~8x.
+///  2. Apply(false, makeNoLongerReadable: true) → xoá bản copy CPU-side.
+///  3. LRU cache có memoryBudgetBytes; vượt budget → evict entry cũ nhất.
+///  4. Application.lowMemory → xả cache ngay, tránh bị OS kill.
+///  5. Bỏ SemaphoreSlim + polling WaitForSeconds(0.1f) (alloc mỗi 0.1s)
+///     → thay bằng counter int + Queue, zero-alloc, không trễ 100ms.
+///
+/// Complexity:
+///  - DownloadImage cache-hit: O(1) Dictionary lookup + O(1) LRU move.
+///  - Eviction: O(k) với k = số entry bị xoá (amortized rất nhỏ).
+///  - Không có loop nào chạy mỗi frame; sweep expiry chạy 60s/lần, O(n) trên cache.
+/// </summary>
 public class ImageDownloadManager : MonoBehaviour
 {
     public static ImageDownloadManager Instance { get; private set; }
 
     [Header("Download Settings")]
-    [SerializeField] private int maxConcurrentDownloads = 5;
+    [SerializeField] private int maxConcurrentDownloads = 3;   // 3 đủ cho mobile, giảm áp lực decode
     [SerializeField] private int maxRetryAttempts = 1;
     [SerializeField] private float retryDelaySeconds = 2f;
     [SerializeField] private int timeoutSeconds = 10;
-    [SerializeField] private bool enableDebugLogs = true;
+    [SerializeField] private bool enableDebugLogs = false;
 
-    // Semaphore để giới hạn concurrent downloads
-    private SemaphoreSlim downloadSemaphore;
-    private readonly Queue<DownloadRequest> downloadQueue = new();
-    private readonly Dictionary<string, List<DownloadRequest>> pendingRequests = new();
+    [Header("Memory Settings (chống OOM)")]
+    [Tooltip("Ảnh tải về lớn hơn sẽ bị downscale về kích thước này")]
+    [SerializeField] private int maxTextureSize = 512;
+    [Tooltip("Tổng budget texture cache. 48MB ≈ 45 ảnh 512x512")]
+    [SerializeField] private long memoryBudgetBytes = 48L * 1024 * 1024;
+    [SerializeField] private float cacheExpiryMinutes = 10f;
+
+    // ─── Download state ───
+    private int _activeDownloads;
+    private readonly Queue<DownloadRequest> _waitingQueue = new();
+    private readonly Dictionary<string, List<DownloadRequest>> _pendingByUrl = new();
+    private WaitForSeconds _retryWait; // cache 1 lần, không new mỗi retry
+
+    // ─── LRU texture cache ───
+    private class CacheEntry
+    {
+        public Texture2D Texture;
+        public long Size;            // bytes (GPU-only sau khi nonReadable)
+        public float ExpireAt;       // Time.realtimeSinceStartup
+        public LinkedListNode<string> LruNode;
+    }
+    private readonly Dictionary<string, CacheEntry> _cache = new();
+    private readonly LinkedList<string> _lru = new(); // đầu list = mới dùng nhất
+    private long _usedBytes;
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            downloadSemaphore = new SemaphoreSlim(maxConcurrentDownloads, maxConcurrentDownloads);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        _retryWait = new WaitForSeconds(retryDelaySeconds);
+        Application.lowMemory += OnLowMemory;
+        StartCoroutine(ExpirySweepLoop());
     }
 
     private void OnDestroy()
     {
-        downloadSemaphore?.Dispose();
+        Application.lowMemory -= OnLowMemory;
+        if (Instance == this) ClearCache();
     }
 
-    // Public API để tải ảnh
+    // ═════════════════════════ PUBLIC API ═════════════════════════
+
     public void DownloadImage(string imageUrl, Action<Texture2D> onSuccess, Action<string> onError = null)
     {
         if (string.IsNullOrEmpty(imageUrl))
@@ -49,167 +85,241 @@ public class ImageDownloadManager : MonoBehaviour
             return;
         }
 
-        // Check cache first
-        if (CacheService.Instance != null)
+        // 1. Cache hit — O(1)
+        if (_cache.TryGetValue(imageUrl, out var entry) && entry.Texture != null)
         {
-            var cachedTexture = CacheService.Instance.GetTexture(imageUrl);
-            if (cachedTexture != null)
-            {
-                onSuccess?.Invoke(cachedTexture);
-                return;
-            }
+            TouchEntry(imageUrl, entry); // refresh LRU + expiry
+            onSuccess?.Invoke(entry.Texture);
+            return;
         }
 
-        var request = new DownloadRequest
-        {
-            url = imageUrl,
-            onSuccess = onSuccess,
-            onError = onError,
-            attemptCount = 0
-        };
+        var request = new DownloadRequest { url = imageUrl, onSuccess = onSuccess, onError = onError };
 
-        // Check if already downloading this URL
-        if (pendingRequests.ContainsKey(imageUrl))
+        // 2. Đang tải cùng URL — gộp callback, không tải trùng
+        if (_pendingByUrl.TryGetValue(imageUrl, out var list))
         {
-            pendingRequests[imageUrl].Add(request);
-            if (enableDebugLogs)
-                Debug.Log($"ImageDownload: Added to pending queue for {imageUrl}");
+            list.Add(request);
+            return;
         }
+
+        _pendingByUrl[imageUrl] = new List<DownloadRequest> { request };
+
+        // 3. Giới hạn concurrent bằng counter — zero alloc, không polling
+        if (_activeDownloads < maxConcurrentDownloads)
+            StartCoroutine(DownloadRoutine(request));
         else
-        {
-            pendingRequests[imageUrl] = new List<DownloadRequest> { request };
-            StartCoroutine(ProcessDownloadRequest(request));
-        }
+            _waitingQueue.Enqueue(request);
     }
 
-    private IEnumerator ProcessDownloadRequest(DownloadRequest request)
+    /// <summary>Xả toàn bộ cache. Gọi khi đổi scene shop hoặc khi OS báo low memory.</summary>
+    public void ClearCache()
     {
-        // Wait for semaphore (limits concurrent downloads)
-        yield return StartCoroutine(WaitForSemaphore());
+        foreach (var kv in _cache)
+            if (kv.Value.Texture != null) Destroy(kv.Value.Texture);
 
-        try
-        {
-            yield return StartCoroutine(DownloadWithRetry(request));
-        }
-        finally
-        {
-            // Release semaphore
-            downloadSemaphore.Release();
-
-            // Remove from pending
-            if (pendingRequests.ContainsKey(request.url))
-            {
-                pendingRequests.Remove(request.url);
-            }
-        }
+        _cache.Clear();
+        _lru.Clear();
+        _usedBytes = 0;
     }
 
-    private IEnumerator WaitForSemaphore()
-    {
-        while (!downloadSemaphore.Wait(0)) // Non-blocking check
-        {
-            yield return new WaitForSeconds(0.1f);
-        }
-    }
+    public long UsedCacheBytes => _usedBytes;
 
-    private IEnumerator DownloadWithRetry(DownloadRequest request)
+    // ═════════════════════════ DOWNLOAD ═════════════════════════
+
+    private IEnumerator DownloadRoutine(DownloadRequest request)
     {
+        _activeDownloads++;
+        try { } finally { } // giữ cấu trúc rõ ràng; cleanup ở cuối routine
+
         for (int attempt = 0; attempt <= maxRetryAttempts; attempt++)
         {
-            request.attemptCount = attempt + 1;
-
-            if (enableDebugLogs && attempt > 0)
-                Debug.Log($"ImageDownload: Retry attempt {attempt} for {request.url}");
-
-            using (var webRequest = UnityWebRequestTexture.GetTexture(request.url))
+            using (var web = UnityWebRequestTexture.GetTexture(request.url))
             {
-                webRequest.timeout = timeoutSeconds;
-                yield return webRequest.SendWebRequest();
+                web.timeout = timeoutSeconds;
+                yield return web.SendWebRequest();
 
-                if (webRequest.result == UnityWebRequest.Result.Success)
+                if (web.result == UnityWebRequest.Result.Success)
                 {
-                    var texture = DownloadHandlerTexture.GetContent(webRequest);
-                    if (texture != null && texture.width > 0 && texture.height > 0)
+                    var raw = DownloadHandlerTexture.GetContent(web);
+                    if (raw != null && raw.width > 0)
                     {
-                        // Cache the successful result
-                        if (CacheService.Instance != null)
-                        {
-                            var cacheExpiry = TimeSpan.FromMinutes(30);
-                            CacheService.Instance.SetTexture(request.url, texture, cacheExpiry);
-                        }
-
-                        // Notify all pending requests for this URL
-                        NotifyPendingRequests(request.url, texture, null);
-                        yield break; // Success!
-                    }
-                    else
-                    {
-                        if (enableDebugLogs)
-                            Debug.LogWarning($"ImageDownload: Invalid texture for {request.url}");
+                        // Downscale + drop CPU copy → đây là chỗ tiết kiệm memory chính
+                        var processed = ProcessTexture(raw);
+                        AddToCache(request.url, processed);
+                        FinishUrl(request.url, processed, null);
+                        EndDownload();
+                        yield break;
                     }
                 }
-                else if (IsRetriableError(webRequest))
+                else if (IsRetriable(web) && attempt < maxRetryAttempts)
                 {
-                    if (attempt < maxRetryAttempts)
-                    {
-                        if (enableDebugLogs)
-                            Debug.LogWarning($"ImageDownload: Retriable error for {request.url}: {webRequest.error}. Retrying in {retryDelaySeconds}s...");
-
-                        yield return new WaitForSeconds(retryDelaySeconds);
-                        continue; // Retry
-                    }
+                    yield return _retryWait;
+                    continue;
                 }
 
-                // If we get here, it's either non-retriable or max attempts exceeded
-                string errorMsg = $"Download failed after {attempt + 1} attempts: {webRequest.error}";
-                if (enableDebugLogs)
-                    Debug.LogError($"ImageDownload: {errorMsg} for {request.url}");
-
-                NotifyPendingRequests(request.url, null, errorMsg);
+                FinishUrl(request.url, null, $"Download failed: {web.error}");
+                EndDownload();
                 yield break;
             }
         }
     }
 
-    private bool IsRetriableError(UnityWebRequest request)
+    private void EndDownload()
     {
-        // Retry on timeout, network issues, but not on 404, 403, etc.
-        return request.result == UnityWebRequest.Result.ConnectionError ||
-               request.result == UnityWebRequest.Result.DataProcessingError ||
-               (request.responseCode >= 500 && request.responseCode < 600); // Server errors
+        _activeDownloads--;
+        // Lấy request kế tiếp từ queue — O(1)
+        while (_waitingQueue.Count > 0 && _activeDownloads < maxConcurrentDownloads)
+        {
+            var next = _waitingQueue.Dequeue();
+            // URL có thể đã được resolve trong lúc chờ → check cache trước
+            if (_cache.TryGetValue(next.url, out var hit) && hit.Texture != null)
+            {
+                FinishUrl(next.url, hit.Texture, null);
+                continue;
+            }
+            StartCoroutine(DownloadRoutine(next));
+        }
     }
 
-    private void NotifyPendingRequests(string url, Texture2D texture, string error)
+    private void FinishUrl(string url, Texture2D tex, string error)
     {
-        if (pendingRequests.TryGetValue(url, out var requests))
+        if (!_pendingByUrl.TryGetValue(url, out var requests)) return;
+        _pendingByUrl.Remove(url);
+
+        foreach (var r in requests)
         {
-            foreach (var request in requests)
+            try
             {
-                try
-                {
-                    if (texture != null)
-                    {
-                        request.onSuccess?.Invoke(texture);
-                    }
-                    else
-                    {
-                        request.onError?.Invoke(error ?? "Unknown error");
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Error in download callback: {e.Message}");
-                }
+                if (tex != null) r.onSuccess?.Invoke(tex);
+                else r.onError?.Invoke(error ?? "Unknown error");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[ImageDownload] Callback error: {e.Message}");
             }
         }
     }
 
-    // Debug method
-    public void LogDownloadStats()
+    private static bool IsRetriable(UnityWebRequest req) =>
+        req.result == UnityWebRequest.Result.ConnectionError ||
+        req.result == UnityWebRequest.Result.DataProcessingError ||
+        (req.responseCode >= 500 && req.responseCode < 600);
+
+    // ═════════════════════════ TEXTURE PROCESSING ═════════════════════════
+
+    /// <summary>
+    /// Downscale về maxTextureSize nếu cần, sau đó xoá bản copy CPU-side.
+    /// Kết quả: texture chỉ tồn tại trên GPU → memory giảm ~50% (không resize)
+    /// hoặc ~8x (resize 1024→512).
+    /// </summary>
+    private Texture2D ProcessTexture(Texture2D src)
     {
-        Debug.Log($"=== ImageDownload Statistics ===");
-        Debug.Log($"Available slots: {downloadSemaphore.CurrentCount}/{maxConcurrentDownloads}");
-        Debug.Log($"Pending URLs: {pendingRequests.Count}");
+        int w = src.width, h = src.height;
+
+        if (w <= maxTextureSize && h <= maxTextureSize)
+        {
+            // Không cần resize — chỉ drop CPU copy
+            src.Apply(false, true);
+            return src;
+        }
+
+        float scale = Mathf.Min((float)maxTextureSize / w, (float)maxTextureSize / h);
+        int nw = Mathf.Max(1, Mathf.RoundToInt(w * scale));
+        int nh = Mathf.Max(1, Mathf.RoundToInt(h * scale));
+
+        var rt = RenderTexture.GetTemporary(nw, nh, 0, RenderTextureFormat.ARGB32);
+        Graphics.Blit(src, rt); // GPU-side, không block lâu
+
+        var prev = RenderTexture.active;
+        RenderTexture.active = rt;
+
+        var dst = new Texture2D(nw, nh, TextureFormat.RGBA32, false);
+        dst.ReadPixels(new Rect(0, 0, nw, nh), 0, 0, false);
+        dst.Apply(false, true); // upload GPU + xoá CPU copy
+
+        RenderTexture.active = prev;
+        RenderTexture.ReleaseTemporary(rt);
+
+        Destroy(src); // bỏ texture gốc full-res ngay lập tức
+        return dst;
+    }
+
+    // ═════════════════════════ LRU CACHE ═════════════════════════
+
+    private void AddToCache(string url, Texture2D tex)
+    {
+        long size = (long)tex.width * tex.height * 4;
+
+        // Evict trước khi thêm nếu vượt budget — O(k) trên số entry bị xoá
+        while (_usedBytes + size > memoryBudgetBytes && _lru.Count > 0)
+            EvictOldest();
+
+        var entry = new CacheEntry
+        {
+            Texture = tex,
+            Size = size,
+            ExpireAt = Time.realtimeSinceStartup + cacheExpiryMinutes * 60f,
+            LruNode = _lru.AddFirst(url)
+        };
+        _cache[url] = entry;
+        _usedBytes += size;
+    }
+
+    private void TouchEntry(string url, CacheEntry entry)
+    {
+        // Move-to-front O(1) nhờ LinkedListNode được cache trong entry
+        _lru.Remove(entry.LruNode);
+        entry.LruNode = _lru.AddFirst(url);
+        entry.ExpireAt = Time.realtimeSinceStartup + cacheExpiryMinutes * 60f;
+    }
+
+    private void EvictOldest()
+    {
+        var node = _lru.Last;
+        if (node == null) return;
+        RemoveEntry(node.Value);
+    }
+
+    private void RemoveEntry(string url)
+    {
+        if (!_cache.TryGetValue(url, out var entry)) return;
+
+        _lru.Remove(entry.LruNode);
+        _cache.Remove(url);
+        _usedBytes -= entry.Size;
+
+        if (entry.Texture != null) Destroy(entry.Texture);
+        // Lưu ý: Sprite đang hiển thị tham chiếu texture này sẽ trắng,
+        // nhưng UI slot luôn gọi DownloadImage lại khi Setup → tự hồi phục.
+        // Budget 48MB + downscale khiến trường hợp này gần như không xảy ra
+        // với item đang hiển thị (chúng luôn nằm đầu LRU).
+    }
+
+    /// <summary>Sweep expiry 60s/lần — O(n) trên cache nhưng tần suất rất thấp.</summary>
+    private IEnumerator ExpirySweepLoop()
+    {
+        var wait = new WaitForSeconds(60f);
+        var toRemove = new List<string>(8); // reuse buffer, không new mỗi vòng
+
+        while (true)
+        {
+            yield return wait;
+            toRemove.Clear();
+
+            float now = Time.realtimeSinceStartup;
+            foreach (var kv in _cache)
+                if (now > kv.Value.ExpireAt) toRemove.Add(kv.Key);
+
+            for (int i = 0; i < toRemove.Count; i++)
+                RemoveEntry(toRemove[i]);
+        }
+    }
+
+    private void OnLowMemory()
+    {
+        Debug.LogWarning("[ImageDownload] OS low memory → clearing texture cache");
+        ClearCache();
+        Resources.UnloadUnusedAssets();
     }
 
     private class DownloadRequest
@@ -217,6 +327,5 @@ public class ImageDownloadManager : MonoBehaviour
         public string url;
         public Action<Texture2D> onSuccess;
         public Action<string> onError;
-        public int attemptCount;
     }
 }

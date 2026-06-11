@@ -1,48 +1,4 @@
-﻿/*// PlayerDataManager.cs
-using UnityEngine;
-using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
-
-public class PlayerDataManager : MonoBehaviour
-{
-    public static PlayerDataManager Instance { get; private set; }
-
-    // Nguồn dữ liệu trung tâm – được set từ scene chọn
-    private GameObject[] _characterPrefabs;
-    private GameObject[] _companionPrefabs;
-
-    const string KEY_CHAR = "SelectedPlayerCharacter";
-    const string KEY_COMP = "SelectedCompanion";
-
-    void Awake()
-    {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
-
-    // Đăng ký dữ liệu 1 lần từ scene chọn
-    public void RegisterCharacterPrefabs(GameObject[] list) => _characterPrefabs = list;
-    public void RegisterCompanionPrefabs(GameObject[] list) => _companionPrefabs = list;
-
-    // Lưu lựa chọn
-    public void SaveCharacterIndex(int idx) { PlayerPrefs.SetInt(KEY_CHAR, idx); PlayerPrefs.Save(); }
-    public void SaveCompanionIndex(int idx) { PlayerPrefs.SetInt(KEY_COMP, idx); PlayerPrefs.Save(); }
-
-    // Truy xuất prefab đã chọn
-    public GameObject GetSelectedCharacterPrefab()
-    {
-        int idx = PlayerPrefs.GetInt(KEY_CHAR, 0);
-        return (_characterPrefabs != null && idx >= 0 && idx < _characterPrefabs.Length) ? _characterPrefabs[idx] : null;
-    }
-    public GameObject GetSelectedCompanionPrefab()
-    {
-        int idx = PlayerPrefs.GetInt(KEY_COMP, 0);
-        return (_companionPrefabs != null && idx >= 0 && idx < _companionPrefabs.Length) ? _companionPrefabs[idx] : null;
-    }
-}
-*/
-
-using System;
+﻿using System;
 using UnityEngine;
 
 public class PlayerDataManager : MonoBehaviour

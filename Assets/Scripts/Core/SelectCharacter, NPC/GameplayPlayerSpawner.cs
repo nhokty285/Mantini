@@ -1,185 +1,9 @@
-﻿/*using Unity.Cinemachine;
-using UnityEngine;
-using TMPro;
-
-public class GameplayPlayerSpawner : MonoBehaviour
-{
-    [Header("Spawn Config")]
-    [SerializeField] private Transform defaultSpawnPoint;
-
-    [Header("Cinemachine Camera (v3.x)")]
-    [SerializeField] private CinemachineCamera cinemachineCamera;
-
-    private GameObject spawnedPlayer;
-    private GameObject spawnedCompanion;
-    private TextMeshProUGUI playerNameText; // Cache reference tới text component
-
-    void Start()
-    {
-        SpawnCharacterAndCompanion();
-    }
-        
-    private void Update()
-    {
-        if(cinemachineCamera == null)
-        UpdateCinemachineTarget();
-    }
-        
-    void SpawnCharacterAndCompanion()
-    {
-        var selectedCharacter = PlayerDataManager.Instance.GetSelectedCharacterData();
-        var selectedCompanion = PlayerDataManager.Instance.GetSelectedCompanionData();
-
-        if (selectedCharacter == null || selectedCompanion == null)
-        {
-            Debug.LogError("[GameplayPlayerSpawner] Character or Companion data not found!");
-            return;
-        }
-
-        Vector3 tempSpawnPos = defaultSpawnPoint != null ? defaultSpawnPoint.position : Vector3.zero;
-        spawnedPlayer = Instantiate(selectedCharacter.gameplayPrefab, tempSpawnPos, Quaternion.identity);
-        spawnedPlayer.name = "Player_" + selectedCharacter.characterName;
-        
-        // ✅ Cập nhật text hiển thị lần đầu
-        SetPlayerNameInUI(selectedCharacter.characterName);
-        
-        Vector3 companionOffset = tempSpawnPos + new Vector3(0f, 0f, 2f);
-        spawnedCompanion = Instantiate(selectedCompanion.gameplayPrefab, companionOffset, Quaternion.identity);
-        spawnedCompanion.name = "Companion_" + selectedCompanion.characterName;
-
-        Debug.Log($"[GameplayPlayerSpawner] Spawned {selectedCharacter.characterName} + {selectedCompanion.characterName} at temp position.");
-
-        var locationLoader = FindFirstObjectByType<PlayerLocationLoaderFullUrl>();
-        if (locationLoader != null)
-        {   
-            locationLoader.LoadAndApplyPosition(spawnedPlayer.transform);
-            locationLoader.LoadAndApplyPosition(spawnedCompanion.transform);
-            UpdateCameraTarget(spawnedPlayer.transform);
-        }
-        else
-        {
-            Debug.LogWarning("[GameplayPlayerSpawner] PlayerLocationLoaderFullUrl not found, using default spawn position.");
-        }
-    }
-
-    void UpdateCinemachineTarget()
-    {
-        if (spawnedPlayer == null)
-        {
-            Debug.LogWarning("[GameplayPlayerSpawner] Cannot update Cinemachine - player not spawned");
-            return;
-        }
-
-        if (cinemachineCamera == null)
-        {
-            cinemachineCamera = FindAnyObjectByType<CinemachineCamera>();
-        }
-
-        if (cinemachineCamera == null)
-        {
-            Debug.LogError("[GameplayPlayerSpawner] CinemachineCamera not found in scene!");
-            return;
-        }
-
-        cinemachineCamera.Target.TrackingTarget = spawnedPlayer.transform;
-        Debug.Log($"[GameplayPlayerSpawner] Cinemachine tracking target updated to: {spawnedPlayer.name}");
-    }
-
-    public void UpdateCameraTarget(Transform newTarget)
-    {
-        if (cinemachineCamera != null)
-        {
-            cinemachineCamera.Target.TrackingTarget = newTarget;
-        }
-    }
-
-    /// <summary>
-    /// Cập nhật tên của spawned player khi user lưu profil mới
-    /// </summary>
-    public void UpdatePlayerName(string newName)
-    {
-        if (spawnedPlayer == null)
-        {
-            Debug.LogWarning("[GameplayPlayerSpawner] spawnedPlayer is not spawned yet!");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(newName))
-        {
-            Debug.LogWarning("[GameplayPlayerSpawner] New name is empty!");
-            return;
-        }
-
-        // 1️⃣ Cập nhật GameObject name
-        spawnedPlayer.name = "Player_" + newName;
-        
-        // 2️⃣ Cập nhật text hiển thị bên trong prefab
-        SetPlayerNameInUI(newName);
-        
-        // 3️⃣ Cập nhật NameplateManager nếu có
-        var manager = FindFirstObjectByType<NameplateManager>();
-        if (manager != null)
-        {
-            manager.UpdateNameplateText(spawnedPlayer.transform, newName);
-            Debug.Log($"[GameplayPlayerSpawner] Updated NameplateManager for: {newName}");
-        }
-
-        Debug.Log($"[GameplayPlayerSpawner] Player name and display updated to: {newName}");
-    }
-
-    /// <summary>
-    /// Tìm và cập nhật tất cả TextMeshPro text components trong player prefab
-    /// </summary>
-    private void SetPlayerNameInUI(string playerName)
-    {
-        if (spawnedPlayer == null)
-        {
-            Debug.LogWarning("[GameplayPlayerSpawner] spawnedPlayer is null!");
-            return;
-        }
-
-        // ✅ Cách 1: Tìm text component có tag "PlayerNameText" hoặc tên cụ thể
-        TextMeshProUGUI[] textComponents = spawnedPlayer.GetComponentsInChildren<TextMeshProUGUI>();
-        
-        if (textComponents.Length == 0)
-        {
-            Debug.LogWarning("[GameplayPlayerSpawner] No TextMeshProUGUI found in player prefab!");
-            return;
-        }
-
-        bool foundPlayerNameText = false;
-
-        foreach (var textComponent in textComponents)
-        {
-            // Kiểm tra GameObject có tên chứa "Name", "PlayerName", hoặc "Nameplate"
-            if (textComponent.gameObject.name.Contains("Name") || 
-                textComponent.gameObject.name.Contains("Nameplate") ||
-                textComponent.gameObject.name.Contains("PlayerName"))
-            {
-                textComponent.text = playerName;
-                playerNameText = textComponent; // Cache để dùng lại
-                foundPlayerNameText = true;
-                
-                Debug.Log($"[GameplayPlayerSpawner] Updated text '{textComponent.gameObject.name}' to: {playerName}");
-                break; // Thoát sau khi tìm text chính
-            }
-        }
-
-        if (!foundPlayerNameText)
-        {
-            // Fallback: Nếu không tìm được by name, cập nhật text đầu tiên tìm được
-            Debug.LogWarning("[GameplayPlayerSpawner] Could not find 'PlayerName' text by name convention. Updating first TextMeshPro found.");
-            textComponents[0].text = playerName;
-            playerNameText = textComponents[0];
-        }
-    }
-}
-*/
-
+﻿
 using Unity.Cinemachine;
 using UnityEngine;
 using TMPro;
-
+using Unity.VisualScripting;
+using System.Collections;
 public class GameplayPlayerSpawner : MonoBehaviour
 {
     [Header("Spawn Config")]
@@ -203,13 +27,15 @@ public class GameplayPlayerSpawner : MonoBehaviour
 
         // ✅ Sau khi spawn, gọi API để lấy profile mới nhất từ server
         LoadPlayerProfileFromServer();
+        ApplyDefaultAvatarIfNeeded();
         Instance = this;
     }
 
     private void Update()
     {
-        if (cinemachineCamera == null)
-            UpdateCinemachineTarget();
+       /* if (cinemachineCamera == null)
+            UpdateCinemachineTarget();*/
+       StartCoroutine(EnsureCameraTarget());
     }
 
     void SpawnCharacterAndCompanion()
@@ -227,7 +53,6 @@ public class GameplayPlayerSpawner : MonoBehaviour
         spawnedPlayer = Instantiate(selectedCharacter.gameplayPrefab, tempSpawnPos, Quaternion.identity);
         spawnedPlayer.name = "Player_" + selectedCharacter.characterName;
         spawnedPlayer.tag = "Player";
-
         // ✅ Cập nhật text hiển thị lần đầu (dùng character name)
         SetPlayerNameInUI(selectedCharacter.characterName);
 
@@ -247,6 +72,17 @@ public class GameplayPlayerSpawner : MonoBehaviour
         else
         {
             Debug.LogWarning("[GameplayPlayerSpawner] PlayerLocationLoaderFullUrl not found, using default spawn position.");
+        }
+    }
+
+    private IEnumerator EnsureCameraTarget()
+    {
+        var wait = new WaitForSeconds(0.5f);
+        for (int i = 0; i < 10 && cinemachineCamera == null; i++)
+        {
+            cinemachineCamera = FindAnyObjectByType<CinemachineCamera>();
+            if (cinemachineCamera != null) { UpdateCinemachineTarget(); yield break; }
+            yield return wait;
         }
     }
 
@@ -290,6 +126,39 @@ public class GameplayPlayerSpawner : MonoBehaviour
                 Debug.LogError($"[GameplayPlayerSpawner] Failed to load profile from server: {error}");
             }
         );
+    }
+
+    /// <summary>
+    /// Nếu ProfileData chưa có avatar từ API hoặc local cache,
+    /// set characterIcon từ CharacterData làm ảnh mặc định.
+    /// </summary>
+    private void ApplyDefaultAvatarIfNeeded()
+    {
+        var profileData = FindAnyObjectByType<ProfileData>();
+        if (profileData == null)
+        {
+            Debug.LogWarning("[GameplayPlayerSpawner] ProfileData not found, skip avatar fallback.");
+            return;
+        }
+
+        // Nếu đã có avatar (từ API hoặc cache) → không cần làm gì
+        if (profileData.AvatarSprite != null)
+        {
+            Debug.Log("[GameplayPlayerSpawner] AvatarSprite already set, skip default icon.");
+            return;
+        }
+
+        // Lấy characterIcon từ CharacterData đã chọn
+        var selectedCharacter = PlayerDataManager.Instance.GetSelectedCharacterData();
+        if (selectedCharacter == null || selectedCharacter.characterIcon == null)
+        {
+            Debug.LogWarning("[GameplayPlayerSpawner] No characterIcon found in CharacterData.");
+            return;
+        }
+
+        // Set icon mặc định vào ProfileData → sẽ fire OnAvatarChanged → PlayerProfileToggle tự update
+        profileData.SetDefaultAvatar(selectedCharacter.characterIcon);
+        Debug.Log($"[GameplayPlayerSpawner] Applied default avatar from CharacterData: {selectedCharacter.characterName}");
     }
 
     /// <summary>

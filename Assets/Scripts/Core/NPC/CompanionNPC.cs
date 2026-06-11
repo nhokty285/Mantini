@@ -262,19 +262,13 @@ public class CompanionNPC : BaseNPC, IChatParticipant
             return;
         }
 
-        // 1. Tính khoảng cách
-        float distance = Vector3.Distance(transform.position, playerTransform.position);
+        Vector3 delta = transform.position - playerTransform.position;
+        float sqrDist = delta.sqrMagnitude;
 
-        // Teleport về gần player nếu bị stuck / đi quá xa
-        if (distance > teleportDistance)
-        {
-          TeleportNearPlayer();
-            return;
-        }
+        if (sqrDist > teleportDistance * teleportDistance) { TeleportNearPlayer(); return; }
 
-        // 🛠 SỬA TẠI ĐÂY: Thêm sai số (Epsilon) 0.05f vào khoảng cách dừng
-        // Điều này giúp cắt đứt SmoothDamp trước khi nó bị kẹt ở mức tiệm cận
-        bool isCloseEnough = distance <= (followDistance + 0.05f);
+        float stopDist = followDistance + 0.05f;
+        bool isCloseEnough = sqrDist <= stopDist * stopDist;
 
         if (!isCloseEnough)
         {
