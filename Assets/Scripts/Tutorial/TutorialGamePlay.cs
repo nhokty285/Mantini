@@ -1,64 +1,65 @@
-﻿using System.Collections;
-using System.Drawing;
+using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 
 /// <summary>
-/// Tutorial workflow cho scene MapTest2.
-/// Chỉ chạy lần đầu tiên. Có thể bật/tắt và debug từ Inspector.
+/// Tutorial workflow cho scene MapTest2 — refactored UX:
+///  • Approach + NPCClick: dẫn dắt 1 lần đầu (có spotlight + lock button shop).
+///  • Các section còn lại (Chat, SelectItem, ProductDetail, BackToShop,
+///    OpenBag, Cart, Checkout, Reward): chỉ hiện companion dialogue + spotlight
+///    LẦN ĐẦU khi player tự mở; KHÔNG khóa button, KHÔNG chặn thao tác.
+///  • Đã thấy section → không hiện lại (lưu PlayerPrefs).
 ///
-/// HOOKS CẦN THÊM VÀO CÁC FILE KHÁC:
-/// VendorNPC.OnPlayerEnterRange()     → TutorialGamePlay.Instance?.OnPlayerEnterNPCRange()
-/// VendorNPC.ProcessInteraction()     → TutorialGamePlay.Instance?.OnPlayerClickedNPC()
-/// BaseNPC.HideDialogueAndOpenShop()  → TutorialGamePlay.Instance?.OnHideDialogueAndOpenShop()
-/// MultiChatManager (send)            → TutorialGamePlay.Instance?.OnPlayerSentChat()
-/// DifyChatService (response)         → TutorialGamePlay.Instance?.OnAIResponseReceived()
-/// ShopController.OnProductLinkCallback() → TutorialGamePlay.Instance?.OnPlayerTappedItem()
-/// ProductDetailUI (add to cart ok)   → TutorialGamePlay.Instance?.OnAddToCartSuccess()
-/// ProductDetailUI (back button)      → TutorialGamePlay.Instance?.OnPlayerBackToShop()
-/// ShopController (cartButton click)  → TutorialGamePlay.Instance?.OnCartOpened()
-/// CartUI (addSelectedToCart ok)      → TutorialGamePlay.Instance?.OnAddSelectedToCartSuccess()
+/// HOOKS Ở CÁC FILE KHÁC — GIỮ NGUYÊN TÊN, KHÔNG CẦN SỬA:
+///   VendorNPC.OnPlayerEnterRange()      → TutorialGamePlay.Instance?.OnPlayerEnterNPCRange()
+///   VendorNPC.ProcessInteraction()      → TutorialGamePlay.Instance?.OnPlayerClickedNPC()
+///   BaseNPC.HideDialogueAndOpenShop()   → TutorialGamePlay.Instance?.OnHideDialogueAndOpenShop()
+///   MultiChatManager (send)             → TutorialGamePlay.Instance?.OnPlayerSentChat()
+///   DifyChatService (response)          → TutorialGamePlay.Instance?.OnAIResponseReceived()
+///   ShopController.OnProductLinkCallback()  → TutorialGamePlay.Instance?.OnPlayerTappedItem()
+///   ProductDetailUI (add to cart ok)    → TutorialGamePlay.Instance?.OnAddToCartSuccess()
+///   ProductDetailUI (back button)       → TutorialGamePlay.Instance?.OnPlayerBackToShop()
+///   ShopController (cartButton click)   → TutorialGamePlay.Instance?.OnCartOpened()
+///   CartUI (addSelectedToCart ok)       → TutorialGamePlay.Instance?.OnAddSelectedToCartSuccess()
+///   CheckoutController                  → TutorialGamePlay.Instance?.OnCheckoutCompleted()
 /// </summary>
-
 public class TutorialGamePlay : MonoBehaviour
 {
     public static TutorialGamePlay Instance { get; private set; }
 
-    // ── PlayerPrefs Keys ─────────────────────────────────────────────────────
-    private const string KEY_DONE = "MapTest2_TutorialDone";
-    private const string KEY_STEP = "MapTest2_TutorialStep";
-    private const string KEY_ENABLED = "MapTest2_TutorialEnabled";
+    // ── PlayerPrefs Keys ────────────────────────────────────────────────────
+    private const string KEY_ENABLED      = "MapTest2_TutorialEnabled";
+    private const string KEY_SEEN_PREFIX  = "MapTest2_TutSeen_";
+    // Legacy keys (giữ để clean khi reset)
+    private const string KEY_LEGACY_DONE  = "MapTest2_TutorialDone";
+    private const string KEY_LEGACY_STEP  = "MapTest2_TutorialStep";
 
     // ════════════════════════════════════════════════════════════════════════
-    // ENUM
+    // ENUM — mỗi section là 1 đơn vị độc lập, có thể trigger riêng
     // ════════════════════════════════════════════════════════════════════════
-    public enum TutorialStep
+    public enum TutorialSection
     {
-        None = -1,
-        Step1_Intro = 0,            // Companion chào + arrow dẫn đường đến NPC
-        Step1_WaitNPCClick = 1,     // Đã vào range → Spotlight NPC, chờ bấm
-        Step2_Chat = 2,             // Shop mở → Spotlight chat input
-        Step2_SelectItem = 3,       // Spotlight khu vực item
-        Step2_InProductDetail = 4,  // ProductDetailUI mở → hướng dẫn chọn size
-        Step2_WaitAddToCart = 5,    // Chờ player bấm "Thêm vào giỏ"
-        Step2_WaitBackToShop = 6,   // Nhắc player bấm Back về shop
-        Step2_WaitOpenBag = 7,      // Spotlight cartButton, chờ bấm
-        Step2_OpenBag = 8,          // CartUI mở → spotlight từng phần
-        Step3_Checkout = 9,         // Hướng dẫn checkout
-        Step3_Reward = 10,          // Hiện badge thành công
-        Step4_Contextual = 99,      // Tooltip tự khám phá
-        Completed = 100
+        Approach,        // [Critical] Companion chào + arrow đến NPC
+        NPCClick,        // [Critical] Hiện hint "bấm vào NPC"
+        Chat,            // [Hint]     Shop vừa mở → giới thiệu ô chat
+        SelectItem,      // [Hint]     AI trả lời xong → giới thiệu khu vực item
+        ProductDetail,   // [Hint]     Mở ProductDetailUI → giới thiệu chọn size
+        BackToShop,      // [Hint]     Add to cart xong → gợi ý quay lại shop
+        OpenBag,         // [Hint]     Quay lại shop → gợi ý nút giỏ
+        Cart,            // [Hint]     Cart panel mở → giới thiệu cart
+        Checkout,        // [Hint]     Đã add to cart → giới thiệu checkout
+        Reward           // [Hint]     Checkout xong → chúc mừng
     }
 
-    // ── Internal State ────────────────────────────────────────────────────
-    private TutorialStep _step = TutorialStep.None;
-    private bool _waitingForAI = false;
-    private bool _continuePressed = false;
+    // ── Internal State ──────────────────────────────────────────────────────
+    private readonly HashSet<TutorialSection> _seenSections = new HashSet<TutorialSection>();
     private bool _isTutorialEnabled = true;
+    private bool _continuePressed = false;
+    private bool _introFlowDone = false;
     private Coroutine _arrowBounce;
-    private Coroutine _arrowDirectionRoutine;
 
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — SETTINGS
@@ -82,6 +83,7 @@ public class TutorialGamePlay : MonoBehaviour
     [SerializeField] private float typewriterSpeed = 0.025f;
     [SerializeField] private TextMeshProUGUI progressText;
     [SerializeField] private DialogueAudioSync audioSync;
+
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — SPOTLIGHT
     // ════════════════════════════════════════════════════════════════════════
@@ -90,17 +92,16 @@ public class TutorialGamePlay : MonoBehaviour
     [SerializeField] private RectTransform spotlightHole;
     [SerializeField] private Vector2 spotlightPadding = new Vector2(20f, 220f);
     [SerializeField] private float autoHideDelay = 2f;
+
     // ════════════════════════════════════════════════════════════════════════
-    // INSPECTOR — STEP 1
+    // INSPECTOR — STEP APPROACH (Critical)
     // ════════════════════════════════════════════════════════════════════════
-    [Header("══════ Step 1: Di chuyển đến NPC ══════")]
+    [Header("══════ Approach NPC (Critical Section) ══════")]
     [SerializeField] private Transform firstNPCWorldTransform;
     [SerializeField] private RectTransform firstNPCScreenRect;
     [SerializeField] private float arrowUpdateInterval = 0.08f;
-/*    [SerializeField] private Vector3 npcSpotlightOffset = new Vector3(0f, 1f, 0f); // ★ Chỉnh từ Inspector
-    [SerializeField] private Vector2 npcSpotlightSize = new Vector2(120f, 120f);
-    private Coroutine _spotlightTrackRoutine;*/
-    [SerializeField] private GameObject spotlightEffectPrefab; // ★ Hiệu ứng spotlight (optional)
+    [SerializeField] private GameObject spotlightEffectPrefab;
+
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — SHOP UI
     // ════════════════════════════════════════════════════════════════════════
@@ -122,71 +123,71 @@ public class TutorialGamePlay : MonoBehaviour
     [SerializeField] private RectTransform checkoutButtonRect;
     [SerializeField] private Button closeCart;
 
-    [Header("══════ Blockable Buttons ══════")]
+    [Header("══════ Blockable Buttons (CHỈ khóa ở Intro/Approach) ══════")]
     [SerializeField] private Button[] allBlockableButtons;
 
     // ════════════════════════════════════════════════════════════════════════
-    // INSPECTOR — MESSAGES (chỉnh từ Inspector, không cần vào code)
+    // INSPECTOR — MESSAGES
     // ════════════════════════════════════════════════════════════════════════
     [Header("══════ Messages ══════")]
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step1_Intro =
-        "👋 Xin chào! Mình là trợ lý của bạn!\nHãy di chuyển đến NPC phía trước\nđể bắt đầu mua sắm nhé! 🏃";
+        "Hãy bắt đầu làm quen với thao tác nhé!\nHãy di chuyển đến NPC phía trước\nđể bắt đầu mua sắm nhé!";
 
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step1_Click =
-        "✅ Bạn đã đến nơi rồi!\nHãy bấm vào NPC để mở Shop! 👆";
+        "Bạn đã đến nơi rồi!\nHãy bấm vào NPC để mở Shop!";
 
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step2_Chat =
-        "💬 Đây là ô Chat với AI!\nBạn có thể hỏi về sản phẩm, size, hay phong cách.\nHãy thử gõ một câu hỏi và nhấn Gửi nhé!";
+        "Đây là ô Chat với AI!\nBạn có thể hỏi về sản phẩm, size, hay phong cách.\nHãy thử gõ một câu hỏi và nhấn Gửi nhé!";
 
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step2_Item =
-        "🛍️ Tuyệt! Bây giờ hãy chọn một sản phẩm\nbạn thích từ khu vực hàng hóa phía dưới!";
+        "Tuyệt! Bây giờ hãy chọn một sản phẩm\nbạn thích từ khu vực hàng hóa phía dưới!";
 
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step2_Size =
-        "👟 Đây là chi tiết sản phẩm!\n• Chọn SIZE phù hợp với bạn\n• Sau đó nhấn \"Thêm vào giỏ\" để tiếp tục!";
+        "Đây là chi tiết sản phẩm!\n• Chọn SIZE phù hợp với bạn\n• Sau đó nhấn \"Thêm vào giỏ\" để tiếp tục!";
 
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step2_Back =
-        "✅ Đã thêm vào giỏ thành công!\nHãy nhấn nút ← Trở Lại để quay về Shop.";
+        "Đã thêm vào giỏ thành công!\nHãy nhấn nút ← Trở Lại để quay về Shop.";
 
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step2_Bag =
-        "🛒 Ngon lắm! Bây giờ hãy bấm vào nút\nTÚI (🛒) để xem giỏ hàng của bạn!";
+        "Ngon lắm! Bây giờ hãy bấm vào nút\nTÚI (🛒) để xem giỏ hàng của bạn!";
 
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step2_Cart =
-        "📦 Đây là Giỏ Hàng của bạn!\n• Tick chọn sản phẩm muốn mua\n• Nhấn \"Thêm vào đơn\" để tiến hành!";
+        "Đây là Giỏ Hàng của bạn!\n• Tick chọn sản phẩm muốn mua\n• Nhấn \"Thêm vào đơn\" để tiến hành!";
 
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step3 =
-        "🎉 Tuyệt vời! Điền thông tin giao hàng\nvà nhấn THANH TOÁN để hoàn tất đơn đầu tiên!";
+        "Tuyệt vời! Điền thông tin giao hàng\nvà nhấn THANH TOÁN để hoàn tất đơn đầu tiên!";
 
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Reward =
-        "🏆 ĐƠN HÀNG ĐẦU TIÊN HOÀN THÀNH! ✅\nBạn đã thành thạo cơ bản.\nTiếp tục khám phá thêm nhé!";
+        "ĐƠN HÀNG ĐẦU TIÊN HOÀN THÀNH! ✅\nBạn đã thành thạo cơ bản.\nTiếp tục khám phá thêm nhé!";
 
     // ════════════════════════════════════════════════════════════════════════
-    // INSPECTOR — DEBUG PANEL (chỉ hiện trong Editor)
+    // INSPECTOR — DEBUG PANEL
     // ════════════════════════════════════════════════════════════════════════
     [Header("══════ Debug Panel ══════")]
     [SerializeField] private bool showDebugPanel = true;
-    [SerializeField] private GameObject debugPanelUI;           // Panel UI debug (optional, có thể null)
-    [SerializeField] private TextMeshProUGUI debugStepText;     // Text hiển thị step hiện tại
-    [SerializeField] private TextMeshProUGUI debugStatusText;   // Text hiển thị trạng thái
+    [SerializeField] private GameObject debugPanelUI;
+    [SerializeField] private TextMeshProUGUI debugStepText;
+    [SerializeField] private TextMeshProUGUI debugStatusText;
 
     // ════════════════════════════════════════════════════════════════════════
     #region Unity Lifecycle
@@ -196,37 +197,52 @@ public class TutorialGamePlay : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        audioSync = FindAnyObjectByType<DialogueAudioSync>();
+
+        if (audioSync == null) audioSync = FindAnyObjectByType<DialogueAudioSync>();
         HideAllTutorialUI();
-        spotlightEffectPrefab.SetActive(false); 
+        if (spotlightEffectPrefab != null) spotlightEffectPrefab.SetActive(false);
     }
 
     private void Start()
     {
-        // Đọc setting bật/tắt từ PlayerPrefs (ưu tiên PlayerPrefs, fallback Inspector)
         _isTutorialEnabled = PlayerPrefs.GetInt(KEY_ENABLED, tutorialEnabled ? 1 : 0) == 1;
+        LoadSeenSections();
 
-        companionContinueButton?.onClick.AddListener(()=> 
-        { 
-            OnContinuePressed();
-            HideAllTutorialUI();
-        });
+        if (companionContinueButton != null)
+        {
+            companionContinueButton.onClick.RemoveAllListeners();
+            companionContinueButton.onClick.AddListener(() =>
+            {
+                OnContinuePressed();
+                HideAllTutorialUI();
+            });
+        }
 
-        HideAllTutorialUI();
         UpdateDebugUI();
 
         if (!_isTutorialEnabled)
         {
-            DebugLog("Tutorial đang TẮT — skip.");
+            DebugLog("Tutorial đang TẮT — bỏ qua, không khóa gì hết.");
+            RestoreAllShopUI();
             return;
         }
 
-        CheckAndStartTutorial();
+        // Chỉ chạy intro guided flow nếu chưa thấy
+        if (!HasSeen(TutorialSection.Approach))
+        {
+            StartCoroutine(IntroGuidedFlow());
+        }
+        else
+        {
+            DebugLog("Intro đã thấy — bỏ qua. Hint sections sẽ tự trigger qua hooks.");
+            _introFlowDone = true;
+            RestoreAllShopUI();
+            ActivateContextualTooltips();
+        }
     }
 
     private void Update()
     {
-        // Cập nhật debug text liên tục khi panel bật
 #if UNITY_EDITOR
         if (showDebugPanel) UpdateDebugUI();
 #endif
@@ -257,7 +273,6 @@ public class TutorialGamePlay : MonoBehaviour
         StopAllCoroutines();
         RestoreAllShopUI();
         HideAllTutorialUI();
-        _step = TutorialStep.None;
         DebugLog("Tutorial đã TẮT.");
         UpdateDebugUI();
     }
@@ -269,399 +284,224 @@ public class TutorialGamePlay : MonoBehaviour
         else EnableTutorial();
     }
 
-    /// <summary>Trả về trạng thái hiện tại.</summary>
     public bool IsTutorialEnabled() => _isTutorialEnabled;
-
-    /// <summary>Trả về bước hiện tại.</summary>
-    public TutorialStep CurrentStep() => _step;
 
     #endregion
 
     // ════════════════════════════════════════════════════════════════════════
-    #region Entry Point
+    #region SEEN-TRACKING (HashSet O(1) + PlayerPrefs)
     // ════════════════════════════════════════════════════════════════════════
 
-    public void CheckAndStartTutorial()
+    private void LoadSeenSections()
     {
-        if (!_isTutorialEnabled) return;
-
-        if (!forceRunOnStart && PlayerPrefs.GetInt(KEY_DONE, 0) == 1)
+        _seenSections.Clear();
+        if (forceRunOnStart)
         {
-            DebugLog("Tutorial đã hoàn thành trước đó — skip.");
-            ActivateContextualTooltips();
+            DebugLog("forceRunOnStart = true → reset _seenSections.");
             return;
         }
 
-        int saved = forceRunOnStart ? 0 : PlayerPrefs.GetInt(KEY_STEP, 0);
-        DebugLog($"Bắt đầu từ bước {(TutorialStep)saved}");
-        SetStep((TutorialStep)saved);
+        foreach (TutorialSection s in System.Enum.GetValues(typeof(TutorialSection)))
+        {
+            if (PlayerPrefs.GetInt(KEY_SEEN_PREFIX + s.ToString(), 0) == 1)
+                _seenSections.Add(s);
+        }
+        DebugLog($"Loaded {_seenSections.Count} section(s) đã thấy từ PlayerPrefs.");
+    }
+
+    private bool HasSeen(TutorialSection s) => _seenSections.Contains(s);
+
+    private void MarkSeen(TutorialSection s)
+    {
+        if (!_seenSections.Add(s)) return; // đã có trong set, bỏ qua
+        PlayerPrefs.SetInt(KEY_SEEN_PREFIX + s.ToString(), 1);
+        PlayerPrefs.Save();
+        DebugLog($"Marked seen: {s}");
+        UpdateDebugUI();
     }
 
     #endregion
 
     // ════════════════════════════════════════════════════════════════════════
-    #region STATE MACHINE
+    #region HINT API — Mỗi section chỉ hiện 1 lần, không block
     // ════════════════════════════════════════════════════════════════════════
 
-    private void SetStep(TutorialStep step)
+    /// <summary>
+    /// Gọi từ hook khi player tự mở 1 section. Nếu chưa thấy → hiện dialogue +
+    /// spotlight (optional) rồi tự tắt. Đã thấy → return ngay, không làm gì.
+    /// KHÔNG block button, KHÔNG chặn thao tác player.
+    /// </summary>
+    private void TryShowHint(
+        TutorialSection section,
+        string msg,
+        RectTransform spotlightTarget = null,
+        bool waitContinue = true)
     {
         if (!_isTutorialEnabled) return;
-
-        _step = step;
-        PlayerPrefs.SetInt(KEY_STEP, (int)step);
-        PlayerPrefs.Save();
-
-        DebugLog($"SetStep → {step}");
-        UpdateDebugUI();
-        UpdateProgressText(step);
-
-        SetSpotlightForStep(step);
-
-        switch (step)
+        if (HasSeen(section))
         {
-            case TutorialStep.Step1_Intro:          StartCoroutine(RunStep1());
-                                                    SetAllowedButtons();                        break;
-            case TutorialStep.Step1_WaitNPCClick:    /* đợi OnPlayerClickedNPC() */
-                                                    SetAllowedButtons();                        break;
-            case TutorialStep.Step2_Chat:           StartCoroutine(RunStep2_Chat());            break;
-            case TutorialStep.Step2_SelectItem:     StartCoroutine(RunStep2_SelectItem());      break;
-            case TutorialStep.Step2_InProductDetail:StartCoroutine(RunStep2_InProductDetail()); break;
-            case TutorialStep.Step2_WaitAddToCart:   /* đợi OnAddToCartSuccess() */             break;
-            case TutorialStep.Step2_WaitBackToShop: StartCoroutine(RunStep2_WaitBackToShop());  break;
-            case TutorialStep.Step2_WaitOpenBag:    SetAllowedButtons(quickCartButton);
-                                                    StartCoroutine(RunStep2_WaitOpenBag());     break;
-            case TutorialStep.Step2_OpenBag:        StartCoroutine(RunStep2_OpenBag());
-                                                    SetAllowedButtons();                        break;
-            case TutorialStep.Step3_Checkout:       StartCoroutine(RunStep3_Checkout());        break;                             
-            case TutorialStep.Step3_Reward:         StartCoroutine(RunStep3_Reward());          break;
-            case TutorialStep.Step4_Contextual:     ActivateContextualTooltips();               break;
-            case TutorialStep.Completed:            CompleteTutorial();                         break;
+            DebugLog($"Section {section} đã thấy — bỏ qua.");
+            return;
         }
+
+        MarkSeen(section);
+        StartCoroutine(HintRoutine(section, msg, spotlightTarget, waitContinue));
     }
 
-    private void SetSpotlightForStep(TutorialStep step)
+    private IEnumerator HintRoutine(
+        TutorialSection section,
+        string msg,
+        RectTransform spotlightTarget,
+        bool waitContinue)
     {
-        switch (step)
-        {
-            // ── Các step KHÔNG dùng spotlight ────────────────────────────────
-            case TutorialStep.Step1_WaitNPCClick:   // ← fix bug của bạn
-            case TutorialStep.Step2_InProductDetail:
-            case TutorialStep.Step2_WaitAddToCart:
-            case TutorialStep.Step2_WaitBackToShop:
-            case TutorialStep.Step3_Reward:
-            case TutorialStep.Step4_Contextual:
-            case TutorialStep.Completed:
-            case TutorialStep.None:
-                HideSpotlight();
-                break;
+        UpdateProgressText(section);
 
-            // ── Các step CÓ spotlight → để RunStepX() tự gọi ShowSpotlight ──
-            // (không làm gì ở đây, Coroutine sẽ xử lý)
-            default:
-                break;
-        }
+        if (spotlightTarget != null)
+            ShowSpotlight(spotlightTarget);
+
+        // ShowCompanionMessage tự xử lý:
+        //   waitContinue = true  → hiện Continue button, đợi player bấm
+        //   waitContinue = false → auto-hide sau autoHideDelay giây
+        yield return ShowCompanionMessage(msg, wait: waitContinue);
+
+        // Clean up — companion message đã tự hide khi wait=true; cần hide spotlight
+        HideSpotlight();
+        if (!waitContinue) HideCompanionPanel();
     }
 
     #endregion
 
     // ════════════════════════════════════════════════════════════════════════
-    #region STEP 1 — Chào → Di chuyển → Bấm NPC
+    #region INTRO GUIDED FLOW (Critical — Approach + NPCClick)
     // ════════════════════════════════════════════════════════════════════════
 
-    private IEnumerator RunStep1()
+    private IEnumerator IntroGuidedFlow()
     {
-        spotlightOverlay.SetActive(true); 
-        // ── Phase A: Companion chào (3 giây, không bấm Continue) ──────────────
+        MarkSeen(TutorialSection.Approach);
+        UpdateProgressText(TutorialSection.Approach);
+
+        // Phase A: Companion chào
+        if (spotlightOverlay != null) spotlightOverlay.SetActive(true);
         yield return ShowCompanionMessage(msg_Step1_Intro, wait: false);
         yield return new WaitForSeconds(2f);
         HideCompanionPanel();
         HideSpotlight();
-        // ── Phase B: Dark overlay + Spotlight bám NPC trong world space ───────
-        // Arrow xoay về NPC + spotlight chiếu vào NPC ngay sau khi companion tắt
-        /*     if (firstNPCWorldTransform != null)
-             {
-                 // Size spotlight: ước lượng theo NPC — chỉnh trong Inspector nếu cần
-                 ShowSpotlightOnWorld(firstNPCWorldTransform, npcSpotlightSize);
-             }*/
 
-        /*        if (arrowNPC != null)
-                {
-                    arrowNPC.SetActive(true);
-                    _arrowDirectionRoutine = StartCoroutine(UpdateArrowDirectionToNPC());
-                }
-        */
+        // Phase B: Bật spotlight effect prefab + sfx dẫn đường
+        if (spotlightEffectPrefab != null) spotlightEffectPrefab.SetActive(true);
+        AudioManager.Instance?.PlaySFXOneShot("Whoosh");
 
-        spotlightEffectPrefab.SetActive(true);
-        AudioManager.Instance.PlaySFXOneShot("Whoosh");
-        // Đợi player di chuyển → OnPlayerEnterNPCRange() callback
+        // Lock button shop trong giai đoạn intro để player tập trung đi tới NPC
+        SetAllowedButtons();
+
+        DebugLog("Intro flow: chờ OnPlayerEnterNPCRange()...");
     }
 
-/*    private IEnumerator UpdateArrowDirectionToNPC()
-    {
-        if (arrowNPC == null || firstNPCWorldTransform == null) yield break;
-        Camera cam = Camera.main;
-        RectTransform arrowRect = arrowNPC.GetComponent<RectTransform>();
-
-        while (_step == TutorialStep.Step1_Intro || _step == TutorialStep.Step1_WaitNPCClick)
-        {
-            if (cam != null && arrowRect != null)
-            {
-                Vector3 npcScreen = cam.WorldToScreenPoint(firstNPCWorldTransform.position);
-                Vector2 center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-                Vector2 dir = ((Vector2)npcScreen - center).normalized;
-                float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-                arrowRect.rotation = Quaternion.Euler(0f, 0f, angle - 90f);
-            }
-            yield return new WaitForSeconds(arrowUpdateInterval);
-        }
-    }
-*/
     /// <summary>Hook → VendorNPC.OnPlayerEnterRange()</summary>
     public void OnPlayerEnterNPCRange()
     {
-        if (_step != TutorialStep.Step1_Intro) return;
-        StartCoroutine(ShowCompanionThenWaitClick());
+        if (!_isTutorialEnabled) return;
+
+        // Đã qua intro rồi → không cần làm gì khi player đi ngang NPC
+        if (HasSeen(TutorialSection.NPCClick)) return;
+
+        MarkSeen(TutorialSection.NPCClick);
+        UpdateProgressText(TutorialSection.NPCClick);
+        StartCoroutine(ShowNPCClickHint());
     }
 
-    private IEnumerator ShowCompanionThenWaitClick()
+    private IEnumerator ShowNPCClickHint()
     {
         yield return ShowCompanionMessage(msg_Step1_Click, wait: false);
-/*        _step = TutorialStep.Step1_WaitNPCClick;
-*/        yield return new WaitForSeconds(1.8f);
+        yield return new WaitForSeconds(1.8f);
         HideAllTutorialUI();
-        SetStep(TutorialStep.Step1_WaitNPCClick);
-        HideSpotlight();
-        PlayerPrefs.SetInt(KEY_STEP, (int)_step);
-        PlayerPrefs.Save();
-        UpdateDebugUI();
-
     }
 
     /// <summary>Hook → VendorNPC.ProcessInteraction()</summary>
     public void OnPlayerClickedNPC()
     {
-        if (_step != TutorialStep.Step1_WaitNPCClick) return;
+        if (!_isTutorialEnabled) return;
+
         StopArrowBounce();
         HideSpotlight();
         HideAllTutorialUI();
-        spotlightEffectPrefab.SetActive(false);
-        if (_arrowDirectionRoutine != null)
-        {
-            StopCoroutine(_arrowDirectionRoutine);
-            _arrowDirectionRoutine = null;
-        }
-        DebugLog("Player bấm NPC — chờ HideDialogueAndOpenShop...");
+        if (spotlightEffectPrefab != null) spotlightEffectPrefab.SetActive(false);
+
+        // Mở khóa toàn bộ shop UI — từ đây trở đi player tự do
+        RestoreAllShopUI();
+        _introFlowDone = true;
+        DebugLog("Player bấm NPC — intro DONE, mở khóa toàn bộ UI.");
     }
 
     /// <summary>Hook → BaseNPC.HideDialogueAndOpenShop()</summary>
     public void OnHideDialogueAndOpenShop()
     {
-        if (_step != TutorialStep.Step1_WaitNPCClick) return;
-        SetStep(TutorialStep.Step2_Chat);
-        ShowSpotlight(chatInputArea);
+        TryShowHint(TutorialSection.Chat, msg_Step2_Chat, chatInputArea, waitContinue: true);
     }
 
     #endregion
 
     // ════════════════════════════════════════════════════════════════════════
-    #region STEP 2A — Chat với AI
+    #region HINT HOOKS — Passive, không block
     // ════════════════════════════════════════════════════════════════════════
 
-    private IEnumerator RunStep2_Chat()
-    {
-        yield return ShowCompanionMessage(msg_Step2_Chat, wait: true);
-        SetShopUIInteractableExcept(chatInputArea, chatSendButton);
-        
-    }
+    /// <summary>Hook → MultiChatManager (player nhấn Send). No-op trong design mới.</summary>
+    public void OnPlayerSentChat() { /* no-op */ }
 
-    /// <summary>Hook → MultiChatManager (khi player nhấn Send)</summary>
-    public void OnPlayerSentChat()
-    {
-        if (_step != TutorialStep.Step2_Chat) return;
-        _waitingForAI = true;
-        DebugLog("Đang đợi AI response...");
-    }
-
-    /// <summary>Hook → DifyChatService (khi AI trả về kết quả)</summary>
+    /// <summary>Hook → DifyChatService (AI trả về). Trigger SelectItem hint.</summary>
     public void OnAIResponseReceived()
     {
-        if (_step != TutorialStep.Step2_Chat || !_waitingForAI) return;
-        _waitingForAI = false;
-        HideSpotlight();
-        RestoreAllShopUI();
-        SetStep(TutorialStep.Step2_SelectItem);
+        TryShowHint(TutorialSection.SelectItem, msg_Step2_Item, shopItemsContainerRect, waitContinue: true);
     }
 
-    #endregion
-
-    // ════════════════════════════════════════════════════════════════════════
-    #region STEP 2B — Chọn Item
-    // ════════════════════════════════════════════════════════════════════════
-
-    private IEnumerator RunStep2_SelectItem()
-    {
-        ShowSpotlight(shopItemsContainerRect);
-        yield return ShowCompanionMessage(msg_Step2_Item, wait: true);
-        yield return new WaitForSeconds(1f);
-        chatSendButton?.gameObject.SetActive(false);
-        if (quickCartButton != null) quickCartButton.interactable = false;
-    }
-
-    /// <summary>Hook → ShopController.OnProductLinkCallback()</summary>
+    /// <summary>Hook → ShopController.OnProductLinkCallback() (player tap item).</summary>
     public void OnPlayerTappedItem()
     {
-        if (_step != TutorialStep.Step2_SelectItem) return;
-        HideSpotlight();
-        RestoreAllShopUI();
-        SetStep(TutorialStep.Step2_InProductDetail);
+        TryShowHint(TutorialSection.ProductDetail, msg_Step2_Size, null, waitContinue: true);
     }
 
-    #endregion
-
-    // ════════════════════════════════════════════════════════════════════════
-    #region STEP 2C — ProductDetailUI
-    // ════════════════════════════════════════════════════════════════════════
-
-    private IEnumerator RunStep2_InProductDetail()
-    {
-        
-        spotlightOverlay.gameObject.SetActive(true);
-        yield return ShowCompanionMessage(msg_Step2_Size, wait: true);
-        // Chuyển state thủ công vì không gọi SetStep (tránh loop)
-        _step = TutorialStep.Step2_WaitAddToCart;
-        PlayerPrefs.SetInt(KEY_STEP, (int)_step);
-        PlayerPrefs.Save();
-        UpdateDebugUI();
-    }
-
-    /// <summary>Hook → ProductDetailUI (add to cart thành công)</summary>
+    /// <summary>Hook → ProductDetailUI (add to cart thành công).</summary>
     public void OnAddToCartSuccess()
     {
-        if (_step != TutorialStep.Step2_WaitAddToCart) return;
-        HideSpotlight();
-        SetStep(TutorialStep.Step2_WaitBackToShop);
+        TryShowHint(TutorialSection.BackToShop, msg_Step2_Back, null, waitContinue: false);
     }
 
-    #endregion
-
-    // ════════════════════════════════════════════════════════════════════════
-    #region STEP 2D — Back về Shop
-    // ════════════════════════════════════════════════════════════════════════
-
-    private IEnumerator RunStep2_WaitBackToShop()
-    {
-        spotlightOverlay.gameObject.SetActive(true);
-        yield return ShowCompanionMessage(msg_Step2_Back, wait: false);
-        yield return new WaitForSeconds(2f);
-        HideCompanionPanel();
-        HideSpotlight();
-        // Companion hiện, chờ player tự bấm Back
-    }
-
-    /// <summary>Hook → ProductDetailUI (back button)</summary>
+    /// <summary>Hook → ProductDetailUI (back button).</summary>
     public void OnPlayerBackToShop()
     {
-        if (_step != TutorialStep.Step2_WaitBackToShop) return;
-        HideCompanionPanel();
-        SetStep(TutorialStep.Step2_WaitOpenBag);
+        RectTransform cartBtnRect = quickCartButton != null
+            ? quickCartButton.GetComponent<RectTransform>()
+            : null;
+        TryShowHint(TutorialSection.OpenBag, msg_Step2_Bag, cartBtnRect, waitContinue: true);
     }
 
-    #endregion
-
-    // ════════════════════════════════════════════════════════════════════════
-    #region STEP 2E — Mở Bag
-    // ════════════════════════════════════════════════════════════════════════
-
-    private IEnumerator RunStep2_WaitOpenBag()
-    {
-        //HideAllTutorialUI();
-        ShowSpotlight(quickCartButton.GetComponent<RectTransform>());
-        yield return ShowCompanionMessage(msg_Step2_Bag, wait: true);
-        yield return new WaitForSeconds(1f);
-        // Chờ player bấm vào cartButton → OnCartOpened()
-    }
-
-    /// <summary>Hook → ShopController (cartButton onClick → cartPanel active)</summary>
+    /// <summary>Hook → ShopController (cartButton onClick → cartPanel active).</summary>
     public void OnCartOpened()
     {
-        if (_step != TutorialStep.Step2_WaitOpenBag) return;
-        HideSpotlight();
-        SetStep(TutorialStep.Step2_OpenBag);
-    }
-
-    #endregion
-
-    // ════════════════════════════════════════════════════════════════════════
-    #region STEP 2F — CartUI
-    // ════════════════════════════════════════════════════════════════════════
-
-    private IEnumerator RunStep2_OpenBag()
-    {
-        //yield return null; // Đợi CartUI render
-        spotlightOverlay.gameObject.SetActive(true);
-        yield return ShowCompanionMessage(msg_Step2_Cart, wait: true);
-        yield return new WaitForSeconds(1.3f);
-
-        yield return new WaitForSeconds(0.1f);
-
-        if (cartItemListRect != null)
-        {
-            ShowSpotlight(cartItemListRect);
-            yield return new WaitForSeconds(1.5f);
-            HideSpotlight();
-        }
-        // Đợi OnAddSelectedToCartSuccess()
+        TryShowHint(TutorialSection.Cart, msg_Step2_Cart, cartItemListRect, waitContinue: true);
     }
 
     /// <summary>Hook → CartUI.addSelectedToCartButton.onClick</summary>
     public void OnAddSelectedToCartSuccess()
     {
-        if (_step != TutorialStep.Step2_OpenBag) return;
-        HideSpotlight();
-        RestoreAllShopUI();
-        SetStep(TutorialStep.Step3_Checkout);
+        TryShowHint(TutorialSection.Checkout, msg_Step3, null, waitContinue: false);
     }
 
-    #endregion
-
-    // ════════════════════════════════════════════════════════════════════════
-    #region STEP 3 — Checkout & Reward
-    // ════════════════════════════════════════════════════════════════════════
-
-    private IEnumerator RunStep3_Checkout()
-    {
-        spotlightOverlay.gameObject.SetActive(true);
-        yield return ShowCompanionMessage(msg_Step3, wait: false);
-        yield return new WaitForSeconds(2f);
-        HideAllTutorialUI();
-        // Đợi OnCheckoutCompleted()
-    }
-
-    /// <summary>Hook → CheckoutController (thanh toán xong)</summary>
+    /// <summary>Hook → CheckoutController (thanh toán xong).</summary>
     public void OnCheckoutCompleted()
     {
-        if (_step != TutorialStep.Step3_Checkout) return;
-        HideCompanionPanel();
-        SetStep(TutorialStep.Step3_Reward);
-    }
-
-    private IEnumerator RunStep3_Reward()
-    {
-        yield return new WaitForSeconds(0.3f);
-        yield return ShowCompanionMessage(msg_Reward, wait: true);
-
-        SetStep(TutorialStep.Step4_Contextual);
+        TryShowHint(TutorialSection.Reward, msg_Reward, null, waitContinue: true);
+        ActivateContextualTooltips();
     }
 
     #endregion
 
     // ════════════════════════════════════════════════════════════════════════
-    #region STEP 4 — Contextual Tooltips
+    #region CONTEXTUAL TOOLTIPS
     // ════════════════════════════════════════════════════════════════════════
 
     private void ActivateContextualTooltips()
     {
-        CompleteTutorial();
         var triggers = FindObjectsByType<ContextualTooltipTrigger>(FindObjectsSortMode.None);
         foreach (var t in triggers) t.Enable();
         DebugLog($"Đã bật {triggers.Length} contextual tooltip(s).");
@@ -672,60 +512,22 @@ public class TutorialGamePlay : MonoBehaviour
     // ════════════════════════════════════════════════════════════════════════
     #region COMPANION HELPERS
     // ════════════════════════════════════════════════════════════════════════
-    /*private IEnumerator ShowCompanionMessage(string msg, bool wait, bool showPanel = true)
-    {
-        if (companionPanel == null) yield break;
-        companionPanel.SetActive(showPanel);
-
-        Vector3 originalScale = companionImage.transform.localScale;
-
-        companionImage.transform.localScale = Vector3.zero;
-        companionImage.transform.DOScale(originalScale, 0.5f).SetEase(Ease.OutBack);
-
-
-        if (companionImage != null && tutorialCompanionSprite != null)
-            companionImage.sprite = tutorialCompanionSprite;
-
-        if (companionChatText != null)
-        {
-            companionChatText.text = msg;           // set full text 1 lần duy nhất
-            companionChatText.maxVisibleCharacters = 0;
-            for (int i = 0; i <= msg.Length; i++)
-            {
-                companionChatText.maxVisibleCharacters = i;
-                if (audioSync != null) audioSync.StartTypewriter(companionChatText, msg);
-                yield return new WaitForSeconds(typewriterSpeed);
-            }
-        }
-
-        if (wait)
-        {
-            companionContinueButton.gameObject.SetActive(true);
-            _continuePressed = true;
-            yield return new WaitUntil(() => _continuePressed);
-            HideCompanionPanel();
-            HideAllTutorialUI();
-        }
-        else
-        {
-            companionContinueButton.gameObject.SetActive(false);
-            yield return new WaitForSeconds(autoHideDelay);
-        }
-    }*/
 
     private IEnumerator ShowCompanionMessage(string msg, bool wait, bool showPanel = true)
     {
-        if (companionPanel == null)
-            yield break;
+        if (companionPanel == null) yield break;
 
         companionPanel.SetActive(showPanel);
 
-        Vector3 originalScale = companionImage.transform.localScale;
-        companionImage.transform.localScale = Vector3.zero;
-        companionImage.transform.DOScale(originalScale, 0.5f).SetEase(Ease.OutBack);
+        if (companionImage != null)
+        {
+            Vector3 originalScale = companionImage.transform.localScale;
+            companionImage.transform.localScale = Vector3.zero;
+            companionImage.transform.DOScale(originalScale, 0.5f).SetEase(Ease.OutBack);
 
-        if (companionImage != null && tutorialCompanionSprite != null)
-            companionImage.sprite = tutorialCompanionSprite;
+            if (tutorialCompanionSprite != null)
+                companionImage.sprite = tutorialCompanionSprite;
+        }
 
         if (companionChatText != null)
         {
@@ -757,15 +559,18 @@ public class TutorialGamePlay : MonoBehaviour
 
         if (wait)
         {
-            companionContinueButton.gameObject.SetActive(true);
-            _continuePressed = true;
+            if (companionContinueButton != null)
+                companionContinueButton.gameObject.SetActive(true);
+
+            _continuePressed = false;
             yield return new WaitUntil(() => _continuePressed);
             HideCompanionPanel();
             HideAllTutorialUI();
         }
         else
         {
-            companionContinueButton.gameObject.SetActive(false);
+            if (companionContinueButton != null)
+                companionContinueButton.gameObject.SetActive(false);
             yield return new WaitForSeconds(autoHideDelay);
         }
     }
@@ -780,10 +585,14 @@ public class TutorialGamePlay : MonoBehaviour
         _continuePressed = false;
     }
 
+    /// <summary>
+    /// Khóa toàn bộ allBlockableButtons trừ những button trong tham số.
+    /// CHỈ dùng trong IntroGuidedFlow. Sau khi OnPlayerClickedNPC → RestoreAllShopUI.
+    /// </summary>
     private void SetAllowedButtons(params Button[] allowed)
     {
         if (allBlockableButtons == null) return;
-        var allowedSet = new System.Collections.Generic.HashSet<Button>(allowed);
+        var allowedSet = new HashSet<Button>(allowed); // O(1) Contains
         foreach (var btn in allBlockableButtons)
         {
             if (btn == null) continue;
@@ -791,24 +600,23 @@ public class TutorialGamePlay : MonoBehaviour
         }
     }
 
-    private void UpdateProgressText(TutorialStep step)
+    private void UpdateProgressText(TutorialSection section)
     {
         if (progressText == null) return;
 
-        string text = step switch
+        string text = section switch
         {
-            TutorialStep.Step1_Intro => "📍 Bước 1/3: Di chuyển đến NPC",
-            TutorialStep.Step1_WaitNPCClick => "📍 Bước 1/3: Bấm vào NPC",
-            TutorialStep.Step2_Chat => "💬 Bước 2/3: Chat với AI",
-            TutorialStep.Step2_SelectItem => "🛍️ Bước 2/3: Chọn sản phẩm",
-            TutorialStep.Step2_InProductDetail => "👟 Bước 2/3: Chọn size",
-            TutorialStep.Step2_WaitAddToCart => "🛒 Bước 2/3: Thêm vào giỏ",
-            TutorialStep.Step2_WaitBackToShop => "↩️ Bước 2/3: Quay lại Shop",
-            TutorialStep.Step2_WaitOpenBag => "👜 Bước 2/3: Mở giỏ hàng",
-            TutorialStep.Step2_OpenBag => "📦 Bước 2/3: Chọn đơn hàng",
-            TutorialStep.Step3_Checkout => "💳 Bước 3/3: Thanh toán",
-            TutorialStep.Step3_Reward => "🏆 Hoàn thành!",
-            _ => ""
+            TutorialSection.Approach       => "📍 Di chuyển đến NPC",
+            TutorialSection.NPCClick       => "📍 Bấm vào NPC để mở Shop",
+            TutorialSection.Chat           => "💬 Khám phá Chat AI",
+            TutorialSection.SelectItem     => "🛍️ Chọn sản phẩm",
+            TutorialSection.ProductDetail  => "👟 Chi tiết sản phẩm",
+            TutorialSection.BackToShop     => "↩️ Quay lại Shop",
+            TutorialSection.OpenBag        => "👜 Mở giỏ hàng",
+            TutorialSection.Cart           => "📦 Trong giỏ hàng",
+            TutorialSection.Checkout       => "💳 Thanh toán",
+            TutorialSection.Reward         => "🏆 Hoàn thành!",
+            _                              => ""
         };
 
         progressText.text = text;
@@ -825,72 +633,15 @@ public class TutorialGamePlay : MonoBehaviour
     {
         if (spotlightOverlay == null || spotlightHole == null || target == null) return;
         spotlightHole.gameObject.SetActive(true);
-        //StopSpotlightTracking(); // Dừng tracking cũ nếu có
         spotlightOverlay.SetActive(true);
         spotlightHole.position = target.position;
         spotlightHole.sizeDelta = target.rect.size + spotlightPadding;
     }
 
- /*   private void ShowSpotlightOnWorld(Transform worldTarget, Vector2 size)
-    {
-        if (spotlightOverlay == null || spotlightHole == null || worldTarget == null) return;
-        spotlightHole.gameObject.SetActive(true);
-        StopSpotlightTracking();
-        spotlightOverlay.SetActive(true);
-        spotlightHole.sizeDelta = size + spotlightPadding;
-        _spotlightTrackRoutine = StartCoroutine(TrackSpotlightToWorldPos(worldTarget));
-    }
-    [SerializeField] private Camera _camera;
-    private IEnumerator TrackSpotlightToWorldPos(Transform worldTarget)
-    {
-        Camera cam = _camera;
-        Canvas canvas = spotlightOverlay.GetComponentInParent<Canvas>();
-        RectTransform canvasRect = canvas != null ? canvas.GetComponent<RectTransform>() : null;
-
-        while (worldTarget != null)
-        {
-            if (cam != null)
-            {
-                Vector3 worldPos = worldTarget.position + npcSpotlightOffset;
-                Vector3 screenPos = cam.WorldToScreenPoint(worldPos);
-
-                // Nếu NPC nằm sau camera → ẩn spotlight
-                if (screenPos.z < 0f)
-                {
-                    spotlightHole.anchoredPosition = new Vector2(-9999f, -9999f);
-                }
-                else
-                {
-                    // Convert Screen → Canvas local position
-                    if (canvasRect != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
-                    {
-                        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                            canvasRect, screenPos, canvas.worldCamera, out Vector2 localPoint);
-                        spotlightHole.localPosition = localPoint;
-                    }
-                    else
-                    {
-                        // ScreenSpaceOverlay: screenPos = anchoredPosition trực tiếp
-                        spotlightHole.position = screenPos;
-                    }
-                }
-            }
-            yield return null; // Update mỗi frame
-        }
-    }
-    private void StopSpotlightTracking()
-    {
-        if (_spotlightTrackRoutine != null)
-        {
-            StopCoroutine(_spotlightTrackRoutine);
-            _spotlightTrackRoutine = null;
-        }
-    }*/
     private void HideSpotlight()
     {
-        //StopSpotlightTracking(); // NEW: dừng tracking khi ẩn
         spotlightOverlay?.SetActive(false);
-        spotlightHole?.gameObject.SetActive(false); 
+        spotlightHole?.gameObject.SetActive(false);
     }
 
     #endregion
@@ -899,29 +650,19 @@ public class TutorialGamePlay : MonoBehaviour
     #region INTERACTABLE HELPERS
     // ════════════════════════════════════════════════════════════════════════
 
-    private void SetShopUIInteractableExcept(params Object[] _)
-    {
-        if (quickCartButton != null) quickCartButton.interactable = false;
-        var sr = shopScrollViewRect?.GetComponent<ScrollRect>();
-        if (sr != null) sr.enabled = false;
-        productDetailPanel?.SetActive(false);
-    }
-
     private void RestoreAllShopUI()
     {
         if (quickCartButton != null) quickCartButton.interactable = true;
         chatSendButton?.gameObject.SetActive(true);
+
         var sr = shopScrollViewRect?.GetComponent<ScrollRect>();
         if (sr != null) sr.enabled = true;
 
         if (allBlockableButtons != null)
+        {
             foreach (var btn in allBlockableButtons)
                 if (btn != null) btn.interactable = true;
-    }
-
-    private void SetCartUIInteractableExcept(Button allowed)
-    {
-        // Mở rộng tùy CartUI — hiện tại chỉ giữ addSelectedToCartBtn
+        }
     }
 
     #endregion
@@ -956,7 +697,7 @@ public class TutorialGamePlay : MonoBehaviour
     #endregion
 
     // ════════════════════════════════════════════════════════════════════════
-    #region COMPLETE / SKIP / RESET
+    #region UI HIDE / RESET
     // ════════════════════════════════════════════════════════════════════════
 
     private void HideAllTutorialUI()
@@ -966,101 +707,68 @@ public class TutorialGamePlay : MonoBehaviour
         StopArrowBounce();
     }
 
-    private void CompleteTutorial()
-    {
-        PlayerPrefs.SetInt(KEY_DONE, 1);
-        PlayerPrefs.SetInt(KEY_STEP, (int)TutorialStep.Completed);
-        PlayerPrefs.Save();
-        HideAllTutorialUI();
-        _step = TutorialStep.Completed;
-        DebugLog("Tutorial HOÀN THÀNH!");
-        UpdateDebugUI();
-    }
-
     public void SkipTutorial()
     {
         StopAllCoroutines();
         RestoreAllShopUI();
-        CompleteTutorial();
+        HideAllTutorialUI();
+
+        // Đánh dấu toàn bộ section đã thấy
+        foreach (TutorialSection s in System.Enum.GetValues(typeof(TutorialSection)))
+            MarkSeen(s);
+
         ActivateContextualTooltips();
-        DebugLog("Tutorial bị SKIP.");
+        DebugLog("Tutorial bị SKIP — đánh dấu toàn bộ section đã thấy.");
     }
 
     #endregion
 
     // ════════════════════════════════════════════════════════════════════════
-    #region DEBUG — ContextMenu + Runtime Panel
+    #region DEBUG
     // ════════════════════════════════════════════════════════════════════════
 
-    /// Hiển thị trạng thái trên debugPanel UI nếu có assign
     private void UpdateDebugUI()
     {
         if (!showDebugPanel) return;
         debugPanelUI?.SetActive(showDebugPanel);
 
         if (debugStepText != null)
-            debugStepText.text = $"Step: {_step} ({(int)_step})";
+            debugStepText.text = $"Seen: {_seenSections.Count}/{System.Enum.GetValues(typeof(TutorialSection)).Length}";
 
         if (debugStatusText != null)
-            debugStatusText.text = $"Enabled: {_isTutorialEnabled} | Done: {PlayerPrefs.GetInt(KEY_DONE, 0) == 1} | WaitAI: {_waitingForAI}";
+            debugStatusText.text = $"Enabled: {_isTutorialEnabled} | IntroDone: {_introFlowDone}";
     }
 
-    private void DebugLog(string msg)
-        => Debug.Log($"[TutorialGamePlay] {msg}");
+    private void DebugLog(string msg) => Debug.Log($"[TutorialGamePlay] {msg}");
 
-    // ── ContextMenu — Right-click component trong Inspector ────────────────
+    // ── ContextMenu — Debug tools ────────────────────────────────────────
 
-    [ContextMenu("🔁 Reset Tutorial (xóa PlayerPrefs)")]
+    [ContextMenu("🔁 Reset Tutorial (xóa tất cả PlayerPrefs)")]
     public void DEBUG_ResetTutorial()
     {
-        PlayerPrefs.DeleteKey(KEY_DONE);
-        PlayerPrefs.DeleteKey(KEY_STEP);
+        foreach (TutorialSection s in System.Enum.GetValues(typeof(TutorialSection)))
+            PlayerPrefs.DeleteKey(KEY_SEEN_PREFIX + s.ToString());
+
+        // Xóa cả legacy keys
+        PlayerPrefs.DeleteKey(KEY_LEGACY_DONE);
+        PlayerPrefs.DeleteKey(KEY_LEGACY_STEP);
         PlayerPrefs.Save();
-        _step = TutorialStep.None;
+
+        _seenSections.Clear();
+        _introFlowDone = false;
         UpdateDebugUI();
-        Debug.Log("[Tutorial] ✅ Reset xong! Reload scene để chạy lại.");
+        Debug.Log("[TutorialGamePlay] ✅ Reset xong! Reload scene để chạy lại từ đầu.");
     }
 
-    [ContextMenu("⏭️ Skip đến Step2_Chat")]
-    public void DEBUG_JumpToStep2Chat()
+    [ContextMenu("✅ Mark ALL sections as Seen")]
+    public void DEBUG_MarkAllSeen()
     {
-        StopAllCoroutines(); HideAllTutorialUI(); RestoreAllShopUI();
-        SetStep(TutorialStep.Step2_Chat);
-    }
-
-    [ContextMenu("⏭️ Skip đến Step2_SelectItem")]
-    public void DEBUG_JumpToSelectItem()
-    {
-        StopAllCoroutines(); HideAllTutorialUI(); RestoreAllShopUI();
-        SetStep(TutorialStep.Step2_SelectItem);
-    }
-
-    [ContextMenu("⏭️ Skip đến Step2_OpenBag")]
-    public void DEBUG_JumpToOpenBag()
-    {
-        StopAllCoroutines(); HideAllTutorialUI(); RestoreAllShopUI();
-        SetStep(TutorialStep.Step2_OpenBag);
-    }
-
-    [ContextMenu("⏭️ Skip đến Step3_Checkout")]
-    public void DEBUG_JumpToCheckout()
-    {
-        StopAllCoroutines(); HideAllTutorialUI(); RestoreAllShopUI();
-        SetStep(TutorialStep.Step3_Checkout);
-    }
-
-    [ContextMenu("⏭️ Skip đến Reward")]
-    public void DEBUG_JumpToReward()
-    {
-        StopAllCoroutines(); HideAllTutorialUI(); RestoreAllShopUI();
-        SetStep(TutorialStep.Step3_Reward);
-    }
-
-    [ContextMenu("✅ Force Complete Tutorial")]
-    public void DEBUG_ForceComplete()
-    {
-        StopAllCoroutines(); RestoreAllShopUI();
-        CompleteTutorial();
+        foreach (TutorialSection s in System.Enum.GetValues(typeof(TutorialSection)))
+            MarkSeen(s);
+        _introFlowDone = true;
+        HideAllTutorialUI();
+        RestoreAllShopUI();
+        Debug.Log("[TutorialGamePlay] ✅ Tất cả section đã được đánh dấu seen.");
     }
 
     [ContextMenu("🔔 Simulate: OnPlayerEnterNPCRange")]
@@ -1071,9 +779,6 @@ public class TutorialGamePlay : MonoBehaviour
 
     [ContextMenu("🔔 Simulate: OnHideDialogueAndOpenShop")]
     public void DEBUG_SimulateOpenShop() => OnHideDialogueAndOpenShop();
-
-    [ContextMenu("🔔 Simulate: OnPlayerSentChat")]
-    public void DEBUG_SimulateSentChat() => OnPlayerSentChat();
 
     [ContextMenu("🔔 Simulate: OnAIResponseReceived")]
     public void DEBUG_SimulateAIResponse() => OnAIResponseReceived();

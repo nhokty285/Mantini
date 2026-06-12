@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -73,8 +73,21 @@ public class CompanionSelection : MonoBehaviour
             dialogueContinueButton.onClick.AddListener(EndDialogue);
         }
 
+        // Đăng ký callback tự động khi typewriter chạy xong hoàn toàn
+        if (dialogueAudioSync != null)
+            dialogueAudioSync.OnTypewriterComplete += OnDescriptionTypewriterFinished;
+
         ShowSelectionPanel();
         selectionPanel.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        // Hủy đăng ký để tránh memory leak
+        if (dialogueAudioSync != null)
+            dialogueAudioSync.OnTypewriterComplete -= OnDescriptionTypewriterFinished;
+
+        CleanupInstances();
     }
 
     #region Dialogue Logic
@@ -250,6 +263,22 @@ public class CompanionSelection : MonoBehaviour
             dialogueAudioSync.StartTypewriter(npcDescriptionText, _currentFullDescription);
     }
 
+    // Callback: được gọi tự động khi typewriter chạy xong hoàn toàn
+    private void OnDescriptionTypewriterFinished()
+    {
+        var companionData = companionDataArray[selectedIndex];
+        int lastIndex = (companionData.description != null)
+            ? companionData.description.Length - 1
+            : -1;
+
+        // Nếu đây là đoạn description cuối → tự động hiện nút action
+        if (_currentDescriptionIndex >= lastIndex)
+        {
+            Debug.Log("[CompanionSelection] Last description finished. Auto-showing final buttons.");
+            ShowFinalInfoButtons();
+        }
+    }
+
     // Logic 2 bước: nếu đang typing → skip về full text; nếu đã xong → sang đoạn tiếp
     void OnContinueDescriptionClicked()
     {
@@ -262,18 +291,32 @@ public class CompanionSelection : MonoBehaviour
                 npcDescriptionText.text = _currentFullDescription;
 
             dialogueAudioSync.StopTypewriter();
+
+            // StopTypewriter() cancel coroutine → OnTypewriterComplete không tự gọi
+            // Cần kiểm tra thủ công nếu đây là đoạn cuối
+            var companionData = companionDataArray[selectedIndex];
+            int lastIndex = (companionData.description != null)
+                ? companionData.description.Length - 1
+                : -1;
+
+            if (_currentDescriptionIndex >= lastIndex)
+            {
+                Debug.Log("[CompanionSelection] Last description skipped. Auto-showing final buttons.");
+                ShowFinalInfoButtons();
+            }
+
             return;
         }
 
-        // Bước 2: sang đoạn tiếp theo
-        var companionData = companionDataArray[selectedIndex];
-        int lastIndex = (companionData.description != null)
-            ? companionData.description.Length - 1
+        // Bước 2: typewriter đã xong → sang đoạn tiếp theo
+        var data = companionDataArray[selectedIndex];
+        int last = (data.description != null)
+            ? data.description.Length - 1
             : -1;
 
-        if (_currentDescriptionIndex >= lastIndex)
+        if (_currentDescriptionIndex >= last)
         {
-            // Đã ở đoạn cuối → hiện 2 nút action, ẩn btContinue
+            // Đã ở đoạn cuối mà vẫn nhấn → ShowFinalInfoButtons phòng trường hợp callback bị miss
             ShowFinalInfoButtons();
             return;
         }
@@ -294,7 +337,6 @@ public class CompanionSelection : MonoBehaviour
     #endregion
 
     #region Confirmation Popup
-
 
     void ConfirmAndStart()
     {
@@ -330,11 +372,6 @@ public class CompanionSelection : MonoBehaviour
         holder = Instantiate(prefab, parent);
         holder.transform.localPosition = Vector3.zero;
         holder.transform.localScale = Vector3.one;
-    }
-
-    private void OnDestroy()
-    {
-        CleanupInstances();
     }
 
     private void CleanupInstances()

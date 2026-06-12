@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: Gwen
   description:
-  - "T\xEDnh c\xE1ch: n\u0103ng \u0111\u1ED9ng, h\xF2a \u0111\u1ED3ng n\\Gi\u1EDBi
+  - "T\xEDnh c\xE1ch: n\u0103ng \u0111\u1ED9ng, h\xF2a \u0111\u1ED3ng n/Gi\u1EDBi
     t\xEDnh: n\u1EEF"
   previewPrefab: {fileID: 125603757700432931, guid: c3c4996a31919c343a256de02eb70d26, type: 3}
   characterIcon: {fileID: 21300000, guid: 7ba07b2987e8d0e45822ae966f2fa449, type: 3}

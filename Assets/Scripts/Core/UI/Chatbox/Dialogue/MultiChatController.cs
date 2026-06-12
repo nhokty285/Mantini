@@ -224,6 +224,14 @@ public class MultiChatManager : MonoBehaviour
             // Shop opened - auto-open chat
             OpenDialogWithShop();
         }
+        else
+        {
+            // ✅ FIX CAMERA: Shop đóng → unlock camera nếu chat đang mở
+            if (chatOpenedWithShop)
+            {
+                CloseCompanionChat();
+            }
+        }
     }
     private void SetupInitialState()
     {
@@ -236,6 +244,10 @@ public class MultiChatManager : MonoBehaviour
         companionChatPanel?.SetActive(false);
         ClearChatHistory();
         chatOpenedWithShop = false;
+
+        // ✅ FIX CAMERA BUG: Unlock camera khi đóng chat panel
+        PlayerController.Instance?.SetCanMove(true);
+        Debug.Log("[MultiChatManager] Chat closed → SetCanMove(true)");
     }
 
     // Hàm xóa sạch các tin nhắn cũ trong UI
@@ -426,7 +438,10 @@ public class MultiChatManager : MonoBehaviour
         companionChatPanel.SetActive(true);
         chatOpenedWithShop = true;
 
-  
+        // ✅ FIX CAMERA BUG: Lock camera khi mở chat panel
+        PlayerController.Instance?.SetCanMove(false);
+        Debug.Log("[MultiChatManager] Chat opened → SetCanMove(false)");
+
             // ✅ QUAN TRỌNG: Add Companion vào chat
             if (assignedCompanion != null && !activeParticipants.Contains(assignedCompanion))
             {
@@ -470,6 +485,10 @@ public class MultiChatManager : MonoBehaviour
             companionChatPanel.SetActive(false);
         ClearChatHistory();
         chatOpenedWithShop = false;
+
+        // ✅ FIX CAMERA BUG: Unlock camera khi player rời NPC
+        PlayerController.Instance?.SetCanMove(true);
+        Debug.Log("[MultiChatManager] Player leaving NPC → SetCanMove(true)");
     }
 
     #region Product Context

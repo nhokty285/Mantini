@@ -1,4 +1,4 @@
-﻿using Unity.Cinemachine; // ✅ THÊM  
+using Unity.Cinemachine; // ✅ THÊM  
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
@@ -25,10 +25,14 @@ public class PlayerController : MonoBehaviour
     [Header("Control State")]
     [SerializeField] private bool canMove = true;
     private int _lockCount = 0;
-        
+
     // ✅ THÊM: Reference đến Cinemachine Input Controller
     [Header("Cinemachine Control")]
     [SerializeField] private CinemachineInputAxisController inputAxisController;
+    // ✅ FIX: Cache TẤT CẢ instances trong scene để disable đồng loạt.
+    // Lần đầu mở shop bị bug vì có thể chỉ disable 1 instance, instance khác vẫn active,
+    // hoặc reference null do timing player spawn trước camera.
+    private CinemachineInputAxisController[] _allInputControllers;
 
     // Input & cache
     Vector2 moveInput;
@@ -39,34 +43,60 @@ public class PlayerController : MonoBehaviour
 
     // Biến lưu trữ Input (Cầu nối giữa Update và FixedUpdate)
     private Vector3 _cachedInputDirection;
+
     private void Awake()
     {
-       /* Instance = this;
-        QualitySettings.vSyncCount = 0;
-        // Lấy refresh rate thật của màn hình
-        var refreshRate = (int)Screen.currentResolution.refreshRateRatio.value;
-        // Unity 2022.2+ dùng refreshRateRatio, cũ hơn dùng Screen.currentResolution.refreshRate
-        // Ép target = ước số của refresh rate để frame pacing đều
-        if (refreshRate >= 120) Application.targetFrameRate = 60; // 1 frame / 2 vblank
-        else if (refreshRate >= 90) Application.targetFrameRate = 60; // hoặc 90
-        else Application.targetFrameRate = 60;*/
+        // ✅ FIX: Đảm bảo Instance được set ngay khi player spawn (qua GameplayPlayerSpawner).
+        // Nếu không có dòng này, PlayerController.Instance == null và mọi câu lệnh
+        // PlayerController.Instance?.SetCanMove(...) ở các script khác sẽ bị bỏ qua im lặng.
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("[PlayerController] Duplicate instance found, destroying new one.");
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
     }
+
+    private void OnDestroy()
+    {
+        // ✅ Cleanup Instance nếu instance hiện tại bị destroy (đổi scene, reload, ...)
+        if (Instance == this) Instance = null;
+    }
+
     void Start()
     {
         FindCameraByTag();
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
 
-        // ✅ Tự động tìm InputAxisController nếu chưa assign
-        if (inputAxisController == null)
-        {
-            inputAxisController = FindFirstObjectByType<CinemachineInputAxisController>();
+        // ✅ Refresh cache tất cả Cinemachine input controllers
+        RefreshInputControllersCache();
+    }
 
-            if (inputAxisController != null)
-            {
-                Debug.Log($"[PlayerController] Found InputAxisController: {inputAxisController.gameObject.name}");
-            }
+    /// <summary>
+    /// Tìm và cache TẤT CẢ CinemachineInputAxisController instances trong scene.
+    /// Gọi từ Start() và mỗi lần SetCanMove khi cache rỗng, để bảo vệ trường hợp:
+    /// - Camera spawn sau player (player được spawn động qua GameplayPlayerSpawner).
+    /// - Có nhiều virtual camera với CinemachineInputAxisController khác nhau.
+    /// - Một instance bị disable/destroy giữa các lần gọi.
+    /// 
+    /// Complexity: O(n) theo số GameObject — gọi rất ít, KHÔNG trong Update.
+    /// </summary>
+    private void RefreshInputControllersCache()
+    {
+        // FindObjectsInactive.Include để tìm cả những controller đang trên GO bị disable
+        _allInputControllers = FindObjectsByType<CinemachineInputAxisController>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        // Giữ inputAxisController legacy cho tương thích (lấy item đầu nếu có)
+        if (inputAxisController == null && _allInputControllers.Length > 0)
+        {
+            inputAxisController = _allInputControllers[0];
         }
+
+        Debug.Log($"[PlayerController] Refreshed input controllers cache. Count = {_allInputControllers.Length}");
     }
 
     public void OnMove(InputAction.CallbackContext ctx) => moveInput = ctx.ReadValue<Vector2>();
@@ -84,19 +114,41 @@ public class PlayerController : MonoBehaviour
         bool shouldMove = _lockCount == 0;
         this.canMove = shouldMove;
 
-        if (inputAxisController != null)
+        // ✅ FIX BUG LẦN 1: Refresh cache mỗi lần gọi SetCanMove nếu cache trống.
+        // Lần đầu Play Mode có thể player spawn trước camera → cache rỗng → camera không lock được.
+        if (_allInputControllers == null || _allInputControllers.Length == 0)
         {
-            inputAxisController.enabled = shouldMove;
-            Debug.Log($"[PlayerController] InputAxisController.enabled = {shouldMove} (lockCount={_lockCount})");
+            RefreshInputControllersCache();
         }
+
+        ApplyInputAxisState(shouldMove);
 
         if (shouldMove)
         {
             moveInput = Vector2.zero;
-            anim.SetBool("isMoving", false);
+            if (anim != null) anim.SetBool("isMoving", false);
         }
 
         OnMovementStateChanged?.Invoke(shouldMove);
+    }
+
+    /// <summary>
+    /// Bật/tắt TẤT CẢ CinemachineInputAxisController instances.
+    /// Khi component disabled, Cinemachine sẽ ngừng đọc input → camera không xoay.
+    /// </summary>
+    private void ApplyInputAxisState(bool enabled)
+    {
+        if (_allInputControllers == null) return;
+
+        int validCount = 0;
+        foreach (var controller in _allInputControllers)
+        {
+            if (controller == null) continue; // skip destroyed instances
+            controller.enabled = enabled;
+            validCount++;
+        }
+
+        Debug.Log($"[PlayerController] CinemachineInputAxisController.enabled = {enabled} on {validCount} controllers (lockCount={_lockCount})");
     }
 
     void LateUpdate()

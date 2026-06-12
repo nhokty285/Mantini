@@ -1,5 +1,6 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
+using System;
 using TMPro;
 
 public class DialogueAudioSync : MonoBehaviour
@@ -11,16 +12,20 @@ public class DialogueAudioSync : MonoBehaviour
     [SerializeField] private float characterDelay = 0.05f;
     [SerializeField] private bool playTypewriterSFX = true;
 
+    // Callback được gọi khi typewriter chạy xong hoàn toàn
+    public Action OnTypewriterComplete;
+
     private Coroutine typewriterCoroutine;
     private string fullText = "";
     private TextMeshProUGUI currentTextComponent;
+
     public void StartTypewriter(TextMeshProUGUI targetText, string text, AudioClip dialogueClip = null)
     {
         StopTypewriter();
 
-        currentTextComponent = targetText; // Lưu lại text đang dùng
+        currentTextComponent = targetText;
         fullText = text;
-        // Stop existing typewriter
+
         if (typewriterCoroutine != null)
         {
             StopCoroutine(typewriterCoroutine);
@@ -40,13 +45,14 @@ public class DialogueAudioSync : MonoBehaviour
         if (currentTextComponent != null)
             currentTextComponent.text = fullText;
     }
+
     public void StopTypeSound()
     {
         AudioManager.Instance.StopTypewriter();
     }
+
     private IEnumerator TypewriterRoutine(string text, AudioClip dialogueClip)
     {
-        // Play dialogue audio if provided
         if (dialogueClip != null && AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayDialogue(dialogueClip);
@@ -55,7 +61,6 @@ public class DialogueAudioSync : MonoBehaviour
         currentTextComponent.text = "";
         float displayDelay = characterDelay;
 
-        // Calculate display delay based on audio duration if syncing
         if (dialogueClip != null)
         {
             float audioDuration = dialogueClip.length;
@@ -66,28 +71,23 @@ public class DialogueAudioSync : MonoBehaviour
         {
             currentTextComponent.text += text[i];
 
-                if (text[i] != ' ' && text[i] != '\n')
-                {
-                    AudioManager.Instance.PlayTypewriter(typewriterSound,0.2f);
-                }                
-                   
-                yield return new WaitForSeconds(displayDelay);
+            if (text[i] != ' ' && text[i] != '\n')
+            {
+                AudioManager.Instance.PlayTypewriter(typewriterSound, 0.2f);
+            }
+
+            yield return new WaitForSeconds(displayDelay);
         }
+
         AudioManager.Instance.StopTypewriter();
         typewriterCoroutine = null;
+
+        // Thông báo cho listener rằng typewriter đã chạy xong
+        OnTypewriterComplete?.Invoke();
     }
 
     public void SkipTypewriter()
     {
-  /*      if (typewriterCoroutine != null)
-        {
-            StopCoroutine(typewriterCoroutine);
-            typewriterCoroutine = null;
-        }
-
-        if (currentTextComponent != null)
-            currentTextComponent.text = fullText;*/
-
         if (AudioManager.Instance != null)
             AudioManager.Instance.StopDialogue();
     }

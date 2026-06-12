@@ -745,7 +745,7 @@ public class ProductDetailUI : MonoBehaviour
     private ProductDetail currentDetail;
     private CartItem currentCartItem;
     private string currentSelectedSize = "";
-    private string currentVariantId = "";
+    private string currentProductId = "";
     private string _lastSelectedSize = "";
 
     // Main-image CTS (cancel khi mở sản phẩm mới hoặc đóng panel)
@@ -1216,12 +1216,12 @@ public class ProductDetailUI : MonoBehaviour
         if (index > 0 && sizeDropdown != null)
         {
             currentSelectedSize = sizeDropdown.options[index].text;
-            currentVariantId = GetVariantIdForSize(currentSelectedSize);
+            currentProductId = GetVariantIdForSize(currentSelectedSize);
         }
         else
         {
             currentSelectedSize = "";
-            currentVariantId = "";
+            currentProductId = "";
         }
 
         UpdateButtonsState();
@@ -1260,11 +1260,13 @@ public class ProductDetailUI : MonoBehaviour
         ShoppingCart.Instance?.AddItem(new CartItem
         {
             customId = currentDetail.customId,
+            productId = currentProductId,
             productName = currentDetail.title,
             brandName = currentDetail.brandName,
             price = currentDetail.price,
             selectedSize = currentSelectedSize,
-            imageUrl = currentDetail.mainImageUrl
+            imageUrl = currentDetail.mainImageUrl,
+            quantity = 1,
         });
 
         Debug.Log($"[ProductDetail] Added to cart: {currentDetail.title} – {currentSelectedSize}");
