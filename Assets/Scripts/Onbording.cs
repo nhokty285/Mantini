@@ -136,7 +136,7 @@ public class Onboarding : MonoBehaviour
     {
         Debug.Log("[Onboarding] Onboarding completed!");
         audioSync.StopTypeSound();
-        LevelLoader.Instance.ShowLoadingThenSwitch(onboardingPanel, characterSelectionPanel, 1.5f);
+        LevelLoader.Instance.ShowLoadingThenSwitch(onboardingPanel, characterSelectionPanel, 2f);
 
         if (onboardingPanel != null)
             onboardingPanel.SetActive(false);

@@ -1,0 +1,7 @@
+public class DemoClick
+{
+    void Start()
+    {
+        Debug.Log("Bat dau test luong tu dong")
+    }
+}

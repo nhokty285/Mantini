@@ -1,0 +1,2 @@
+// demo-mcp.txt - Fixed missing semicolon
+Debug.Log("Hello from MCP demo");
