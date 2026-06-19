@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -10,22 +10,24 @@ public class ContextualTooltipTrigger : MonoBehaviour, IPointerClickHandler
     [SerializeField] private TextMeshProUGUI tooltipText;
     [SerializeField] private float autoHideDuration = 3f; // 0 = không tự ẩn
 
-    private string seenKey;
-    private bool isEnabled = false;
+    private string _seenKey;
+    private bool _isEnabled = false;
 
-    private void Awake()
-        => seenKey = "Tooltip_Seen_" + gameObject.name;
+    private void Awake() => _seenKey = "Tooltip_Seen_" + gameObject.name;
 
-    public void Enable() => isEnabled = true;
+    public void Enable() => _isEnabled = true;
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (!isEnabled) return;
-        if (PlayerPrefs.GetInt(seenKey, 0) == 1) return; // Chỉ hiện lần đầu
+        if (!_isEnabled) return;
+        if (PlayerPrefs.GetInt(_seenKey, 0) == 1) return; // Chỉ hiện lần đầu
+
         if (tooltipText != null) tooltipText.text = tooltipMessage;
         if (tooltipPanel != null) tooltipPanel.SetActive(true);
-        PlayerPrefs.SetInt(seenKey, 1);
+
+        PlayerPrefs.SetInt(_seenKey, 1);
         PlayerPrefs.Save();
+
         if (autoHideDuration > 0)
             StartCoroutine(AutoHide());
     }
@@ -39,7 +41,7 @@ public class ContextualTooltipTrigger : MonoBehaviour, IPointerClickHandler
     [ContextMenu("DEBUG: Reset Seen")]
     public void DebugReset()
     {
-        PlayerPrefs.DeleteKey(seenKey);
+        PlayerPrefs.DeleteKey(_seenKey);
         PlayerPrefs.Save();
     }
 }

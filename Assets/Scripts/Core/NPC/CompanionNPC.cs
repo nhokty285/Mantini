@@ -1,188 +1,7 @@
-﻿/*using UnityEngine;
-using System.Collections.Generic;
-
-public class CompanionNPC : BaseNPC
-{
-    [Header("Companion Specific")]
-    [SerializeField] private float followDistance = 2f;
-    [SerializeField] private float followSpeed = 5f;
-    [SerializeField] private float smoothTime = 0.3f;
-    [SerializeField] private float rotationSpeed = 5f;
-    [SerializeField] private bool shouldFollowPlayer = true;
-
-    [Header("Game Help Data")]
-    [SerializeField] private List<GetHelpTopic> helpTopics = new();
-
-    private bool isFollowing = false;
-    private Vector3 currentVelocity;
-
-    void Start()
-    {
-        InitializeNPCData();
-        AutoFindPlayer();
-    }
-
-    private void AutoFindPlayer()
-    {
-        if (playerTransform == null)
-        {
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
-            if (player != null)
-            {
-                playerTransform = player.transform;
-                Debug.Log($"[{npcName}] Auto-locked to player");
-            }
-        }
-
-        if (shouldFollowPlayer && playerTransform != null)
-        {
-            StartFollowing();
-        }
-    }
-
-    private void FixedUpdate()
-    {
-        if (!isFollowing || playerTransform == null) return;
-
-        float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
-
-        if (distanceToPlayer >= followDistance)
-        {
-            FollowPlayer();
-        }
-        else
-        {
-            StayIdle();
-        }
-    }
-
-    private void FollowPlayer()
-    {
-        Vector3 directionToPlayer = (playerTransform.position - transform.position).normalized;
-        Vector3 targetPos = playerTransform.position - directionToPlayer * followDistance;
-
-        // Smooth movement
-        transform.position = Vector3.SmoothDamp(
-            transform.position,
-            targetPos,
-            ref currentVelocity,
-            smoothTime,
-            followSpeed
-        );
-
-        // Smooth rotation
-        Vector3 lookPos = new Vector3(playerTransform.position.x, transform.position.y, playerTransform.position.z);
-        Quaternion targetRotation = Quaternion.LookRotation(lookPos - transform.position);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
-
-        UpdateAnimation();
-    }
-
-    private void StayIdle()
-    {
-        currentVelocity = Vector3.zero;
-
-        if (npcAnimator != null)
-        {
-            //npcAnimator.SetFloat("moveSpeed", 0f);
-            npcAnimator.SetBool("isMoving", false);
-        }
-    }
-
-    private void UpdateAnimation()
-    {
-        if (npcAnimator == null) return;
-
-        float speed = currentVelocity.magnitude;
-        //npcAnimator.SetFloat("moveSpeed", speed);
-        npcAnimator.SetBool("isMoving", speed > 0.1f);
-    }
-
-    public void StartFollowing()
-    {
-        isFollowing = true;
-    }
-
-    public void StopFollowing()
-    {
-        isFollowing = false;
-        currentVelocity = Vector3.zero;
-
-        if (npcAnimator != null)
-        {
-            //npcAnimator.SetFloat("moveSpeed", 0f);
-            npcAnimator.SetBool("isMoving", false);
-        }
-    }
-
-    public override void OnPlayerEnterRange()
-    {
-        Debug.Log($"[{npcName}] Player in interaction range");
-        // Chỉ dùng cho UI interaction, không control follow
-    }
-
-    public override void OnPlayerExitRange()
-    {
-        Debug.Log($"[{npcName}] Player out of interaction range");
-        // Follow vẫn tiếp tục
-    }
-
-    public override void InitializeNPCData()
-    {
-        npcType = NPCType.Companion;
-        aiPersonality = "You are a helpful game companion.";
-        LoadGameHelpData();
-    }
-
-    public override void ProcessInteraction()
-    {
-        Debug.Log($"Talking to {npcName}");
-    }
-
-    protected override string GetDefaultResponse()
-    {
-        string[] responses = {
-            "Xin chào! Tôi có thể giúp gì?",
-            "Bạn cần hướng dẫn không?",
-            "Tôi ở đây để giúp bạn!"
-        };
-        return responses[Random.Range(0, responses.Length)];
-    }
-
-    private void LoadGameHelpData()
-    {
-        helpTopics = new List<GetHelpTopic>
-        {
-            new GetHelpTopic("movement", "WASD để di chuyển"),
-            new GetHelpTopic("shop", "Talk với vendor để mở shop")
-        };
-    }
-
-    public string GetHelpForTopic(string topic)
-    {
-        var helpTopic = helpTopics.Find(h => h.topicName.ToLower().Contains(topic.ToLower()));
-        return helpTopic?.helpText ?? "Xin lỗi, tôi không có thông tin về chủ đề đó.";
-    }
-
-    [System.Serializable]
-    public class GetHelpTopic
-    {
-        public string topicName;
-        public string helpText;
-
-        public GetHelpTopic(string topic, string text)
-        {
-            topicName = topic;
-            helpText = text;
-        }
-    }
-}
-*/
-
 using UnityEngine;
 using System.Collections.Generic;
 
-public class CompanionNPC : BaseNPC, IChatParticipant
+public class CompanionNPC : BaseNPC
 {
     [Header("Companion Movement")]
     [SerializeField] private float followDistance = 2f;
@@ -197,7 +16,13 @@ public class CompanionNPC : BaseNPC, IChatParticipant
     [SerializeField] private float maxIdleTime = 6f;
     [SerializeField] private int totalIdleEmotes = 3;   // số emote idle trong sub-machine (nếu có)
 
-    // Animator hashes
+    [Header("Chat")]
+    [SerializeField] private MultiChatManager _chatManager;
+
+    [Header("Game Help Data")]
+    [SerializeField] private List<GetHelpTopic> helpTopics = new();
+
+    // Animator hashes — readonly để tránh allocation runtime
     private readonly int speedHash = Animator.StringToHash("Speed");
     private readonly int actionIdHash = Animator.StringToHash("ActionID");
     private readonly int doActionHash = Animator.StringToHash("DoAction");
@@ -213,45 +38,26 @@ public class CompanionNPC : BaseNPC, IChatParticipant
     private float currentWaitTime;
     private int lastEmoteId = 0;
     private bool isPlayingIdleEmote = false;
-    [SerializeField] private MultiChatManager _chatManager;
-    public System.Action OnTypingStarted;  
+
+    // Public actions (giữ public API cho code khác đang subscribe)
+    public System.Action OnTypingStarted;
     public System.Action OnTypingStopped;
+
     protected override MultiChatManager GetChatManager() => _chatManager;
+
     void Start()
     {
         InitializeNPCData();
         AutoFindPlayer();
         ResetIdleTimer();
-        NameplateManager.Instance.Register(this.transform, npcName);
-        _chatManager = FindFirstObjectByType<MultiChatManager>();
+
+        if (NameplateManager.Instance != null)
+            NameplateManager.Instance.Register(this.transform, npcName);
+
+        // Refactor: chỉ Find khi Inspector chưa wire (tránh override SerializeField)
+        if (_chatManager == null)
+            _chatManager = FindFirstObjectByType<MultiChatManager>();
     }
-
-    /*  void FixedUpdate()
-      {
-          if (!shouldFollowPlayer || playerTransform == null)
-          {
-              UpdateAnimationSpeed(0f);
-              HandleIdleEmotes(false);
-              return;
-          }
-
-          float distance = Vector3.Distance(transform.position, playerTransform.position);
-          bool shouldMove = distance > followDistance;
-
-          if (shouldMove)
-          {
-              FollowPlayer();
-          }
-          else
-          {
-              // đứng yên
-              currentVelocity = Vector3.zero;
-          }
-
-          float planarSpeed = currentVelocity.magnitude;
-          UpdateAnimationSpeed(planarSpeed);
-          HandleIdleEmotes(planarSpeed <= 0.05f);
-      }*/
 
     void FixedUpdate()
     {
@@ -280,20 +86,16 @@ public class CompanionNPC : BaseNPC, IChatParticipant
             currentVelocity = Vector3.zero;
         }
 
-        // 2. Tính toán Speed truyền vào Animator
+        // Tính toán Speed truyền vào Animator
         float planarSpeed = currentVelocity.magnitude;
 
         // Ép tốc độ Animator về 0 tuyệt đối nếu đã tới gần hoặc vận tốc quá nhỏ
         if (isCloseEnough || planarSpeed < 0.05f)
-        {
             planarSpeed = 0f;
-        }
 
         UpdateAnimationSpeed(planarSpeed);
         HandleIdleEmotes(planarSpeed == 0f); // Tự tin check bằng 0f vì ta đã ép ở trên
     }
-
-
 
     #region Movement
 
@@ -327,7 +129,9 @@ public class CompanionNPC : BaseNPC, IChatParticipant
 
         // Đảm bảo animation không bị kẹt ở trạng thái chạy
         UpdateAnimationSpeed(0f);
-        Debug.Log($"[{npcName}] Teleported back to player (was too far).");
+#if UNITY_EDITOR
+        GameLog.Info($"[CompanionNPC] {npcName} Teleported back to player (was too far).");
+#endif
     }
 
     private void FollowPlayer()
@@ -345,14 +149,13 @@ public class CompanionNPC : BaseNPC, IChatParticipant
         Vector3 targetPos = playerTransform.position - dir.normalized * followDistance;
 
         // Smooth move
-        Vector3 newPos = Vector3.SmoothDamp(
+        transform.position = Vector3.SmoothDamp(
             transform.position,
             targetPos,
             ref currentVelocity,
             smoothTime,
             followSpeed
         );
-        transform.position = newPos;
 
         // Smooth rotation
         Quaternion targetRot = Quaternion.LookRotation(dir.normalized);
@@ -371,16 +174,11 @@ public class CompanionNPC : BaseNPC, IChatParticipant
     {
         if (npcAnimator == null) return;
 
-        // 🛠 QUAN TRỌNG: Xóa bỏ quán tính (damp time) của Animator khi cần dừng hẳn
+        // Xóa bỏ quán tính (damp time) của Animator khi cần dừng hẳn
         if (speed == 0f)
-        {
             npcAnimator.SetFloat(speedHash, 0f);
-        }
         else
-        {
-            // Vẫn giữ độ mượt khi tăng tốc Walk -> Run
-            npcAnimator.SetFloat(speedHash, speed, 0.1f, Time.deltaTime);
-        }
+            npcAnimator.SetFloat(speedHash, speed, 0.1f, Time.deltaTime); // giữ độ mượt Walk->Run
     }
 
     private void ResetIdleTimer()
@@ -393,28 +191,22 @@ public class CompanionNPC : BaseNPC, IChatParticipant
     {
         if (npcAnimator == null || totalIdleEmotes <= 0) return;
 
-        // 1. KHI ĐANG DI CHUYỂN (Yêu cầu: Tắt trigger, ID=0, Dừng sub-machine)
+        // 1. KHI ĐANG DI CHUYỂN: Tắt trigger, ID=0, Dừng sub-machine
         if (!isIdle)
         {
             // Nếu đang có cờ hiệu diễn hoặc trigger đang chờ -> Dọn dẹp ngay
             if (isPlayingIdleEmote || npcAnimator.GetInteger(emoteIdHash) != 0)
             {
-                // Tắt Trigger ngay lập tức
                 npcAnimator.ResetTrigger(playEmoteHash);
-
-                // Đưa ID về 0 để Animator không còn lý do ở lại Sub-machine
                 npcAnimator.SetInteger(emoteIdHash, 0);
-
-                // Xóa cờ trạng thái
                 isPlayingIdleEmote = false;
             }
 
-            ResetIdleTimer(); // Reset bộ đếm để lần sau đứng lại phải chờ từ đầu
+            ResetIdleTimer();
             return;
         }
 
         // 2. KHI ĐANG ĐỨNG YÊN
-        // ... (Phần logic random và check animation giữ nguyên như cũ) ...
         if (isPlayingIdleEmote)
         {
             AnimatorStateInfo stateInfo = npcAnimator.GetCurrentAnimatorStateInfo(0);
@@ -433,9 +225,7 @@ public class CompanionNPC : BaseNPC, IChatParticipant
         // Bắn Emote mới
         int emoteId = (totalIdleEmotes == 1) ? 1 : Random.Range(1, totalIdleEmotes + 1);
         while (totalIdleEmotes > 1 && emoteId == lastEmoteId)
-        {
             emoteId = Random.Range(1, totalIdleEmotes + 1);
-        }
         lastEmoteId = emoteId;
 
         npcAnimator.SetInteger(emoteIdHash, emoteId);
@@ -452,13 +242,9 @@ public class CompanionNPC : BaseNPC, IChatParticipant
     {
         if (npcAnimator == null) return;
 
-        // tạm dừng follow nếu cần
-        // isFollowing = false;
-
         npcAnimator.SetInteger(actionIdHash, actionId);
         npcAnimator.SetTrigger(doActionHash);
 
-        // sau khi animation trong sub-machine Actions chơi xong
         // Animator (transition Has Exit Time) sẽ tự trả về Locomotion
     }
 
@@ -466,59 +252,31 @@ public class CompanionNPC : BaseNPC, IChatParticipant
     {
         if (npcAnimator == null) return;
 
-        // Set ID & Trigger
         npcAnimator.SetInteger(emoteIdHash, emoteId);
         npcAnimator.SetTrigger(playEmoteHash);
 
-        // Optional: Reset ID về 0 ngay sau 1 frame để nó không bị "dính"
+        // Reset ID về 0 ngay sau 1 frame để nó không bị "dính"
         StartCoroutine(ResetEmoteIDAfterFrame());
     }
 
     private System.Collections.IEnumerator ResetEmoteIDAfterFrame()
     {
         yield return null; // Chờ 1 frame
-        npcAnimator.SetInteger(emoteIdHash, 0);
+        if (npcAnimator != null) npcAnimator.SetInteger(emoteIdHash, 0);
     }
     #endregion
 
     #region BaseNPC overrides
 
-    // ========== IMPLEMENT IChatParticipant ==========
-    public string GetParticipantName()
-    {
-        return npcName;
-    }
-
-    public string GetParticipantID()
-    {
-        return npcId;
-    }
-
-    public ChatParticipantType GetParticipantType()
-    {
-        return ChatParticipantType.Companion;
-    }
-
-    public bool IsActive()
-    {
-        return gameObject.activeInHierarchy; // Hoặc return isPlayerNearby;
-    }
-
-    public void OnJoinChat()
-    {
-        Debug.Log($"{npcName} joined chat");
-    }
-
-    public void OnLeaveChat()
-    {
-        Debug.Log($"{npcName} left chat");
-    }
-
+    // ─── IChatParticipant ─────────────────────────────────────────────
+    // Refactor: bỏ duplicate (GetParticipantName/ID/Type, OnJoin/Leave) — base đã cover.
+    // IsActive() vẫn cần override vì semantic khác base (không check `enabled`).
+    public override bool IsActive() => gameObject.activeInHierarchy;
 
     public override void OnPlayerEnterRange()
     {
         // ví dụ: vẫy tay khi player lại gần
-        PlayAction(1); // ActionID 1 = Wave (tùy bạn setup trong Animator)
+        PlayAction(1); // ActionID 1 = Wave
     }
 
     public override void OnPlayerExitRange()
@@ -538,24 +296,14 @@ public class CompanionNPC : BaseNPC, IChatParticipant
         PlayAction(2); // ActionID 2 = Point / Talk gesture
     }
 
-/*    public override string GetAIResponse(string message)
-    {
-        // TODO: Gọi API OpenAI ở đây (code bạn đã có trong GetAIResponse)
-        // Tạm thời return mock response để test
-        return "";
-    }*/
+    protected override string GetDefaultResponse() => "Tôi sẽ đi cùng bạn!";
 
-    protected override string GetDefaultResponse()
-    {
-        return "Tôi sẽ đi cùng bạn!";
-    }
-    [Header("Game Help Data")]
-    [SerializeField] private List<GetHelpTopic> helpTopics = new();
     public string GetHelpForTopic(string topic)
     {
         var helpTopic = helpTopics.Find(h => h.topicName.ToLower().Contains(topic.ToLower()));
         return helpTopic?.helpText ?? "Xin lỗi, tôi không có thông tin về chủ đề đó.";
     }
+
     [System.Serializable]
     public class GetHelpTopic
     {
@@ -568,15 +316,15 @@ public class CompanionNPC : BaseNPC, IChatParticipant
             helpText = text;
         }
     }
+
     #endregion
 
-    // ✅ IMPLEMENT METHOD BẮT BUỘC
     public override string ProcessMessage(string message, string sender)
     {
         if (enableAIChat && !string.IsNullOrEmpty(aiPersonality))
         {
             GetAIResponse(message);
-            return null; // Trả về null vì câu trả lời sẽ được gửi qua event khi Dify trả về
+            return null; // câu trả lời sẽ được gửi qua event khi Dify trả về
         }
         return null;
     }

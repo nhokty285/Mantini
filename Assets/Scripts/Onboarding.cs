@@ -1,5 +1,4 @@
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -38,12 +37,11 @@ public class Onboarding : MonoBehaviour
     [Header("Dialogues")]
     [SerializeField] private DialogueData[] dialogues;
 
-    private int _currentDialogueIndex = 0;
-    private bool _isTyping = false;
-    private string _currentFullText = "";
-
     [SerializeField] private DialogueAudioSync audioSync;
     [SerializeField] private AudioClip helloSound;
+
+    private int _currentDialogueIndex = 0;
+    private string _currentFullText = "";
 
     void Start()
     {
@@ -62,12 +60,16 @@ public class Onboarding : MonoBehaviour
         if (continueButton != null)
             continueButton.gameObject.SetActive(false);
 
+        // Refactor: gộp 2 if check continueChatButton thành 1
         if (continueChatButton != null)
+        {
             continueChatButton.onClick.RemoveAllListeners();
-        if (continueChatButton != null)
             continueChatButton.onClick.AddListener(OnContinueButtonClicked);
+        }
 
-        audioSync = FindAnyObjectByType<DialogueAudioSync>();
+        // Refactor: chỉ Find khi audioSync chưa được gán Inspector (tránh override Inspector ref)
+        if (audioSync == null)
+            audioSync = FindAnyObjectByType<DialogueAudioSync>();
 
         // Đăng ký callback khi typewriter chạy xong
         if (audioSync != null)
@@ -76,15 +78,14 @@ public class Onboarding : MonoBehaviour
         if (continueButton != null)
         {
             continueButton.onClick.RemoveAllListeners();
-            continueButton.onClick.AddListener(() =>
-            {
-                SkipOnboarding();
-                profileData.SaveProfile();
-            });
+            continueButton.onClick.AddListener(OnSkipPressed);
         }
 
         if (voiceNameInput != null)
-            voiceNameInput.OnSpeechResult += (name) => nameInputField.text = name;
+            voiceNameInput.OnSpeechResult += (name) =>
+            {
+                if (nameInputField != null) nameInputField.text = name;
+            };
     }
 
     private void OnDestroy()
@@ -92,6 +93,13 @@ public class Onboarding : MonoBehaviour
         // Hủy đăng ký để tránh memory leak
         if (audioSync != null)
             audioSync.OnTypewriterComplete -= OnTypewriterFinished;
+    }
+
+    // Refactor: tách lambda ra method có tên rõ (không alloc closure)
+    private void OnSkipPressed()
+    {
+        SkipOnboarding();
+        if (profileData != null) profileData.SaveProfile();
     }
 
     // Callback: được gọi tự động khi typewriter chạy xong hoàn toàn
@@ -103,7 +111,7 @@ public class Onboarding : MonoBehaviour
         bool isLastDialogue = (_currentDialogueIndex >= dialogues.Length - 1);
         if (isLastDialogue)
         {
-            Debug.Log("[Onboarding] Last dialogue finished. Auto-completing.");
+            GameLog.Info("[Onboarding] Last dialogue finished. Auto-completing.");
             OnAllDialoguesCompleted();
         }
     }
@@ -118,7 +126,10 @@ public class Onboarding : MonoBehaviour
         }
 
         DialogueData currentDialogue = dialogues[index];
-        AudioManager.Instance.PlayDialogue(helloSound, 0.6f);
+        _currentFullText = currentDialogue.dialogue; // Refactor: lưu full text để skip hiển thị đúng
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayDialogue(helloSound, 0.6f);
 
         if (npcImage != null && npcSprites != null && currentDialogue.npcSpriteIndex < npcSprites.Length)
             npcImage.sprite = npcSprites[currentDialogue.npcSpriteIndex];
@@ -133,7 +144,7 @@ public class Onboarding : MonoBehaviour
     // Gọi khi tất cả dialogue đã chạy xong
     private void OnAllDialoguesCompleted()
     {
-        Debug.Log("[Onboarding] All dialogues completed. Showing characterChat.");
+        GameLog.Info("[Onboarding] All dialogues completed. Showing characterChat.");
 
         // ✅ FIX: Hiện characterChat và continueButton cùng lúc.
         // Trước đây continueButton luôn visible từ đầu nên player skip được sớm.
@@ -147,12 +158,11 @@ public class Onboarding : MonoBehaviour
     // Cập nhật text của nút Continue
     private void UpdateContinueButtonText(string text)
     {
-        if (continueChatButton != null)
-        {
-            TextMeshProUGUI buttonText = continueChatButton.GetComponentInChildren<TextMeshProUGUI>();
-            if (buttonText != null)
-                buttonText.text = text;
-        }
+        if (continueChatButton == null) return;
+
+        TextMeshProUGUI buttonText = continueChatButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (buttonText != null)
+            buttonText.text = text;
     }
 
     // Xử lý khi nhấn nút Continue
@@ -162,9 +172,10 @@ public class Onboarding : MonoBehaviour
 
         if (isRunning)
         {
-            // Đang chạy: skip về full text, OnTypewriterFinished sẽ KHÔNG được gọi tự nhiên
-            // vì StopTypewriter() cancel coroutine trước khi nó kết thúc
-            dialogueText.text = _currentFullText;
+            // Đang chạy: skip về full text. StopTypewriter cancel coroutine
+            // nên OnTypewriterFinished sẽ KHÔNG tự bắn → phải xử lý tay.
+            if (dialogueText != null)
+                dialogueText.text = _currentFullText;
             UpdateContinueButtonText("Tiếp tục");
             audioSync.StopTypewriter();
 
@@ -172,7 +183,7 @@ public class Onboarding : MonoBehaviour
             bool isLastDialogue = (_currentDialogueIndex >= dialogues.Length - 1);
             if (isLastDialogue)
             {
-                Debug.Log("[Onboarding] Last dialogue skipped. Auto-completing.");
+                GameLog.Info("[Onboarding] Last dialogue skipped. Auto-completing.");
                 OnAllDialoguesCompleted();
             }
         }
@@ -187,9 +198,11 @@ public class Onboarding : MonoBehaviour
     // Kết thúc onboarding
     private void EndOnboarding()
     {
-        Debug.Log("[Onboarding] Onboarding completed!");
-        audioSync.StopTypeSound();
-        LevelLoader.Instance.ShowLoadingThenSwitch(onboardingPanel, characterSelectionPanel, 2f);
+        GameLog.Info("[Onboarding] Onboarding completed!");
+        if (audioSync != null) audioSync.StopTypeSound();
+
+        if (LevelLoader.Instance != null)
+            LevelLoader.Instance.ShowLoadingThenSwitch(onboardingPanel, characterSelectionPanel, 2f);
 
         if (onboardingPanel != null)
             onboardingPanel.SetActive(false);

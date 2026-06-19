@@ -1,21 +1,18 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class CartUI : MonoBehaviour 
+public class CartUI : MonoBehaviour
 {
     [SerializeField] private GameObject moreObject;
     [SerializeField] private Button moreButton;
     [SerializeField] private Button selectAllToCartButton;
-    //[SerializeField] private Button addSelectedToCartButton;
     [SerializeField] private Button closeMoreButton;
 
     [Header("Button State Icons")]
     [SerializeField] private GameObject selectAllIcon;
-    //[SerializeField] private GameObject addSelectedIcon;
 
     [Header("Cart Button")]
     [SerializeField] private Button cartButton;
@@ -25,12 +22,12 @@ public class CartUI : MonoBehaviour
     [Header("Cart Panel")]
     [SerializeField] private GameObject cartPanel;
     [SerializeField] private Transform cartItemsContainer;
-    // ĐÃ XÓA: cartItemPrefab (theo yêu cầu)
     [SerializeField] private TextMeshProUGUI totalAmountText;
     [SerializeField] private Button checkoutButton;
     [SerializeField] private Button continueShopButton;
 
     [Header("Customer Info")]
+    // ⚠️ Các field dưới giữ public vì code khác/scene wiring có thể dùng trực tiếp
     public TMP_InputField customerNameInput;
     public TMP_InputField customerPhoneInput;
     public TMP_InputField customerAddressInput;
@@ -39,64 +36,91 @@ public class CartUI : MonoBehaviour
     public Button buyButton;
     public Button backButton;
 
+    [Header("Checkout Localization (VI)")]
+    [SerializeField] private string placeholderName = "Họ và tên";
+    [SerializeField] private string placeholderPhone = "Số điện thoại";
+    [SerializeField] private string placeholderAddress = "Địa chỉ giao hàng";
+    [SerializeField] private string placeholderNote = "Ghi chú (tuỳ chọn)";
+    [SerializeField] private string buyButtonLabel = "Đặt hàng";
+
+    [Header("Validation (Inline Errors)")]
+    // Optional: nếu để trống, label lỗi sẽ được tự tạo dưới mỗi ô lúc runtime.
+    [SerializeField] private TextMeshProUGUI nameErrorText;
+    [SerializeField] private TextMeshProUGUI phoneErrorText;
+    [SerializeField] private TextMeshProUGUI addressErrorText;
+    [SerializeField] private Color errorColor = new Color(0.85f, 0.15f, 0.15f, 1f);
+
     [Header("Payment Method")]
-    public GameObject paymentMethodPanel;   // Object chứa codButton + bankButton
-    public Button codButton;                // Thanh toán khi nhận hàng
-    public Button bankButton;               // Chuyển khoản ngân hàng
-    public Button changePaymentButton;      // Button nằm trong selectedPaymentText để mở lại panel
-    public TextMeshProUGUI selectedPaymentText; // Hiển thị phương thức đang chọn
-    private string selectedPaymentMethod = "COD";
+    public GameObject paymentMethodPanel;
+    public Button codButton;
+    public Button bankButton;
+    public Button changePaymentButton;
+    public TextMeshProUGUI selectedPaymentText;
 
     [Header("Inventory Tabs")]
-    [SerializeField] private Button unpaidTab; // Tab 1: Chưa thanh toán
-    [SerializeField] private Button paidTab; // Tab 2: Đã thanh toán
-    [SerializeField] private Button futureTab3; // Tab 3: Tương lai
-    [SerializeField] private Button futureTab4; // Tab 4: Tương lai
-
-    private enum InventoryTab { Unpaid, Paid, Future3, Future4 }
-    private InventoryTab currentTab = InventoryTab.Unpaid;
-    private CartItem selectedItem = null;
-
-    private CartItem lastClickedItem = null;
-    private float lastClickTime = 0f;
-    private const float doubleClickThreshold = 1f;
+    [SerializeField] private Button unpaidTab;
+    [SerializeField] private Button paidTab;
+    [SerializeField] private Button futureTab3;
+    [SerializeField] private Button futureTab4;
 
     [Header("Image Grid System")]
-    [SerializeField] private GameObject cartImageItemPrefab; // Prefab cho image items (Grid)
-    // ĐÃ XÓA: detailPanel và closeDetailButton vì không còn dùng workflow hiển thị isSelectMode 
+    [SerializeField] private GameObject cartImageItemPrefab;
 
     [Header("Auto Refresh")]
     public bool autoUpdateTotalAmount = true;
-    public GameObject shopController; // Reference đến ShopController để gọi API khi cần
+    public GameObject shopController;
 
     [Header("Select Mode")]
-    [SerializeField] private List<RectTransform> selectZones = new List<RectTransform>(); 
-    [SerializeField] public bool isSelectMode = false;     // 🆕 THÊM: track chế độ chọn thủ công
+    [SerializeField] private List<RectTransform> selectZones = new List<RectTransform>();
+    [SerializeField] public bool isSelectMode = false;
     [SerializeField] private int number;
-
-    private readonly Dictionary<(string productId, string size), CartImageItem> _cellLookup
-    = new Dictionary<(string productId, string size), CartImageItem>();
-
-    private int ignoreOutsideClickUntilFrame = -1;
 
     [Header("Long Press")]
     [SerializeField] private float longPressThreshold = 0.5f;
 
-    // State
+    // ── State ────────────────────────────────────────────────────────────────
+    private enum InventoryTab { Unpaid, Paid, Future3, Future4 }
+
+    private InventoryTab _currentTab = InventoryTab.Unpaid;
+    private string _selectedPaymentMethod = "COD";
+
+    // Buy Now (mua ngay) — tái dùng panel nhập liệu nhưng checkout riêng 1 item.
+    private bool _buyNowMode = false;
+    private CartItem _buyNowItem;
+    private int _ignoreOutsideClickUntilFrame = -1;
+
+    // Inline error labels (resolved 1 lần — serialized ref hoặc auto-create)
+    private TextMeshProUGUI _nameError;
+    private TextMeshProUGUI _phoneError;
+    private TextMeshProUGUI _addressError;
+    private bool _errorLabelsReady;
+
+    // Long press
     private CartItem _longPressCandidate;
     private float _longPressTimer;
     private bool _longPressConsumed;
 
-    // CartImageItem gọi từ OnPointerDown
+    // Khoá định danh cell = (customId, size) — đồng bộ với ShoppingCart._unpaidItemMap.
+    // Cùng productId nhưng khác customId là 2 mặt hàng riêng nên KHÔNG trùng khoá.
+    private readonly Dictionary<(string customId, string size), CartImageItem> _cellLookup
+        = new Dictionary<(string customId, string size), CartImageItem>();
+
+    private readonly List<CartImageItem> _spawnedCells = new();
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LONG-PRESS PUBLIC API (CartImageItem gọi)
+    // ═══════════════════════════════════════════════════════════════════════
+
     public void BeginLongPress(CartItem item)
     {
-        Debug.Log($"[LongPress] Begin: {item.productName}");
+#if UNITY_EDITOR
+        GameLog.Info($"[CartUI][LongPress] Begin: {item.productName}");
+#endif
         _longPressCandidate = item;
         _longPressTimer = 0f;
         _longPressConsumed = false;
     }
 
-    // CartImageItem gọi từ OnPointerUp / OnPointerExit
     public void CancelLongPress()
     {
         _longPressCandidate = null;
@@ -105,7 +129,6 @@ public class CartUI : MonoBehaviour
 
     public bool IsLongPressConsumed() => _longPressConsumed;
 
-    // Trong Update()
     private void HandleLongPress()
     {
         if (_longPressCandidate == null || _longPressConsumed) return;
@@ -118,8 +141,12 @@ public class CartUI : MonoBehaviour
         _longPressCandidate = null;
         _longPressTimer = 0f;
 
-        ShowProductDetailInMainUI(item);   // ← thay thế double-click
+        ShowProductDetailInMainUI(item);
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LIFECYCLE
+    // ═══════════════════════════════════════════════════════════════════════
 
     private void Start()
     {
@@ -127,53 +154,352 @@ public class CartUI : MonoBehaviour
         SetupTabSystem();
         InitializeUI();
 
+        // Chuẩn hoá ngôn ngữ (VI) + gỡ '\n' thừa ở placeholder + chuẩn bị label lỗi inline
+        LocalizeCheckoutUI();
+        EnsureErrorLabels();
+        SetupInlineErrorClearing();
+
         BindIconToButtonState(selectAllToCartButton, selectAllIcon);
         if (moreObject != null) moreObject.SetActive(false);
     }
 
-    // Trong CartUI.cs - Thêm vào cuối Update() hoặc LateUpdate()
+    private void Update()
+    {
+        HandleLongPress();
+    }
+
     private void LateUpdate()
     {
-        /*// Chỉ chạy khi panel active
-        if (cartPanel != null && cartPanel.activeSelf && Input.GetMouseButtonDown(0))
-        {
-            if (!IsPointerOverCartItem())
-            {
-                CartImageItem.ClearAllHighlights();
-
-            }
-        }*/
-
-        if (!cartPanel.activeSelf) return;
+        // Click ra ngoài select zones → đóng select mode
+        if (cartPanel == null || !cartPanel.activeSelf) return;
         if (!Input.GetMouseButtonDown(0)) return;
-
-        if (Time.frameCount <= ignoreOutsideClickUntilFrame) return;
+        if (Time.frameCount <= _ignoreOutsideClickUntilFrame) return;
 
         bool insideZone = false;
-
         if (selectZones != null)
         {
             foreach (var zone in selectZones)
             {
                 if (zone == null) continue;
-
-                if (RectTransformUtility.RectangleContainsScreenPoint(
-                        zone,
-                        Input.mousePosition,
-                        null)) // Screen Space Overlay => cam = null
+                if (RectTransformUtility.RectangleContainsScreenPoint(zone, Input.mousePosition, null))
                 {
                     insideZone = true;
-                    break; // chỉ cần trúng 1 vùng là đủ
+                    break;
                 }
             }
         }
 
         if (!insideZone)
         {
-            // Click ra ngoài vùng → tắt mode, clear hết
-           closeMoreButton.onClick.Invoke(); // Reuse nút đóng để đảm bảo đồng bộ logic tắt mode
+            // Reuse nút đóng để đảm bảo đồng bộ logic tắt mode
+            closeMoreButton?.onClick.Invoke();
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SETUP
+    // ═══════════════════════════════════════════════════════════════════════
+
+    private void SetupEventListeners()
+    {
+        // Refactor: RemoveAllListeners() trước AddListener — tránh duplicate handlers
+        if (selectAllToCartButton != null)
+        {
+            selectAllToCartButton.onClick.RemoveAllListeners();
+            selectAllToCartButton.onClick.AddListener(OnSelectAllToCartClicked);
+        }
+
+        if (cartButton != null)
+        {
+            cartButton.onClick.RemoveAllListeners();
+            cartButton.onClick.AddListener(() =>
+            {
+                ToggleCartPanel();
+                SwitchTab(InventoryTab.Unpaid);
+            });
+        }
+
+        if (moreButton != null)
+        {
+            moreButton.onClick.RemoveAllListeners();
+            moreButton.onClick.AddListener(() =>
+            {
+                if (moreObject != null) moreObject.SetActive(true);
+                SetSelectAllButtonActive(true);
+                OnSelectAllToCartClicked();
+            });
+        }
+
+        if (closeMoreButton != null)
+        {
+            closeMoreButton.onClick.RemoveAllListeners();
+            closeMoreButton.onClick.AddListener(() =>
+            {
+                if (moreObject != null) moreObject.SetActive(false);
+                ExitSelectModeVisualOnly();
+                ResetSelectAllButtonVisual();
+            });
+        }
+
+        if (checkoutButton != null)
+        {
+            checkoutButton.onClick.RemoveAllListeners();
+            checkoutButton.onClick.AddListener(InputInfomation);
+        }
+
+        if (continueShopButton != null)
+        {
+            continueShopButton.onClick.RemoveAllListeners();
+            continueShopButton.onClick.AddListener(CloseCartPanel);
+        }
+
+        if (ShoppingCart.Instance != null)
+        {
+            ShoppingCart.Instance.OnCartCountChanged += UpdateCartCount;
+            ShoppingCart.Instance.OnUnpaidItemsUpdated += OnUnpaidItemsUpdated;
+            ShoppingCart.Instance.OnPaidItemsUpdated += OnPaidItemsUpdated;
+        }
+
+        if (codButton != null)
+        {
+            codButton.onClick.RemoveAllListeners();
+            codButton.onClick.AddListener(() => SetPaymentMethod("COD"));
+        }
+        if (bankButton != null)
+        {
+            bankButton.onClick.RemoveAllListeners();
+            bankButton.onClick.AddListener(() => SetPaymentMethod("BANK_TRANSFER"));
+        }
+        if (changePaymentButton != null)
+        {
+            changePaymentButton.onClick.RemoveAllListeners();
+            changePaymentButton.onClick.AddListener(OpenPaymentMethodPanel);
+        }
+
+        if (buyButton != null)
+        {
+            buyButton.onClick.RemoveAllListeners();
+            buyButton.onClick.AddListener(OnBuyButtonClicked);
+        }
+
+        if (backButton != null)
+        {
+            backButton.onClick.RemoveAllListeners();
+            backButton.onClick.AddListener(CloseCheckOut);
+        }
+    }
+
+    // Refactor: tách lambda buyButton thành method có tên — dễ debug stack trace
+    private void OnBuyButtonClicked()
+    {
+        // Hiển thị lỗi ngay dưới từng ô; chỉ tiếp tục khi mọi field hợp lệ
+        if (!ValidateCheckout()) return;
+
+        PopupManager.Instance.ShowPopup(
+            "Xác nhận mua",
+            "Bạn có chắc chắn muốn mua vật phẩm này?",
+            OnCheckoutClicked
+        );
+    }
+
+    private void SetupTabSystem()
+    {
+        unpaidTab?.onClick.RemoveAllListeners();
+        unpaidTab?.onClick.AddListener(() => SwitchTab(InventoryTab.Unpaid));
+        paidTab?.onClick.RemoveAllListeners();
+        paidTab?.onClick.AddListener(() => SwitchTab(InventoryTab.Paid));
+        futureTab3?.onClick.RemoveAllListeners();
+        futureTab3?.onClick.AddListener(() => SwitchTab(InventoryTab.Future3));
+        futureTab4?.onClick.RemoveAllListeners();
+        futureTab4?.onClick.AddListener(() => SwitchTab(InventoryTab.Future4));
+
+        if (futureTab3 != null) futureTab3.interactable = false;
+        if (futureTab4 != null) futureTab4.interactable = false;
+    }
+
+    private void InitializeUI()
+    {
+        UpdateCartCount(0);
+        if (cartPanel != null) cartPanel.SetActive(false);
+        SwitchTab(InventoryTab.Unpaid);
+        if (moreObject != null) moreObject.SetActive(false);
+        if (moreButton != null) moreButton.interactable = false;
+        if (customerInfoPanel != null) customerInfoPanel.SetActive(false);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CHECKOUT LOCALIZATION (VI) + INLINE VALIDATION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // Set placeholder tiếng Việt (đã loại bỏ ký tự '\n' thừa) + nhãn nút mua.
+    private void LocalizeCheckoutUI()
+    {
+        SetPlaceholder(customerNameInput, placeholderName);
+        SetPlaceholder(customerPhoneInput, placeholderPhone);
+        SetPlaceholder(customerAddressInput, placeholderAddress);
+        SetPlaceholder(customerNoteInput, placeholderNote);
+
+        if (buyButton != null)
+        {
+            var label = buyButton.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label != null) label.text = buyButtonLabel;
+        }
+    }
+
+    private static void SetPlaceholder(TMP_InputField field, string text)
+    {
+        if (field == null) return;
+        if (field.placeholder is TextMeshProUGUI ph)
+            ph.text = text; // gán chuỗi sạch -> tự gỡ '\n' thừa ở giá trị cũ
+    }
+
+    // Clear lỗi của từng ô ngay khi người dùng gõ lại.
+    private void SetupInlineErrorClearing()
+    {
+        // Start() chạy 1 lần/đời object nên AddListener không bị nhân đôi.
+        customerNameInput?.onValueChanged.AddListener(_ => HideError(_nameError));
+        customerPhoneInput?.onValueChanged.AddListener(_ => HideError(_phoneError));
+        customerAddressInput?.onValueChanged.AddListener(_ => HideError(_addressError));
+    }
+
+    private void EnsureErrorLabels()
+    {
+        if (_errorLabelsReady) return;
+        _nameError    = nameErrorText    != null ? nameErrorText    : CreateErrorLabel(customerNameInput);
+        _phoneError   = phoneErrorText   != null ? phoneErrorText   : CreateErrorLabel(customerPhoneInput);
+        _addressError = addressErrorText != null ? addressErrorText : CreateErrorLabel(customerAddressInput);
+        _errorLabelsReady = true;
+    }
+
+    // Fallback: tạo 1 TMP label đỏ ngay dưới ô input (clone placeholder để giữ font/style).
+    private TextMeshProUGUI CreateErrorLabel(TMP_InputField field)
+    {
+        if (field == null) return null;
+
+        GameObject go;
+        var placeholder = field.placeholder as TextMeshProUGUI;
+        if (placeholder != null)
+        {
+            go = Instantiate(placeholder.gameObject, field.transform);
+        }
+        else
+        {
+            go = new GameObject("ErrorLabel", typeof(RectTransform));
+            go.transform.SetParent(field.transform, false);
+        }
+        go.name = "ErrorLabel";
+
+        var label = go.GetComponent<TextMeshProUGUI>();
+        if (label == null) label = go.AddComponent<TextMeshProUGUI>();
+
+        // Neo thành dải ngang ngay dưới đáy ô input
+        var rt = label.rectTransform;
+        rt.anchorMin = new Vector2(0f, 0f);
+        rt.anchorMax = new Vector2(1f, 0f);
+        rt.pivot = new Vector2(0.5f, 1f);
+        rt.sizeDelta = new Vector2(-16f, 32f);
+        rt.anchoredPosition = new Vector2(0f, -2f);
+
+        label.color = errorColor;
+        label.fontSize = 22f;
+        label.enableAutoSizing = false;
+        label.alignment = TextAlignmentOptions.TopLeft;
+        label.raycastTarget = false;
+        label.richText = false;
+        label.text = string.Empty;
+        label.gameObject.SetActive(false);
+
+        // Đừng để label ảnh hưởng layout của ô input
+        var le = go.GetComponent<LayoutElement>();
+        if (le != null) le.ignoreLayout = true;
+
+#if UNITY_EDITOR
+        GameLog.Info($"[CartUI] Auto-created inline error label under '{field.name}'. Gán field trong Inspector để kiểm soát vị trí chính xác hơn.");
+#endif
+        return label;
+    }
+
+    // Trả về true nếu hợp lệ; ngược lại hiển thị lỗi inline. O(1) theo số field (4), không alloc đáng kể.
+    private bool ValidateCheckout()
+    {
+        EnsureErrorLabels();
+        ClearAllErrors();
+        bool ok = true;
+
+        string name = customerNameInput != null ? customerNameInput.text?.Trim() : null;
+        if (string.IsNullOrWhiteSpace(name) || name.Length < 2)
+        {
+            SetError(_nameError, "Vui lòng nhập họ tên hợp lệ.");
+            ok = false;
+        }
+
+        string phone = customerPhoneInput != null ? customerPhoneInput.text : null;
+        if (!IsValidVietnamPhone(phone))
+        {
+            SetError(_phoneError, "Số điện thoại không hợp lệ (10 số, bắt đầu bằng 0).");
+            ok = false;
+        }
+
+        string address = customerAddressInput != null ? customerAddressInput.text?.Trim() : null;
+        if (string.IsNullOrWhiteSpace(address) || address.Length < 5)
+        {
+            SetError(_addressError, "Vui lòng nhập địa chỉ giao hàng.");
+            ok = false;
+        }
+
+        // Phương thức thanh toán không có ô riêng → giữ popup nhắc.
+        if (string.IsNullOrWhiteSpace(_selectedPaymentMethod))
+        {
+            PopupManager.Instance?.ShowPopup("Thiếu thông tin", "Vui lòng chọn hình thức thanh toán.", null);
+            ok = false;
+        }
+
+        return ok;
+    }
+
+    // Định dạng SĐT VN: 10 số, bắt đầu '0', số thứ 2 ∈ {3,5,7,8,9}. Chấp nhận tiền tố +84/84.
+    private static bool IsValidVietnamPhone(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return false;
+
+        string s = raw.Trim();
+        if (s.StartsWith("+")) s = s.Substring(1);
+
+        for (int i = 0; i < s.Length; i++)
+            if (!char.IsDigit(s[i])) return false; // phải toàn số
+
+        if (s.StartsWith("84") && s.Length == 11)
+            s = "0" + s.Substring(2);
+
+        if (s.Length != 10 || s[0] != '0') return false;
+        return "1235789".IndexOf(s[1]) >= 0;
+    }
+
+    private void SetError(TextMeshProUGUI label, string message)
+    {
+        if (label == null) return;
+        label.text = message;
+        label.color = errorColor;
+        label.gameObject.SetActive(true);
+    }
+
+    private void ClearAllErrors()
+    {
+        HideError(_nameError);
+        HideError(_phoneError);
+        HideError(_addressError);
+    }
+
+    private static void HideError(TextMeshProUGUI label)
+    {
+        if (label == null) return;
+        label.text = string.Empty;
+        label.gameObject.SetActive(false);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SELECT MODE
+    // ═══════════════════════════════════════════════════════════════════════
 
     private void ExitSelectModeVisualOnly()
     {
@@ -181,106 +507,11 @@ public class CartUI : MonoBehaviour
         CartImageItem.ClearAllHighlights();
     }
 
-    private bool IsPointerOverCartItem()
-    {
-        if (EventSystem.current == null) return false;
-
-        PointerEventData eventData = new PointerEventData(EventSystem.current)
-        {
-            position = Input.mousePosition
-        };
-
-        var results = new System.Collections.Generic.List<RaycastResult>();
-        EventSystem.current.RaycastAll(eventData, results);
-
-        foreach (var result in results)
-        {
-            if (result.gameObject.GetComponent<CartImageItem>() != null)
-                return true;
-        }
-
-        return false;
-
-
-    }
-
-
-    private void SetupEventListeners()
-    {
-        selectAllToCartButton?.onClick.AddListener(()=> 
-        {
-            OnSelectAllToCartClicked();
-        });
-
-       /* addSelectedToCartButton?.onClick.AddListener(() =>
-        {
-            OnAddSelectedToCartClicked();
-        });*/
-
-        cartButton?.onClick.AddListener(() =>
-        {
-            ToggleCartPanel();
-            SwitchTab(InventoryTab.Unpaid);
-        });
-        moreButton?.onClick.AddListener(() =>
-        {
-            if (moreObject != null)
-                moreObject.SetActive(true);
-            // Gọi logic trực tiếp thay vì Invoke()
-            SetSelectAllButtonActive(true);
-            OnSelectAllToCartClicked();
-        });
-        closeMoreButton?.onClick.AddListener(() =>
-        {
-            if (moreObject != null)
-                moreObject.SetActive(false);
-            ExitSelectModeVisualOnly();
-            ResetSelectAllButtonVisual();
-        });
-        checkoutButton?.onClick.AddListener(InputInfomation);
-        continueShopButton?.onClick.AddListener(CloseCartPanel);
-        if (ShoppingCart.Instance != null)
-        {
-            ShoppingCart.Instance.OnCartCountChanged += UpdateCartCount;
-            ShoppingCart.Instance.OnUnpaidItemsUpdated += OnUnpaidItemsUpdated;
-            ShoppingCart.Instance.OnPaidItemsUpdated += OnPaidItemsUpdated;
-        }
-        codButton?.onClick.AddListener(() => SetPaymentMethod("COD"));
-        bankButton?.onClick.AddListener(() => SetPaymentMethod("BANK_TRANSFER"));
-        changePaymentButton?.onClick.AddListener(OpenPaymentMethodPanel);
-
-        buyButton?.onClick.AddListener(()=> 
-        {
-            string error = ValidateCheckout();
-            if (error != null)
-            {
-                PopupManager.Instance.ShowPopup("Thông tin chưa hợp lệ", error, null);
-                return;
-            }
-
-            // Gọi Popup thay vì gọi hàm mua
-            PopupManager.Instance.ShowPopup(
-                "Xác nhận mua",
-                "Bạn có chắc chắn muốn mua vật phẩm này?",
-                () => {
-                    // Khi bấm "Đồng ý" trên Popup thì mới chạy hàm này
-                    OnCheckoutClicked();
-                }
-            );
-            
-        });
-        backButton?.onClick.AddListener(() =>
-        {
-            CloseCheckOut();
-        });
-    }
-
     private void SetSelectAllButtonActive(bool active)
     {
+        if (selectAllToCartButton == null) return;
         var colors = selectAllToCartButton.colors;
-        selectAllToCartButton.targetGraphic.color = active
-            ? colors.selectedColor  // hoặc colors.pressedColor tùy visual bạn muốn
-            : colors.normalColor;
+        selectAllToCartButton.targetGraphic.color = active ? colors.selectedColor : colors.normalColor;
     }
 
     private void ResetSelectAllButtonVisual()
@@ -291,14 +522,6 @@ public class CartUI : MonoBehaviour
 
     private void OnSelectAllToCartClicked()
     {
-
-        /*  isSelectMode = !isSelectMode;
-          selectedItem = null;
-          CartImageItem.ClearAllHighlights();
-
-          if (isSelectMode)
-              ShoppingCart.Instance?.ClearCheckoutSelection(); // reset state cũ khi bắt đầu lượt mới*/
-
         // Chỉ bật select mode, không toggle OFF
         isSelectMode = true;
 
@@ -306,17 +529,12 @@ public class CartUI : MonoBehaviour
         // - Đọc state isSelectedForCheckout từ ShoppingCart
         // - Highlight lại các item đã được chọn
         RefreshHighlightsFromSelection();
-
         UpdateTotalAmount();
     }
 
-    private void Update()
-    {
-        HandleLongPress();   // ← phải có dòng này thì long press mới chạy
-    }
     private void RefreshHighlightsFromSelection()
     {
-        if (_cellLookup == null || _cellLookup.Count == 0) return;
+        if (_cellLookup.Count == 0) return;
 
         foreach (var cell in _cellLookup.Values)
         {
@@ -331,56 +549,48 @@ public class CartUI : MonoBehaviour
         }
     }
 
-    private void SetupTabSystem()
-    {
-        unpaidTab?.onClick.AddListener(() => SwitchTab(InventoryTab.Unpaid));
-        paidTab?.onClick.AddListener(() => SwitchTab(InventoryTab.Paid));
-        futureTab3?.onClick.AddListener(() => SwitchTab(InventoryTab.Future3));
-        futureTab4?.onClick.AddListener(() => SwitchTab(InventoryTab.Future4));
-
-        if (futureTab3 != null) futureTab3.interactable = false;
-        if (futureTab4 != null) futureTab4.interactable = false;
-    }
+    // ═══════════════════════════════════════════════════════════════════════
+    // TAB SYSTEM
+    // ═══════════════════════════════════════════════════════════════════════
 
     private void SwitchTab(InventoryTab tab)
     {
-        currentTab = tab;
-        selectedItem = null;
+        _currentTab = tab;
         UpdateTabVisuals();
         RefreshCurrentTabContent();
     }
 
     private void UpdateTabVisuals()
     {
-        SetTabColor(unpaidTab, currentTab == InventoryTab.Unpaid);
-        SetTabColor(paidTab, currentTab == InventoryTab.Paid);
-        SetTabColor(futureTab3, currentTab == InventoryTab.Future3);
-        SetTabColor(futureTab4, currentTab == InventoryTab.Future4);
+        SetTabColor(unpaidTab, _currentTab == InventoryTab.Unpaid);
+        SetTabColor(paidTab, _currentTab == InventoryTab.Paid);
+        SetTabColor(futureTab3, _currentTab == InventoryTab.Future3);
+        SetTabColor(futureTab4, _currentTab == InventoryTab.Future4);
 
-        bool showCheckout = currentTab == InventoryTab.Unpaid;
+        bool showCheckout = _currentTab == InventoryTab.Unpaid;
         if (checkoutButton != null) checkoutButton.gameObject.SetActive(showCheckout);
         if (totalAmountText != null) totalAmountText.gameObject.SetActive(showCheckout);
     }
 
-    private void SetTabColor(Button tab, bool isActive)
+    private static void SetTabColor(Button tab, bool isActive)
     {
         if (tab == null) return;
         var colors = tab.colors;
-        colors.normalColor = isActive ? Color.white : Color.gray; // Điều chỉnh màu tùy ý
+        colors.normalColor = isActive ? Color.white : Color.gray;
         tab.colors = colors;
     }
 
     private void RefreshCurrentTabContent()
     {
-        switch (currentTab)
+        if (ShoppingCart.Instance == null) return;
+
+        switch (_currentTab)
         {
             case InventoryTab.Unpaid:
-                if (ShoppingCart.Instance != null)
-                    UpdateCartDisplay(ShoppingCart.Instance.GetUnpaidItems());
+                UpdateCartDisplay(ShoppingCart.Instance.GetUnpaidItems());
                 break;
             case InventoryTab.Paid:
-                if (ShoppingCart.Instance != null)
-                    UpdateCartDisplay(ShoppingCart.Instance.GetPaidItems());
+                UpdateCartDisplay(ShoppingCart.Instance.GetPaidItems());
                 break;
             case InventoryTab.Future3:
                 break;
@@ -390,15 +600,9 @@ public class CartUI : MonoBehaviour
         }
     }
 
-    private void InitializeUI()
-    {
-        UpdateCartCount(0);
-        if (cartPanel != null) cartPanel.SetActive(false);
-        SwitchTab(InventoryTab.Unpaid);
-        if (moreObject != null) moreObject.SetActive(false);
-        if (moreButton != null) moreButton.interactable = false;
-        if (customerInfoPanel != null) customerInfoPanel.SetActive(false);
-    }
+    // ═══════════════════════════════════════════════════════════════════════
+    // CART DISPLAY (pooling)
+    // ═══════════════════════════════════════════════════════════════════════
 
     private void UpdateCartCount(int count)
     {
@@ -408,7 +612,7 @@ public class CartUI : MonoBehaviour
 
     private void OnUnpaidItemsUpdated(List<CartItem> items)
     {
-        if (currentTab == InventoryTab.Unpaid)
+        if (_currentTab == InventoryTab.Unpaid)
         {
             RefreshCurrentTabContent();
             RefreshAllCartIndicators();
@@ -417,40 +621,18 @@ public class CartUI : MonoBehaviour
 
     private void OnPaidItemsUpdated(List<CartItem> items)
     {
-        if (currentTab == InventoryTab.Paid)
+        if (_currentTab == InventoryTab.Paid)
             UpdateCartDisplay(items);
     }
-    private readonly List<CartImageItem> _spawnedCells = new();
+
     private void UpdateCartDisplay(List<CartItem> items)
     {
-        /*  if (cartItemsContainer == null || cartImageItemPrefab == null) return;
-
-          foreach (Transform child in cartItemsContainer)
-              Destroy(child.gameObject);
-
-          _cellLookup.Clear();
-
-          foreach (var item in items)
-          {
-              var itemGO = Instantiate(cartImageItemPrefab, cartItemsContainer);
-              // Giả định tên class là CartImageItemUI dựa trên ngữ cảnh
-              var imageItemUI = itemGO.GetComponent<CartImageItem>();
-              if (imageItemUI != null)
-              {
-                  imageItemUI.Setup(item, OnItemClicked, this); 
-                  imageItemUI.RefreshCartIndicator();
-
-                  var key = (item.productId, item.selectedSize);
-                  _cellLookup[key] = imageItemUI;
-              }
-          }*/
-
         if (cartItemsContainer == null || cartImageItemPrefab == null) return;
 
-        // Clear previous lookup so we rebuild mapping for current items
+        // Clear previous lookup → rebuild mapping cho current items
         _cellLookup.Clear();
 
-        // Instantiate only the missing cells (pooling)
+        // Instantiate chỉ các cells còn thiếu (pooling)
         while (_spawnedCells.Count < items.Count)
         {
             var go = Instantiate(cartImageItemPrefab, cartItemsContainer);
@@ -458,7 +640,7 @@ public class CartUI : MonoBehaviour
             _spawnedCells.Add(cell);
         }
 
-        // Configure each spawned cell: activate those within items.Count, deactivate extras.
+        // Configure mỗi spawned cell: activate trong items.Count, deactivate phần dư
         for (int i = 0; i < _spawnedCells.Count; i++)
         {
             var cell = _spawnedCells[i];
@@ -471,91 +653,24 @@ public class CartUI : MonoBehaviour
             if (!active) continue;
 
             var item = items[i];
-            // Pass the required click callback and CartUI reference to match Setup signature
             cell.Setup(item, OnItemClicked, this);
 
-            // Use tuple key (productId, selectedSize) to match dictionary type
-            var key = (productId: item.productId, size: item.selectedSize);
+            // Tuple key (customId, selectedSize) — khớp kiểu dictionary mới
+            var key = (customId: item.customId, size: item.selectedSize);
             _cellLookup[key] = cell;
         }
         UpdateTotalAmount();
     }
 
+    // Refactor: dùng _spawnedCells thay vì foreach Transform + GetComponent<CartImageItem>()
     private void RefreshAllCartIndicators()
     {
-        foreach (Transform child in cartItemsContainer)
+        foreach (var cell in _spawnedCells)
         {
-            var cell = child.GetComponent<CartImageItem>();
-            if (cell != null) cell.RefreshCartIndicator();
+            if (cell != null && cell.gameObject.activeSelf)
+                cell.RefreshCartIndicator();
         }
     }
-
-    /* private void OnItemClicked(CartItem item)
-     {
-         ignoreOutsideClickUntilFrame = Time.frameCount + 1;
-         float currentTime = Time.time;
-
-         // 🆕 Nhánh multi-select tối ưu
-         if (isSelectMode)
-         {
-             // Lookup cell O(1) bằng (productId, size)
-             CartImageItem clickedCell = null;
-             if (!_cellLookup.TryGetValue((item.productId, item.selectedSize), out clickedCell) || clickedCell == null)
-             {
-                 // Fallback an toàn: nếu vì lý do gì đó dictionary chưa sync, có thể
-                 // (optionally) fallback sang loop nếu bạn muốn.
-                 return;
-             }
-
-             // Toggle highlight (multi-select, không ảnh hưởng item khác)
-             clickedCell.ToggleHighlightMultiSelect();
-             bool nowHighlighted = clickedCell.IsHighlighted();
-
-             // Đồng bộ state xuống ShoppingCart (isSelectedForCheckout)
-             if (ShoppingCart.Instance != null)
-             {
-                 ShoppingCart.Instance.SelectItemForCheckout(
-                     item.productId,
-                     item.selectedSize,
-                     nowHighlighted
-                 );
-             }
-
-             // Cập nhật overlay/icon "đã chọn"
-             clickedCell.RefreshCartIndicator();
-
-             // Tổng tiền & số món sẽ dùng currentSelectedTotal (ở bước 2)
-             UpdateTotalAmount();
-
-             lastClickedItem = null;
-             return;
-         }
-
-         // ==== Phần dưới: single-select + double-click mở detail giữ nguyên ====
-
-         selectedItem = item;
-
-         foreach (Transform child in cartItemsContainer)
-         {
-             var cell = child.GetComponent<CartImageItem>();
-             if (cell != null && cell.GetCurrentItem() == item)
-             {
-                 cell.SelectThisItem();
-                 break;
-             }
-         }
-
-         if (lastClickedItem == item && (currentTime - lastClickTime) < doubleClickThreshold)
-         {
-             ShowProductDetailInMainUI(item);
-             lastClickedItem = null;
-         }
-         else
-         {
-             lastClickedItem = item;
-             lastClickTime = currentTime;
-         }
-     }*/
 
     private void OnItemClicked(CartItem item)
     {
@@ -566,30 +681,31 @@ public class CartUI : MonoBehaviour
             return;
         }
 
-        ignoreOutsideClickUntilFrame = Time.frameCount + 1;
+        _ignoreOutsideClickUntilFrame = Time.frameCount + 1;
 
         // isSelectMode luôn = true → chỉ còn nhánh multi-select
-        if (!_cellLookup.TryGetValue((item.productId, item.selectedSize), out var clickedCell)
+        if (!_cellLookup.TryGetValue((item.customId, item.selectedSize), out var clickedCell)
             || clickedCell == null) return;
 
         clickedCell.ToggleHighlightMultiSelect();
         bool nowHighlighted = clickedCell.IsHighlighted();
 
-        ShoppingCart.Instance?.SelectItemForCheckout(item.productId, item.selectedSize, nowHighlighted);
+        ShoppingCart.Instance?.SelectItemForCheckout(item.customId, item.selectedSize, nowHighlighted);
         clickedCell.RefreshCartIndicator();
         UpdateTotalAmount();
     }
 
-    // ✅ MỚI: Gọi ProductDetailUI để hiển thị thông tin
     private void ShowProductDetailInMainUI(CartItem item)
     {
         if (ProductDetailUI.Instance == null)
         {
-            Debug.LogError("ProductDetailUI Instance not found!");
+            Debug.LogError("[CartUI] ProductDetailUI Instance not found!");
             return;
         }
 
-        Debug.Log($"Opening Detail for: {item.productName} (Paid: {item.isPaid})");
+#if UNITY_EDITOR
+        GameLog.Info($"[CartUI] Opening Detail for: {item.productName} (Paid: {item.isPaid})");
+#endif
 
         if (item.isPaid)
         {
@@ -600,13 +716,9 @@ public class CartUI : MonoBehaviour
         {
             // CASE 2: Hàng CHƯA MUA -> Gọi logic cũ (API Shop) dùng customId
             if (!string.IsNullOrEmpty(item.customId))
-            {
                 ProductDetailUI.Instance.ShowUnpaidProductDetail(item.customId, item.selectedSize);
-            }
             else
-            {
-                Debug.LogError("Unpaid item missing CustomID, cannot load shop detail.");
-            }
+                Debug.LogError("[CartUI] Unpaid item missing CustomID, cannot load shop detail.");
         }
     }
 
@@ -620,17 +732,9 @@ public class CartUI : MonoBehaviour
         totalAmountText.text = $"Tổng: {count} món\n{total:N0} VND";
     }
 
-    /* private void ToggleCartPanel()
-     {
-         if (cartPanel != null)
-         {
-             bool isActive = !cartPanel.activeSelf;
-             cartPanel.SetActive(isActive);
-             this.enabled = isActive;
-             if (isActive) RefreshCurrentTabContent();
-             PlayerController.Instance?.SetCanMove(!isActive);
-         }
-     }*/
+    // ═══════════════════════════════════════════════════════════════════════
+    // CART PANEL OPEN/CLOSE
+    // ═══════════════════════════════════════════════════════════════════════
 
     private void ToggleCartPanel()
     {
@@ -642,7 +746,7 @@ public class CartUI : MonoBehaviour
 
         if (isActive)
         {
-            isSelectMode = true;           // ← THÊM: luôn vào select mode khi mở
+            isSelectMode = true; // luôn vào select mode khi mở
             RefreshCurrentTabContent();
         }
 
@@ -652,7 +756,11 @@ public class CartUI : MonoBehaviour
     private void CloseCartPanel()
     {
         ExitSelectModeVisualOnly();
-        if (!shopController.activeInHierarchy && cartPanel.activeInHierarchy)
+        if (cartPanel == null) return;
+
+        // Refactor: null check shopController trước khi access
+        bool shopHidden = shopController != null && !shopController.activeInHierarchy;
+        if (shopHidden && cartPanel.activeInHierarchy)
         {
             cartPanel.SetActive(false);
             PlayerController.Instance?.SetCanMove(true);
@@ -661,11 +769,40 @@ public class CartUI : MonoBehaviour
         {
             cartPanel.SetActive(false);
         }
-  
-    }   
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CHECKOUT FLOW
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // BUY NOW — mở panel nhập liệu dùng chung cho "Mua ngay" (ProductDetailUI gọi)
+    // ═══════════════════════════════════════════════════════════════════════
+    public void OpenCheckoutForBuyNow(CartItem item)
+    {
+        if (item == null)
+        {
+            PopupManager.Instance.ShowPopup("Thông báo", "Không có vật phẩm để mua!", null, "Đóng");
+            return;
+        }
+
+        _buyNowMode = true;
+        _buyNowItem = item;
+
+        // Mở panel nhập thông tin + chọn thanh toán (KHÔNG kiểm tra giỏ trống vì mua trực tiếp)
+        if (customerInfoPanel != null) customerInfoPanel.SetActive(true);
+        if (paymentMethodPanel != null) paymentMethodPanel.SetActive(true);
+        if (changePaymentButton != null) changePaymentButton.gameObject.SetActive(false);
+        _selectedPaymentMethod = "";
+        if (selectedPaymentText != null) selectedPaymentText.text = "";
+        ClearAllErrors();
+    }
 
     private void InputInfomation()
     {
+        _buyNowMode = false;
+        _buyNowItem = null;
+
         if (ShoppingCart.Instance != null)
         {
             float total = ShoppingCart.Instance.TotalAmount;
@@ -678,39 +815,32 @@ public class CartUI : MonoBehaviour
                     "Bạn cần nhấn vào lưu vật phẩm để xác nhận trước",
                     null
                 );
-                return; // ← Dừng lại, không mở panel
+                return;
             }
         }
 
-        if (customerInfoPanel != null)
-            customerInfoPanel.SetActive(true);
+        if (customerInfoPanel != null) customerInfoPanel.SetActive(true);
+
         // Hiện panel chọn phương thức, ẩn nút đổi
         if (paymentMethodPanel != null) paymentMethodPanel.SetActive(true);
         if (changePaymentButton != null) changePaymentButton.gameObject.SetActive(false);
-        selectedPaymentMethod = "";
+        _selectedPaymentMethod = "";
         if (selectedPaymentText != null) selectedPaymentText.text = "";
-    }
 
-    private string ValidateCheckout()
-    {
-        if (string.IsNullOrWhiteSpace(customerNameInput?.text)) return "Vui lòng nhập họ tên.";
-        if (string.IsNullOrWhiteSpace(customerPhoneInput?.text)) return "Vui lòng nhập số điện thoại.";
-        if (customerPhoneInput.text.Trim().Length < 10) return "Số điện thoại phải có ít nhất 10 số.";
-        if (string.IsNullOrWhiteSpace(customerAddressInput?.text)) return "Vui lòng nhập địa chỉ giao hàng.";
-        if (string.IsNullOrWhiteSpace(selectedPaymentMethod)) return "Vui lòng chọn hình thức thanh toán.";
-        return null;
+        // Mở form mới → xoá mọi lỗi inline cũ
+        ClearAllErrors();
     }
 
     private void CloseCheckOut()
     {
-        if (customerInfoPanel != null)
-            customerInfoPanel.SetActive(false);
+        if (customerInfoPanel != null) customerInfoPanel.SetActive(false);
+        _buyNowMode = false;
+        _buyNowItem = null;
     }
-
 
     private void SetPaymentMethod(string method)
     {
-        selectedPaymentMethod = method;
+        _selectedPaymentMethod = method;
         if (selectedPaymentText != null)
             selectedPaymentText.text = method == "COD" ? "COD" : "Bank";
 
@@ -728,11 +858,11 @@ public class CartUI : MonoBehaviour
 
     private void UpdatePaymentButtonVisuals()
     {
-        SetPaymentButtonColor(codButton, selectedPaymentMethod == "COD");
-        SetPaymentButtonColor(bankButton, selectedPaymentMethod == "BANK_TRANSFER");
+        SetPaymentButtonColor(codButton, _selectedPaymentMethod == "COD");
+        SetPaymentButtonColor(bankButton, _selectedPaymentMethod == "BANK_TRANSFER");
     }
 
-    private void SetPaymentButtonColor(Button btn, bool isSelected)
+    private static void SetPaymentButtonColor(Button btn, bool isSelected)
     {
         if (btn == null) return;
         var label = btn.GetComponentInChildren<TextMeshProUGUI>();
@@ -742,12 +872,29 @@ public class CartUI : MonoBehaviour
 
     private void OnCheckoutClicked()
     {
-        if (currentTab == InventoryTab.Unpaid && ShoppingCart.Instance != null)
+        if (ShoppingCart.Instance != null)
         {
-            ShoppingCart.Instance.ProcessCheckout(selectedPaymentMethod);
+            if (_buyNowMode)
+            {
+                // Mua ngay: chỉ thanh toán đúng item đang xem, không đụng giỏ
+                ShoppingCart.Instance.ProcessBuyNow(_buyNowItem, _selectedPaymentMethod);
+            }
+            else if (_currentTab == InventoryTab.Unpaid)
+            {
+                ShoppingCart.Instance.ProcessCheckout(_selectedPaymentMethod);
+            }
         }
-        customerInfoPanel.SetActive(false);
+
+        // Reset state sau khi đặt đơn
+        _buyNowMode = false;
+        _buyNowItem = null;
+
+        if (customerInfoPanel != null) customerInfoPanel.SetActive(false);
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // ICON BINDING (EventTrigger)
+    // ═══════════════════════════════════════════════════════════════════════
 
     private void BindIconToButtonState(Button button, GameObject icon)
     {
@@ -759,22 +906,20 @@ public class CartUI : MonoBehaviour
         if (trigger.triggers == null)
             trigger.triggers = new List<EventTrigger.Entry>();
 
-        System.Func<bool> isSelected = () => EventSystem.current != null && EventSystem.current.currentSelectedGameObject == button.gameObject;
+        System.Func<bool> isSelected = () =>
+            EventSystem.current != null && EventSystem.current.currentSelectedGameObject == button.gameObject;
 
         AddEvent(trigger, EventTriggerType.PointerDown, _ => icon.SetActive(true));
-        AddEvent(trigger, EventTriggerType.PointerUp, _ => icon.SetActive(isSelected()));
+        AddEvent(trigger, EventTriggerType.PointerUp,   _ => icon.SetActive(isSelected()));
         AddEvent(trigger, EventTriggerType.PointerExit, _ => icon.SetActive(isSelected()));
-        AddEvent(trigger, EventTriggerType.Select, _ => icon.SetActive(true));
-        AddEvent(trigger, EventTriggerType.Deselect, _ => icon.SetActive(false));
+        AddEvent(trigger, EventTriggerType.Select,      _ => icon.SetActive(true));
+        AddEvent(trigger, EventTriggerType.Deselect,    _ => icon.SetActive(false));
     }
 
-    private void AddEvent(EventTrigger trigger, EventTriggerType type, UnityEngine.Events.UnityAction<BaseEventData> action)
+    private static void AddEvent(EventTrigger trigger, EventTriggerType type, UnityEngine.Events.UnityAction<BaseEventData> action)
     {
         var entry = new EventTrigger.Entry { eventID = type };
         entry.callback.AddListener(action);
         trigger.triggers.Add(entry);
     }
-
 }
-
-

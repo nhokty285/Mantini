@@ -1,7 +1,16 @@
-﻿using System;
+using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections;
+
+/// <summary>
+/// Lưu/khôi phục vị trí player qua API. Hot path: SaveCheckLoop chạy mỗi giây
+/// nhưng debounce theo distance + time interval (15-30s) để không spam server.
+///
+/// ⚠️ NOTE: Class name <c>PlayerLocationLoaderFullUrl</c> không khớp filename
+/// <c>PlayerLocationLoader.cs</c>. Không đổi vì serialize ref trong scene/prefab
+/// có thể đang bind theo tên class — đổi sẽ phá wire.
+/// </summary>
 public class PlayerLocationLoaderFullUrl : MonoBehaviour
 {
     [Header("References")]
@@ -18,11 +27,12 @@ public class PlayerLocationLoaderFullUrl : MonoBehaviour
     [SerializeField] private float distanceThresholdMeters = 4f;
     [SerializeField] private bool  horizontalOnly = false;
 
-    private bool isPositionLoadedFromServer = false;
-    private float lastPutTime = -9999f;
-    private float currentInterval;
-    private Vector3 lastSavedPos;
-    private bool isSaving = false;
+    // Refactor: private fields theo Mantini convention _camelCase
+    private bool _isPositionLoadedFromServer = false;
+    private float _lastPutTime = -9999f;
+    private float _currentInterval;
+    private Vector3 _lastSavedPos;
+    private bool _isSaving = false;
 
     [Serializable]
     private class LastLocationAPI
@@ -43,39 +53,25 @@ public class PlayerLocationLoaderFullUrl : MonoBehaviour
 
     void Awake()
     {
-        currentInterval = UnityEngine.Random.Range(timeMinSeconds, timeMaxSeconds);
+        _currentInterval = UnityEngine.Random.Range(timeMinSeconds, timeMaxSeconds);
         if (playerTransform != null) LoadAndApplyPosition(playerTransform);
         StartCoroutine(SaveCheckLoop());
     }
+
     private IEnumerator SaveCheckLoop()
     {
-        var wait = new WaitForSeconds(1f); // cache 1 lần — zero alloc per loop
+        // Cache WaitForSeconds 1 lần — zero alloc per loop iteration
+        var wait = new WaitForSeconds(1f);
         while (true)
         {
             yield return wait;
-            if (playerTransform == null || !isPositionLoadedFromServer || isSaving) continue;
+            if (playerTransform == null || !_isPositionLoadedFromServer || _isSaving) continue;
 
             float dist = DistanceFromLastSaved(playerTransform.position);
-            if (dist >= distanceThresholdMeters || Time.time - lastPutTime >= currentInterval)
+            if (dist >= distanceThresholdMeters || Time.time - _lastPutTime >= _currentInterval)
                 SaveCurrentLocation(SceneManager.GetActiveScene().name);
         }
     }
-
-/*    void FixedUpdate()
-    {
-        if (playerTransform == null) return;
-
-        if (!isPositionLoadedFromServer) return;
-
-        float dist = DistanceFromLastSaved(playerTransform.position);
-        float elapsed = Time.time - lastPutTime;
-
-        if (!isSaving && (dist >= distanceThresholdMeters || elapsed >= currentInterval))
-        {
-            string sceneName = SceneManager.GetActiveScene().name;
-            SaveCurrentLocation(sceneName);
-        }
-    }*/
 
     /// <summary>
     /// Public method để GameplayPlayerSpawner gọi: GET vị trí từ backend và set cho target transform.
@@ -95,54 +91,63 @@ public class PlayerLocationLoaderFullUrl : MonoBehaviour
             onSuccess: (json) =>
             {
                 var loc = JsonUtility.FromJson<LastLocationAPI>(json);
-                //DISABLE PHYSICS trước khi set vị trí
+
+                // DISABLE PHYSICS trước khi set vị trí (tránh nudge / collision)
                 var rb = target.GetComponent<Rigidbody>();
                 if (rb != null) rb.isKinematic = true;
 
                 target.position = loc.ToVector3();
-                lastSavedPos = target.position;
-                lastPutTime = Time.time;
+                _lastSavedPos = target.position;
+                _lastPutTime = Time.time;
 
-                // ✅ FIX #3: ENABLE lại physics + mark loaded
+                // ENABLE lại physics + mark loaded
                 if (rb != null)
                     StartCoroutine(EnablePhysicsNextFrame(rb));
 
-                isPositionLoadedFromServer = true;  // ✅ ALLOW SAVE từ giờ
+                _isPositionLoadedFromServer = true; // cho phép save từ giờ
 
-                Debug.Log($"[PlayerLocationLoader] Loaded position from server: {target.position} (map={loc.map_id})");
+#if UNITY_EDITOR
+                GameLog.Info($"[PlayerLocationLoader] Loaded position from server: {target.position} (map={loc.map_id})");
+#endif
             },
             onError: (err) =>
             {
-                Debug.LogWarning($"[PlayerLocationLoader] Failed to load position, keeping spawn default.\n{err}");
-                lastSavedPos = target.position;
-                lastPutTime = Time.time;
-                isPositionLoadedFromServer = true;
+                GameLog.Warn($"[PlayerLocationLoader] Failed to load position, keeping spawn default.\n{err}");
+                _lastSavedPos = target.position;
+                _lastPutTime = Time.time;
+                _isPositionLoadedFromServer = true;
             }
         );
-
-
     }
-    System.Collections.IEnumerator EnablePhysicsNextFrame(Rigidbody rb)
+
+    private IEnumerator EnablePhysicsNextFrame(Rigidbody rb)
     {
-        yield return null;  // Next frame
-        rb.isKinematic = false;
+        yield return null;
+        if (rb != null) rb.isKinematic = false;
     }
 
-    float DistanceFromLastSaved(Vector3 current)
+    private float DistanceFromLastSaved(Vector3 current)
     {
         if (horizontalOnly)
         {
+            // Bỏ qua trục Y — tránh chênh lệch cao độ làm save không cần thiết
             Vector2 a = new Vector2(current.x, current.z);
-            Vector2 b = new Vector2(lastSavedPos.x, lastSavedPos.z);
+            Vector2 b = new Vector2(_lastSavedPos.x, _lastSavedPos.z);
             return Vector2.Distance(a, b);
         }
-        return Vector3.Distance(current, lastSavedPos);
+        return Vector3.Distance(current, _lastSavedPos);
     }
 
     public void SaveCurrentLocation(string mapId)
     {
+        if (playerTransform == null) return;
+
         var p = playerTransform.position;
-        if (!IsValid(p)) { Debug.LogError("Invalid position, abort PUT"); return; }
+        if (!IsValid(p))
+        {
+            Debug.LogError("[PlayerLocationLoader] Invalid position, abort PUT");
+            return;
+        }
 
         var payload = new LastLocationPayload
         {
@@ -150,39 +155,39 @@ public class PlayerLocationLoaderFullUrl : MonoBehaviour
         };
 
         string json = JsonUtility.ToJson(payload);
-        isSaving = true;
+        _isSaving = true;
 
         APIClient.Instance.PutJsonFull(lastLocationUrl, json,
             onSuccess: (res) =>
             {
-                lastSavedPos = p;
-                lastPutTime = Time.time;
-                currentInterval = UnityEngine.Random.Range(timeMinSeconds, timeMaxSeconds);
-                isSaving = false;
-                Debug.Log($"[PlayerLocationLoader] Saved position: {p}, scene={mapId}, nextInterval={currentInterval:0.1}s");
+                _lastSavedPos = p;
+                _lastPutTime = Time.time;
+                _currentInterval = UnityEngine.Random.Range(timeMinSeconds, timeMaxSeconds);
+                _isSaving = false;
+#if UNITY_EDITOR
+                GameLog.Info($"[PlayerLocationLoader] Saved position: {p}, scene={mapId}, nextInterval={_currentInterval:0.1}s");
+#endif
             },
             onError: (err) =>
             {
-                isSaving = false;
+                _isSaving = false;
                 Debug.LogError($"[PlayerLocationLoader] Save failed: {err}");
             });
     }
 
-    bool IsValid(Vector3 v)
-    {
-        return !(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z) ||
-                 float.IsInfinity(v.x) || float.IsInfinity(v.y) || float.IsInfinity(v.z));
-    }
+    private static bool IsValid(Vector3 v)
+        => !(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z) ||
+             float.IsInfinity(v.x) || float.IsInfinity(v.y) || float.IsInfinity(v.z));
 
     void OnApplicationPause(bool pause)
     {
-        if (pause && !isSaving && playerTransform != null)
+        if (pause && !_isSaving && playerTransform != null)
             SaveCurrentLocation(SceneManager.GetActiveScene().name);
     }
 
     void OnApplicationQuit()
     {
-        if (!isSaving && playerTransform != null)
+        if (!_isSaving && playerTransform != null)
             SaveCurrentLocation(SceneManager.GetActiveScene().name);
     }
 }

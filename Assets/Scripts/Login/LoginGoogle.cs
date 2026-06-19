@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Services.Authentication;
@@ -35,7 +35,7 @@ public class LoginController : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
+            GameLog.Info(ex.Message);
         }
     }
 
@@ -49,7 +49,7 @@ public class LoginController : MonoBehaviour
             try
             {
                 await AuthenticationService.Instance.SignInWithUnityAsync(accessToken);
-                Debug.Log("SignIn is successful.");
+                GameLog.Info("SignIn is successful.");
 
                 playerInfo = AuthenticationService.Instance.PlayerInfo;
 
@@ -75,7 +75,7 @@ public class LoginController : MonoBehaviour
         try
         {
             await AuthenticationService.Instance.SignInWithUnityAsync(accessToken);
-            Debug.Log("SignIn is successful.");
+            GameLog.Info("SignIn is successful.");
 
             playerInfo = AuthenticationService.Instance.PlayerInfo;
 
@@ -89,7 +89,7 @@ public class LoginController : MonoBehaviour
             {
                 // Fallback siêu an toàn: dùng PlayerId ngắn gọn
                 name = $"Player_{playerInfo.Id.Substring(playerInfo.Id.Length - 8)}";
-                Debug.LogWarning("Server name fail, dùng fallback: " + name);
+                GameLog.Warn("Server name fail, dùng fallback: " + name);
             }
 
             playerProfile.playerInfo = playerInfo;

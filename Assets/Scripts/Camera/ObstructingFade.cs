@@ -1,4 +1,4 @@
-﻿/*using System.Collections.Generic;
+/*using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraWallOcclusion : MonoBehaviour
@@ -35,7 +35,7 @@ public class CameraWallOcclusion : MonoBehaviour
             if (playerObj != null)
             {
                 player = playerObj.transform;
-                Debug.Log($"✅ Tìm thấy Player: {player.name}");
+                GameLog.Info($"✅ Tìm thấy Player: {player.name}");
             }
             else
             {
@@ -171,6 +171,7 @@ public class CameraWallOcclusion : MonoBehaviour
     // ✅ Throttle: chỉ cast mỗi N giây thay vì mỗi frame
     [SerializeField] private float castInterval = 0.05f; // 20 lần/giây đủ dùng
     private float _nextCastTime;
+    private float _nextPlayerSearchTime; // PERF: throttle tìm player
 
     private readonly HashSet<WallFadeTarget> _currentHits = new();
     private readonly HashSet<WallFadeTarget> _previousHits = new();
@@ -188,15 +189,17 @@ public class CameraWallOcclusion : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (!findPlayerByTag)
+        // PERF: throttle tìm player. Trước đây FindWithTag chạy MỖI frame khi
+        // player chưa spawn (spawn động) → alloc + chậm. Giờ chỉ tìm tối đa
+        // mỗi 0.5s, và dừng hẳn khi đã tìm thấy.
+        if (player == null)
         {
-            // Tìm Player bằng Tag (nhanh hơn FindByName)
-            player = GameObject.FindWithTag("Player");
-
-            if (player != null)
+            if (Time.time >= _nextPlayerSearchTime)
             {
-                findPlayerByTag = true;
+                _nextPlayerSearchTime = Time.time + 0.5f;
+                player = GameObject.FindWithTag("Player");
             }
+            if (player == null) return; // chưa có player → skip frame này
         }
         // ✅ Throttle: skip frame nếu chưa đến interval
         if (Time.time < _nextCastTime) return;

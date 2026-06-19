@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 
 public class Keyboard : MonoBehaviour
@@ -29,7 +29,7 @@ public class Keyboard : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
         originalPos = targetPanel.anchoredPosition;
-        Debug.Log("Original pos: " + originalPos);
+        GameLog.Info("Original pos: " + originalPos);
     }
 
     private void OnKeyboardOpen()
@@ -39,7 +39,7 @@ public class Keyboard : MonoBehaviour
 
         float offsetY = GetKeyboardOffsetY();
         targetPanel.anchoredPosition = new Vector2(originalPos.x, originalPos.y + offsetY);
-        Debug.Log($"Keyboard opened → moved up {offsetY} units");
+        GameLog.Info($"Keyboard opened → moved up {offsetY} units");
     }
 
     private void OnKeyboardClose()
@@ -48,7 +48,7 @@ public class Keyboard : MonoBehaviour
         isMoved = false;
 
         targetPanel.anchoredPosition = originalPos;
-        Debug.Log("Keyboard closed → reset position");
+        GameLog.Info("Keyboard closed → reset position");
     }
 
     private float GetKeyboardOffsetY()

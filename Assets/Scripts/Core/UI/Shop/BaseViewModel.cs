@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
@@ -127,7 +127,7 @@ public class MainMenuViewModel : BaseViewModel
         {
             var item = CurrentShopData.GetItem(itemID);
             // Logic mua hàng sẽ được xử lý ở đây
-            Debug.Log($"Buying {item.itemName} for {item.price} coins");
+            GameLog.Info($"Buying {item.itemName} for {item.price} coins");
         }
     }
     #endregion

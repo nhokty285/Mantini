@@ -5,139 +5,133 @@ using UnityEngine.UI;
 public class CharacterSelection : MonoBehaviour
 {
     [Header("Character Data")]
-    public CharacterData[] characterDataArray; // Array CharacterData thay vì GameObject[]
+    public CharacterData[] characterDataArray;
 
     [Header("Character Display")]
-    public Transform[] characterPositions; // Vị trí trái(0), giữa(1), phải(2)
+    public Transform[] characterPositions; // 0=trái, 1=giữa, 2=phải
 
     [Header("UI Elements")]
     public Button createCharacterButton;
     public TextMeshProUGUI characterNameText;
     public TextMeshProUGUI characterDetailText;
 
-    private GameObject[] instantiatedCharacters;
-    private int currentCharacterIndex = 1;
-    private Vector2 startTouchPosition;
-    private float swipeThreshold = 50f;
-
     public GameObject companionSelectionPanel;
     public GameObject playerCharacterPanel;
 
+    private GameObject[] _instantiatedCharacters;
+    private int _currentCharacterIndex = 1;
+    private Vector2 _startTouchPosition;
+    private const float SwipeThreshold = 50f;
 
-    void Start()
+    private void Start()
     {
         PlayerDataManager.Instance.RegisterCharacterData(characterDataArray);
         InitializeCharacters();
         UpdateCharacterPositions();
-        createCharacterButton.onClick.AddListener(OnCreateCharacterButtonClicked);
+
+        if (createCharacterButton != null)
+        {
+            // Mantini convention: RemoveAllListeners trước AddListener
+            createCharacterButton.onClick.RemoveAllListeners();
+            createCharacterButton.onClick.AddListener(OnCreateCharacterButtonClicked);
+        }
     }
 
-    void InitializeCharacters()
+    private void InitializeCharacters()
     {
-        instantiatedCharacters = new GameObject[2];
+        _instantiatedCharacters = new GameObject[2];
 
-        for (int i = 0; i < instantiatedCharacters.Length && i < characterDataArray.Length; i++)
+        for (int i = 0; i < _instantiatedCharacters.Length && i < characterDataArray.Length; i++)
         {
             GameObject previewPrefab = characterDataArray[i].previewPrefab;
-            instantiatedCharacters[i] = Instantiate(previewPrefab);
-            instantiatedCharacters[i].transform.localPosition = Vector3.zero;
+            _instantiatedCharacters[i] = Instantiate(previewPrefab);
+            _instantiatedCharacters[i].transform.localPosition = Vector3.zero;
         }
 
-        currentCharacterIndex = 0;
+        _currentCharacterIndex = 0;
 
         ApplyLayoutForCurrentIndex();
         UpdateCharacterInfo();
     }
 
-    private void OnDestroy()
-    {
-        CleanupCharacters();
-    }
+    private void OnDestroy() => CleanupCharacters();
 
     private void CleanupCharacters()
     {
-        if (instantiatedCharacters == null) return;
+        if (_instantiatedCharacters == null) return;
 
-        foreach (var character in instantiatedCharacters)
+        foreach (var character in _instantiatedCharacters)
         {
-            if (character != null)
-                Destroy(character);
+            if (character != null) Destroy(character);
         }
-        instantiatedCharacters = null;
+        _instantiatedCharacters = null;
     }
 
+    private void Update() => HandleSwipeInput();
 
-    void Update()
+    private void HandleSwipeInput()
     {
-        HandleSwipeInput();
-    }
+        if (Input.touchCount <= 0) return;
+        if (playerCharacterPanel == null || !playerCharacterPanel.activeInHierarchy) return;
 
-    void HandleSwipeInput()
-    {
-        if (Input.touchCount > 0 && playerCharacterPanel.activeInHierarchy)
+        Touch touch = Input.GetTouch(0);
+
+        if (touch.phase == TouchPhase.Began)
         {
-            Touch touch = Input.GetTouch(0);
+            _startTouchPosition = touch.position;
+        }
+        else if (touch.phase == TouchPhase.Ended)
+        {
+            Vector2 endTouchPosition = touch.position;
+            Vector2 swipeDirection = endTouchPosition - _startTouchPosition;
 
-            if (touch.phase == TouchPhase.Began)
+            if (Mathf.Abs(swipeDirection.x) > SwipeThreshold)
             {
-                startTouchPosition = touch.position;
-            }
-            else if (touch.phase == TouchPhase.Ended)
-            {
-                Vector2 endTouchPosition = touch.position;
-                Vector2 swipeDirection = endTouchPosition - startTouchPosition;
-
-                if (Mathf.Abs(swipeDirection.x) > swipeThreshold)
-                {
-                    if (swipeDirection.x > 0)
-                        SwitchToPreviousCharacter();
-                    else
-                        SwitchToNextCharacter();
-                }
+                if (swipeDirection.x > 0) SwitchToPreviousCharacter();
+                else SwitchToNextCharacter();
             }
         }
     }
 
-    void SwitchToNextCharacter()
+    private void SwitchToNextCharacter()
     {
-        if (currentCharacterIndex >= characterDataArray.Length - 1)
-            return;
+        if (_currentCharacterIndex >= characterDataArray.Length - 1) return;
 
-        AudioManager.Instance.PlaySFXOneShot("Swipe");
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFXOneShot("Swipe");
 
-        currentCharacterIndex++;
+        _currentCharacterIndex++;
         ApplyLayoutForCurrentIndex();
         UpdateCharacterInfo();
     }
 
-    void SwitchToPreviousCharacter()
+    private void SwitchToPreviousCharacter()
     {
-        if (currentCharacterIndex <= 0)
-            return;
+        if (_currentCharacterIndex <= 0) return;
 
-        AudioManager.Instance.PlaySFXOneShot("Swipe");
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFXOneShot("Swipe");
 
-        currentCharacterIndex--;
+        _currentCharacterIndex--;
         ApplyLayoutForCurrentIndex();
         UpdateCharacterInfo();
     }
 
-
-    void ApplyLayoutForCurrentIndex()
+    private void ApplyLayoutForCurrentIndex()
     {
-        if (instantiatedCharacters == null || instantiatedCharacters.Length < 2)
-            return;
+        if (_instantiatedCharacters == null || _instantiatedCharacters.Length < 2) return;
 
-        GameObject male = instantiatedCharacters[0];
-        GameObject female = instantiatedCharacters[1];
+        GameObject male = _instantiatedCharacters[0];
+        GameObject female = _instantiatedCharacters[1];
 
+        // Unparent all children dưới character positions
         for (int i = 0; i < characterPositions.Length; i++)
         {
             foreach (Transform child in characterPositions[i])
                 child.SetParent(null);
         }
 
-        if (currentCharacterIndex == 1)
+        if (_currentCharacterIndex == 1)
         {
             female.transform.SetParent(characterPositions[1], false);
             female.transform.localPosition = Vector3.zero;
@@ -157,14 +151,13 @@ public class CharacterSelection : MonoBehaviour
         UpdateCharacterPositions();
     }
 
-    void UpdateCharacterPositions()
+    private void UpdateCharacterPositions()
     {
         for (int i = 0; i < characterPositions.Length; i++)
         {
+            bool isCenter = (i == 1);
             foreach (Transform child in characterPositions[i])
             {
-                bool isCenter = (i == 1);
-
                 child.localScale = isCenter ? Vector3.one : Vector3.one * 0.8f;
                 SetCharacterLayerOrder(child.gameObject, isCenter ? 10 : 5);
                 SetCharacterText(child.gameObject, isCenter);
@@ -173,18 +166,16 @@ public class CharacterSelection : MonoBehaviour
         }
     }
 
-    void SetCharacterText(GameObject character, bool isCenter)
+    private static void SetCharacterText(GameObject character, bool isCenter)
     {
         TextMeshProUGUI[] tmpTexts = character.GetComponentsInChildren<TextMeshProUGUI>(true);
-        foreach (var tmp in tmpTexts)
-            tmp.gameObject.SetActive(isCenter);
+        foreach (var tmp in tmpTexts) tmp.gameObject.SetActive(isCenter);
 
         Text[] uiTexts = character.GetComponentsInChildren<Text>(true);
-        foreach (var txt in uiTexts)
-            txt.gameObject.SetActive(isCenter);
+        foreach (var txt in uiTexts) txt.gameObject.SetActive(isCenter);
     }
 
-    void SetCharacterBrightness(GameObject character, bool isCenter)
+    private static void SetCharacterBrightness(GameObject character, bool isCenter)
     {
         RawImage[] imgs = character.GetComponentsInChildren<RawImage>(true);
         for (int i = 0; i < imgs.Length; i++)
@@ -197,54 +188,49 @@ public class CharacterSelection : MonoBehaviour
             }
             else
             {
-                if (i == 1)
-                    c = Color.Lerp(c, new Color(0.5f, 0.5f, 0.5f, 0f), 1f);
-                else
-                    c = Color.Lerp(c, new Color(0.5f, 0.5f, 0.5f, 1f), 1f);
+                // Slot 1: invisible side, slot khác: dim
+                c = (i == 1)
+                    ? Color.Lerp(c, new Color(0.5f, 0.5f, 0.5f, 0f), 1f)
+                    : Color.Lerp(c, new Color(0.5f, 0.5f, 0.5f, 1f), 1f);
             }
-
             img.color = c;
         }
     }
 
-    void SetCharacterLayerOrder(GameObject character, int order)
+    private static void SetCharacterLayerOrder(GameObject character, int order)
     {
         Renderer[] renderers = character.GetComponentsInChildren<Renderer>();
-        foreach (Renderer renderer in renderers)
-            renderer.sortingOrder = order;
+        foreach (Renderer renderer in renderers) renderer.sortingOrder = order;
     }
 
-    void UpdateCharacterInfo()
+    private void UpdateCharacterInfo()
     {
-        if (characterNameText != null && currentCharacterIndex < characterDataArray.Length)
-            characterNameText.text = characterDataArray[currentCharacterIndex].characterName;
+        if (characterNameText != null && _currentCharacterIndex < characterDataArray.Length)
+            characterNameText.text = characterDataArray[_currentCharacterIndex].characterName;
 
         if (characterDetailText != null)
         {
-            // description giờ là string[] — lấy phần tử [0] với null/empty guard
-            var desc = characterDataArray[currentCharacterIndex].description;
+            var desc = characterDataArray[_currentCharacterIndex].description;
             characterDetailText.text = (desc != null && desc.Length > 0) ? desc[0] : "";
         }
         UpdateCharacterPositions();
     }
 
-    void OnCreateCharacterButtonClicked()
+    private void OnCreateCharacterButtonClicked()
     {
-        PlayerDataManager.Instance.SaveCharacterIndex(currentCharacterIndex);
-
-        Debug.Log($"[CharacterSelection] Player đã chọn character: {characterDataArray[currentCharacterIndex].characterName}");
-
+        PlayerDataManager.Instance.SaveCharacterIndex(_currentCharacterIndex);
+#if UNITY_EDITOR
+        GameLog.Info($"[CharacterSelection] Player đã chọn character: {characterDataArray[_currentCharacterIndex].characterName}");
+#endif
         TransitionToCompanionSelection();
     }
 
-    void TransitionToCompanionSelection()
+    private void TransitionToCompanionSelection()
     {
-        if (playerCharacterPanel != null)
-            playerCharacterPanel.SetActive(false);
-
-        if (companionSelectionPanel != null)
-            companionSelectionPanel.SetActive(true);
-
-        Debug.Log("[CharacterSelection] Chuyển sang Companion Selection");
+        if (playerCharacterPanel != null) playerCharacterPanel.SetActive(false);
+        if (companionSelectionPanel != null) companionSelectionPanel.SetActive(true);
+#if UNITY_EDITOR
+        GameLog.Info("[CharacterSelection] Chuyển sang Companion Selection");
+#endif
     }
 }

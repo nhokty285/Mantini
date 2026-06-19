@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -317,7 +317,7 @@ public class ImageDownloadManager : MonoBehaviour
 
     private void OnLowMemory()
     {
-        Debug.LogWarning("[ImageDownload] OS low memory → clearing texture cache");
+        GameLog.Warn("[ImageDownload] OS low memory → clearing texture cache");
         ClearCache();
         Resources.UnloadUnusedAssets();
     }

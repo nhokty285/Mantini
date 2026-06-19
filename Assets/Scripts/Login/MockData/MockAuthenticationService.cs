@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using System.Collections;
 
@@ -13,7 +13,7 @@ public class MockAuthenticationService : MonoBehaviour
     {
         if (useMockAuth)
         {
-            Debug.Log("🧪 MOCK LOGIN: Testing authentication flow");
+            GameLog.Info("🧪 MOCK LOGIN: Testing authentication flow");
 
             // Tạo fake JWT token (giống thật)
             string fakeAccessToken = CreateMockJWTToken(mockUsername);
@@ -25,9 +25,9 @@ public class MockAuthenticationService : MonoBehaviour
             PlayerPrefs.SetString("token_expiry", DateTime.Now.AddHours(1).ToBinary().ToString());
             PlayerPrefs.Save();
 
-            Debug.Log("✅ MOCK LOGIN SUCCESS - Token saved!");
-            Debug.Log($"Access Token: {fakeAccessToken.Substring(0, 50)}...");
-            Debug.Log($"Refresh Token: {fakeRefreshToken}");
+            GameLog.Info("✅ MOCK LOGIN SUCCESS - Token saved!");
+            GameLog.Info($"Access Token: {fakeAccessToken.Substring(0, 50)}...");
+            GameLog.Info($"Refresh Token: {fakeRefreshToken}");
         }
     }
 

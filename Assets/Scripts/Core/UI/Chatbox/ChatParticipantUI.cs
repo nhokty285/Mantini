@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -37,7 +37,7 @@ public class ChatParticipantUI : MonoBehaviour
         if (selectButton != null)
             selectButton.onClick.AddListener(OnParticipantClicked);
 
-        Debug.Log($"✅ Setup UI for {participant.GetParticipantName()}");
+        GameLog.Info($"✅ Setup UI for {participant.GetParticipantName()}");
     }
 
     private void SetAvatarByType(ChatParticipantType type)
@@ -63,7 +63,7 @@ public class ChatParticipantUI : MonoBehaviour
         if (multiChatManager != null)
         {
             // TODO: Implement SetTargetRecipient method
-            Debug.Log($"Selected participant: {participant.GetParticipantName()}");
+            GameLog.Info($"Selected participant: {participant.GetParticipantName()}");
         }
 
         SetSelected(true);

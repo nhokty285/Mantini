@@ -1,27 +1,18 @@
-﻿// VendorNPC.cs
+// VendorNPC.cs
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UIElements;
-public class VendorNPC : BaseNPC, IChatParticipant
+
+public class VendorNPC : BaseNPC
 {
     [Header("Vendor Specific")]
     [SerializeField] private NPCAPIConfig vendorConfig;
     [SerializeField] private ShopData defaultShopData; // Fallback nếu API fail
     [SerializeField] private Sprite vendorIconBT;
     [SerializeField] private MultiChatManager _chatManager;
-    protected override MultiChatManager GetChatManager() => _chatManager;
+
     [Header("Idle Animation Settings")]
-
-    [SerializeField] private int totalIdleVariations = 3; // Tổng số idle đặc biệt 
-    private int lastActionId = 0;
-    private bool isCustomerNearby = false;
-    // Animator Hashes
-    private readonly int actionIdHash = Animator.StringToHash("ActionID");
-    private readonly int isIdlingHash = Animator.StringToHash("IsIdling");
-
-    private ShopData dynamicShopData;
-    private bool isShopDataLoaded = false;
+    [SerializeField] private int totalIdleVariations = 3; // Tổng số idle đặc biệt
 
     [Header("Vendor Configuration")]
     [SerializeField] private Sprite vendorImage; // Avatar của vendor
@@ -36,35 +27,51 @@ public class VendorNPC : BaseNPC, IChatParticipant
     [SerializeField] private ImageLayout myLayout = ImageLayout.Default;
 
     [Header("Dify Chat State")]
-/*    private string _conversationId = "";     
-    private bool _isWaitingResponse = false;
-    private GameObject _typingBubble;*/
-    public System.Action OnTypingStarted;   // Fire khi bắt đầu chờ API
-    public System.Action OnTypingStopped;   // Fire khi nhận được response (hoặc lỗi)
     [SerializeField] private string difyApiKey;
+
+    // Public Action (giữ public API)
+    public System.Action OnTypingStarted;
+    public System.Action OnTypingStopped;
+
+    // Internal state
+    private int lastActionId = 0;
+    private bool isCustomerNearby = false;
+    private ShopData dynamicShopData;
+    private bool isShopDataLoaded = false;
+
+    // Animator Hashes — readonly cache
+    private readonly int actionIdHash = Animator.StringToHash("ActionID");
+    private readonly int isIdlingHash = Animator.StringToHash("IsIdling");
+
+    protected override MultiChatManager GetChatManager() => _chatManager;
+
     private void Start()
     {
-        NameplateManager.Instance.Register(this.transform, npcName);
-        _chatManager = FindFirstObjectByType<MultiChatManager>();
+        if (NameplateManager.Instance != null)
+            NameplateManager.Instance.Register(this.transform, npcName);
 
-
+        // Refactor: chỉ Find khi Inspector chưa wire (tránh override SerializeField)
+        if (_chatManager == null)
+            _chatManager = FindFirstObjectByType<MultiChatManager>();
     }
+
     private void FixedUpdate()
     {
         // Nếu có khách -> Tắt chế độ Idling
         if (isCustomerNearby)
         {
-            if (npcAnimator.GetBool(isIdlingHash))
+            if (npcAnimator != null && npcAnimator.GetBool(isIdlingHash))
                 npcAnimator.SetBool(isIdlingHash, false);
             return;
         }
 
         HandleRandomIdleActions();
     }
+
     public override void InitializeNPCData()
     {
         npcType = NPCType.Vendor;
-        SetupNameTag(); 
+        SetupNameTag();
 
         if (vendorConfig != null)
         {
@@ -72,17 +79,18 @@ public class VendorNPC : BaseNPC, IChatParticipant
             npcId = vendorConfig.npcId;
         }
 
-        Debug.Log($"Vendor NPC '{npcName}' initialized - Category: {vendorConfig?.shopCategory}");
+#if UNITY_EDITOR
+        GameLog.Info($"[VendorNPC] '{npcName}' initialized - Category: {vendorConfig?.shopCategory}");
+#endif
     }
 
     private void SetupNameTag()
     {
-        if (npcName != null)
-        {
+        // Refactor: thêm null check cho nameTagUI và dùng IsNullOrEmpty (string null/empty đều fail)
+        if (nameTagUI != null && !string.IsNullOrEmpty(npcName))
             nameTagUI.text = npcName;
-        }
     }
-  
+
     private void HandleRandomIdleActions()
     {
         if (npcAnimator == null || totalIdleVariations <= 0) return;
@@ -97,54 +105,55 @@ public class VendorNPC : BaseNPC, IChatParticipant
         bool isFinishing = stateInfo.normalizedTime >= 0.95f && !npcAnimator.IsInTransition(0);
         bool isDefaultState = npcAnimator.GetInteger(actionIdHash) == 0;
 
-        if (isFinishing || isDefaultState)
-        {
-            // Random số mới
-            int newActionId;
-            if (totalIdleVariations == 1)
-            {
-                newActionId = 1;
-            }
-            else
-            {
-                do
-                {
-                    newActionId = Random.Range(1, totalIdleVariations + 1);
-                } while (newActionId == lastActionId);
-            }
-            lastActionId = newActionId;
+        if (!(isFinishing || isDefaultState)) return;
 
-            // Chỉ cần đổi ID, Bool IsIdling đã bật sẵn rồi
-            npcAnimator.SetInteger(actionIdHash, newActionId);
+        // Random số mới
+        int newActionId;
+        if (totalIdleVariations == 1)
+        {
+            newActionId = 1;
         }
+        else
+        {
+            do
+            {
+                newActionId = Random.Range(1, totalIdleVariations + 1);
+            } while (newActionId == lastActionId);
+        }
+        lastActionId = newActionId;
+
+        // Chỉ cần đổi ID, Bool IsIdling đã bật sẵn rồi
+        npcAnimator.SetInteger(actionIdHash, newActionId);
     }
 
-  
     public override void OnPlayerEnterRange()
     {
-        Debug.Log($"Vendor {npcName}: Player entered range");
+#if UNITY_EDITOR
+        GameLog.Info($"[VendorNPC] {npcName}: Player entered range");
+#endif
         isCustomerNearby = true;
+
         if (npcAnimator != null)
         {
             // 1. Tắt công tắc Trigger ngay lập tức (Xóa lệnh cũ)
             npcAnimator.SetBool(isIdlingHash, false);
-
             // 2. Ép ActionID về 0 -> Kích hoạt Transition thoát hiểm
             npcAnimator.SetInteger(actionIdHash, 0);
         }
 
         // Load shop data từ API
         if (!isShopDataLoaded)
-        {
             FetchShopDataFromAPI();
-        }
+
         TutorialGamePlay.Instance?.OnPlayerEnterNPCRange();
     }
 
     public override void OnPlayerExitRange()
     {
         _chatManager?.RemoveParticipant(this);
-        Debug.Log($"Vendor {npcName}: Player left range");
+#if UNITY_EDITOR
+        GameLog.Info($"[VendorNPC] {npcName}: Player left range");
+#endif
         isCustomerNearby = false;
 
         if (MainMenuView.Instance != null)
@@ -154,42 +163,36 @@ public class VendorNPC : BaseNPC, IChatParticipant
         }
     }
 
-    /*   public override void ProcessInteraction()
-       {
-           if (MainMenuView.Instance != null)
-           {
-               // ✅ THÊM tham số this
-               MainMenuView.Instance.SetNPCInteraction(true, npcName, dynamicShopData ?? defaultShopData, this);
-           }
-       }*/
-
     public override void ProcessInteraction()
     {
         if (MainMenuView.Instance == null) return;
-        Debug.Log($"[RESTORE][11] ProcessInteraction — " +
-           $"HasActiveConversation={HasActiveConversation}, " +
-           $"SessionRestoredThisPlay={SessionRestoredThisPlay}, " +
-           $"ConversationId='{ConversationId}'");
 
-        // ✅ Nếu đã có conversation trong session này → restore lịch sử
+#if UNITY_EDITOR
+        GameLog.Info($"[VendorNPC][RESTORE] ProcessInteraction — " +
+                  $"HasActiveConversation={HasActiveConversation}, " +
+                  $"SessionRestoredThisPlay={SessionRestoredThisPlay}, " +
+                  $"ConversationId='{ConversationId}'");
+#endif
+
+        // Nếu đã có conversation trong session này → restore lịch sử
         if (HasActiveConversation && !SessionRestoredThisPlay)
         {
-            Debug.Log($"[VendorNPC] {npcName}: Restoring conversation {ConversationId}");
+            GameLog.Info($"[VendorNPC] {npcName}: Restoring conversation {ConversationId}");
 
             RestoreConversationSession((messages) =>
             {
-                Debug.Log($"[RESTORE][11] → Restore callback nhận {messages?.Count ?? 0} messages, mở shop...");
+#if UNITY_EDITOR
+                GameLog.Info($"[VendorNPC][RESTORE] → Restore callback nhận {messages?.Count ?? 0} messages, mở shop...");
+#endif
                 // Mở shop bình thường
                 MainMenuView.Instance.SetNPCInteraction(
                     true, npcName, dynamicShopData ?? defaultShopData, this);
 
-                // ✅ Sau khi UI mở, load lịch sử chat lên
+                // Sau khi UI mở, load lịch sử chat lên
                 if (messages != null && messages.Count > 0)
-                {
                     MainMenuView.Instance.RestoreChatHistory(messages, this);
-                }
                 else
-                    Debug.LogWarning("[RESTORE][11] → messages rỗng, không restore UI");
+                    GameLog.Warn("[VendorNPC][RESTORE] → messages rỗng, không restore UI");
             });
         }
         else
@@ -204,88 +207,28 @@ public class VendorNPC : BaseNPC, IChatParticipant
 
     public override Sprite GetParticipantIcon()
     {
-        // Ưu tiên trả về vendorImage hoặc vendorIconBT tùy logic của bạn
+        // Ưu tiên trả về vendorIcon nếu có
         return vendorIcon != null ? vendorIcon : base.GetParticipantIcon();
     }
 
-
     protected override string GetDefaultResponse()
-    {
-        return $"Xin chào! Tôi là {npcName}. Chào mừng đến cửa hàng của tôi!";
-    }
-
-    // ✅ THÊM Method để VendorNPC cũng có AI Response
-/*    public override string GetAIResponse(string playerMessage)
-    {   
-        if (!enableAIChat || string.IsNullOrEmpty(aiPersonality))
-            return GetDefaultResponse();
-
-        // Tránh gửi nhiều request cùng lúc
-        if (_isWaitingResponse)
-        return "Hãy đợi mình một chút...";
-
-        // userId = npcId của vendor này để phân biệt session
-        string userId = string.IsNullOrEmpty(npcId) ? "player-guest" : npcId;
-        _isWaitingResponse = true;
-
-        _typingBubble = _chatManager?.AddTypingBubble(
-       sender: GetParticipantName(),
-       icon: GetParticipantIcon()
-   );
-
-        DifyChatService.Instance.SendMessageAI(
-            apiKey: aiPersonality,     // ← aiPersonality IS the API key
-            userId: userId,
-            query: playerMessage,
-            conversationId: _conversationId,
-            onSuccess: (answer, newConvId) =>
-            {
-                _conversationId = newConvId;   // Lưu lại để giữ ngữ cảnh
-                _isWaitingResponse = false;
-
-                if (_typingBubble != null)
-                {
-                    Object.Destroy(_typingBubble);
-                    _typingBubble = null;
-                }
-
-                Debug.Log($"[{npcName}] Dify response: {answer}");
-                OnDifyResponseReceived?.Invoke(answer);
-            },
-            onError: (err) =>
-            {
-                _isWaitingResponse = false;
-                if (_typingBubble != null)
-                {
-                    Object.Destroy(_typingBubble);
-                    _typingBubble = null;
-                }
-
-                Debug.LogError($"[{npcName}] Dify error: {err}");
-                OnDifyResponseReceived?.Invoke(GetDefaultResponse());
-            }
-        );
-
-        return null;
-    }*/
-
+        => $"Xin chào! Tôi là {npcName}. Chào mừng đến cửa hàng của tôi!";
 
     // Vendor-specific methods (từ SellerTrigger cũ)
     private void FetchShopDataFromAPI()
     {
-        if (ShopAPIManager.Instance != null && vendorConfig != null)
-        {
-            ShopAPIManager.Instance.FetchShopItemsForNPC(
-                vendorConfig.npcId,
-                OnAPISuccess,
-                OnAPIError
-            );
-        }
+        if (ShopAPIManager.Instance == null || vendorConfig == null) return;
+
+        ShopAPIManager.Instance.FetchShopItemsForNPC(
+            vendorConfig.npcId,
+            OnAPISuccess,
+            OnAPIError
+        );
     }
 
     private void OnAPISuccess(List<ShopItem> shopItems)
     {
-        Debug.Log($"API Success: Received {shopItems.Count} items for vendor {npcName}");
+        GameLog.Info($"[VendorNPC] API Success: Received {shopItems.Count} items for vendor {npcName}");
 
         // Tạo dynamic shop data
         dynamicShopData = ScriptableObject.CreateInstance<ShopData>();
@@ -294,52 +237,28 @@ public class VendorNPC : BaseNPC, IChatParticipant
         SetDynamicItems(dynamicShopData, shopItems);
         isShopDataLoaded = true;
 
-        Debug.Log($"Shop data loaded successfully for {npcName}");
+        GameLog.Info($"[VendorNPC] Shop data loaded successfully for {npcName}");
     }
 
     private void OnAPIError(string error)
     {
-        Debug.LogError($"Failed to load shop data for {npcName}: {error}");
+        Debug.LogError($"[VendorNPC] Failed to load shop data for {npcName}: {error}");
 
         // Sử dụng default shop data
         if (defaultShopData != null)
         {
             dynamicShopData = defaultShopData;
             isShopDataLoaded = true;
-            Debug.Log($"Using default shop data for {npcName}");
+            GameLog.Info($"[VendorNPC] Using default shop data for {npcName}");
         }
     }
 
-    // ========== IMPLEMENT IChatParticipant ==========
-    public string GetParticipantName()
-    {
-        return npcName;
-    }
+    // ─── IChatParticipant overrides ─────────────────────────────────────
+    // Refactor: bỏ duplicate (GetParticipantName/ID/Type, OnJoin/Leave) — base đã cover.
+    // IsActive() khác base (active khi có customer) → giữ override.
+    public override bool IsActive() => isCustomerNearby;
 
-    public string GetParticipantID()
-    {
-        return npcId;
-    }
-
-    public ChatParticipantType GetParticipantType()
-    {
-        return ChatParticipantType.VendorNPC;
-    }
-
-    public bool IsActive()
-    {
-        return isCustomerNearby; // Vendor active khi có khách
-    }
-
-    public void OnJoinChat()
-    {
-        Debug.Log($"Vendor {npcName} available in chat");
-    }
-
-    public void OnLeaveChat()
-    {
-        Debug.Log($"Vendor {npcName} closed chat");
-    }
+    public override ChatParticipantType GetParticipantType() => ChatParticipantType.VendorNPC;
 
     private void SetDynamicItems(ShopData shopData, List<ShopItem> items)
     {
@@ -347,18 +266,14 @@ public class VendorNPC : BaseNPC, IChatParticipant
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
         if (itemsListField != null)
-        {
             itemsListField.SetValue(shopData, items);
-        }
     }
 
-    //Override GetDialogueSequence để setup dialogue của Vendor
+    // Override GetDialogueSequence để setup dialogue của Vendor
     public override List<DialogueEntry> GetDialogueSequence()
     {
         if (!customDialogueEnabled || dialogueSequence.Count == 0)
-        {
             return GenerateDefaultVendorDialogue();
-        }
 
         return new List<DialogueEntry>(dialogueSequence);
     }
@@ -366,37 +281,16 @@ public class VendorNPC : BaseNPC, IChatParticipant
     /// Tạo dialogue mặc định cho vendor nếu không có custom dialogue
     private List<DialogueEntry> GenerateDefaultVendorDialogue()
     {
-        List<DialogueEntry> defaultDialogue = new List<DialogueEntry>();
-
-        // Greeting
-        defaultDialogue.Add(new DialogueEntry(
-            npcName,
-            $"Xin chào! Tôi là {npcName}.",
-            vendorImage,
-            0f,
-            myLayout
-        ));
-
-        // Introduction
-        defaultDialogue.Add(new DialogueEntry(
-            npcName,
-            $"Mình bán những sản phẩm {shopCategory} rất chất lượng.",
-            vendorImage,
-            0f,
-            myLayout
-        ));
-
-        // Call to action
-        defaultDialogue.Add(new DialogueEntry(
-            npcName,
-            "Bạn muốn xem hàng của mình không?",
-            vendorImage,
-            0f,
-            myLayout
-        ));
-
+        // Refactor: pre-allocate capacity = 3 (tránh resize List)
+        var defaultDialogue = new List<DialogueEntry>(3)
+        {
+            new DialogueEntry(npcName, $"Xin chào! Tôi là {npcName}.", vendorImage, 0f, myLayout),
+            new DialogueEntry(npcName, $"Mình bán những sản phẩm {shopCategory} rất chất lượng.", vendorImage, 0f, myLayout),
+            new DialogueEntry(npcName, "Bạn muốn xem hàng của mình không?", vendorImage, 0f, myLayout)
+        };
         return defaultDialogue;
     }
+
     public override string ProcessMessage(string message, string sender)
     {
         if (enableAIChat && !string.IsNullOrEmpty(aiPersonality))
@@ -405,8 +299,8 @@ public class VendorNPC : BaseNPC, IChatParticipant
             return null;
         }
         return GetDefaultResponse();
-
     }
+
     // Getter cho shop data
     public ShopData GetShopData() => dynamicShopData ?? defaultShopData;
     public NPCAPIConfig GetVendorConfig() => vendorConfig;

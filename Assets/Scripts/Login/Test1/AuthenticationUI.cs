@@ -1,4 +1,4 @@
-﻿/*using UnityEngine;
+/*using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -86,7 +86,7 @@ public class AuthenticationUI : MonoBehaviour
 
     private void OnGoogleLoginClicked()
     {
-        Debug.Log("🔍 Google Login button clicked");
+        GameLog.Info("🔍 Google Login button clicked");
 
         if (GoogleAuthService.Instance != null)
         {
@@ -101,13 +101,13 @@ public class AuthenticationUI : MonoBehaviour
 
     private void OnAppleLoginClicked()
     {
-        Debug.Log("🍎 Apple Login - Coming soon!");
+        GameLog.Info("🍎 Apple Login - Coming soon!");
         ShowError("Apple Login not implemented yet");
     }
 
     private void OnLogoutClicked()
     {
-        Debug.Log("🔓 Logout button clicked");
+        GameLog.Info("🔓 Logout button clicked");
 
         if (GoogleAuthService.Instance != null)
         {
@@ -125,7 +125,7 @@ public class AuthenticationUI : MonoBehaviour
             {
                 GoogleAuthService.Instance.CurrentUser.phone = phone;
                 // Có thể gọi API để update thông tin này
-                Debug.Log($"📞 Updated phone: {phone}");
+                GameLog.Info($"📞 Updated phone: {phone}");
             }
 
             // Hide additional info panel
@@ -136,7 +136,7 @@ public class AuthenticationUI : MonoBehaviour
 
     private void OnLoginSuccess(UserProfile user)
     {
-        Debug.Log($"✅ Login success callback for: {user.displayName}");
+        GameLog.Info($"✅ Login success callback for: {user.displayName}");
 
         ShowProcessingState(false);
         UpdateAuthenticationState(true, user);
@@ -161,7 +161,7 @@ public class AuthenticationUI : MonoBehaviour
 
     private void OnLogoutComplete()
     {
-        Debug.Log("🔓 Logout complete callback");
+        GameLog.Info("🔓 Logout complete callback");
         UpdateAuthenticationState(false, null);
     }
 
@@ -244,7 +244,7 @@ public class AuthenticationUI : MonoBehaviour
 
     private void ShowWelcomeMessage(string userName)
     {
-        Debug.Log($"🎉 Welcome {userName}!");
+        GameLog.Info($"🎉 Welcome {userName}!");
     }
 
     private void OnDestroy()
@@ -340,7 +340,7 @@ public class AuthenticationUI : MonoBehaviour
 
     private void OnQuickLoginClicked()
     {
-        Debug.Log("⚡ Quick Login button clicked");
+        GameLog.Info("⚡ Quick Login button clicked");
 
         if (GoogleAuthService.Instance != null)
         {
@@ -355,7 +355,7 @@ public class AuthenticationUI : MonoBehaviour
 
     private void OnLogoutClicked()
     {
-        Debug.Log("🔓 Logout button clicked");
+        GameLog.Info("🔓 Logout button clicked");
 
         if (GoogleAuthService.Instance != null)
         {
@@ -365,7 +365,7 @@ public class AuthenticationUI : MonoBehaviour
 
     private void OnLoginSuccess(UserProfile user)
     {
-        Debug.Log($"✅ Login success callback for: {user.displayName}");
+        GameLog.Info($"✅ Login success callback for: {user.displayName}");
 
         ShowProcessingState(false);
         UpdateAuthenticationState(true, user);
@@ -386,7 +386,7 @@ public class AuthenticationUI : MonoBehaviour
 
     private void OnLogoutComplete()
     {
-        Debug.Log("🔓 Logout complete callback");
+        GameLog.Info("🔓 Logout complete callback");
         UpdateAuthenticationState(false, null);
         HideGameInterface();
     }
@@ -436,7 +436,7 @@ public class AuthenticationUI : MonoBehaviour
             gameMainPanel.SetActive(true);
         }
 
-        Debug.Log("🎮 Game interface shown!");
+        GameLog.Info("🎮 Game interface shown!");
     }
 
     private void HideGameInterface()
@@ -446,7 +446,7 @@ public class AuthenticationUI : MonoBehaviour
             gameMainPanel.SetActive(false);
         }
 
-        Debug.Log("🎮 Game interface hidden!");
+        GameLog.Info("🎮 Game interface hidden!");
     }
 
     private void ShowProcessingState(bool isProcessing)
@@ -479,7 +479,7 @@ public class AuthenticationUI : MonoBehaviour
 
     private void ShowWelcomeMessage(string userName)
     {
-        Debug.Log($"🎉 Welcome {userName}! You're now logged in and ready to play!");
+        GameLog.Info($"🎉 Welcome {userName}! You're now logged in and ready to play!");
     }
 
     private void OnDestroy()

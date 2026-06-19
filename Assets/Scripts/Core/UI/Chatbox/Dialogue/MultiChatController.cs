@@ -26,6 +26,13 @@ public class MultiChatManager : MonoBehaviour
     [SerializeField] private Transform chatParticipantsContainer;
     [SerializeField] private GameObject participantItemPrefab;
     [SerializeField] private DialogueAudioSync audioSync;
+
+    [Header("Bubble Alignment")]
+    [SerializeField] private bool playerBubbleOnRight = true;
+    [Range(0.4f, 0.95f)]
+    [SerializeField] private float maxBubbleWidthRatio = 0.72f;
+    private VerticalLayoutGroup _contentLayout;
+
     // ✅ THÊM: Auto-open settings
     [Header("Auto-Open Settings")]
     [SerializeField] private bool autoOpenWithShop = true;
@@ -108,7 +115,7 @@ public class MultiChatManager : MonoBehaviour
 
     private void OnNPCDifyResponse(IChatParticipant participant, string answer)
     {
-        Debug.Log($"[OnNPCDifyResponse] participant={participant?.GetParticipantName()} | answer={answer}");
+        GameLog.Info($"[OnNPCDifyResponse] participant={participant?.GetParticipantName()} | answer={answer}");
 
         if (string.IsNullOrEmpty(answer)) return;
         AddChatBubble(answer, isPlayer: false,
@@ -179,11 +186,11 @@ public class MultiChatManager : MonoBehaviour
         if (companions.Length > 0)
         {
             assignedCompanion = companions[0];
-            Debug.Log($"Assigned companion: {assignedCompanion.GetNPCName()}");
+            GameLog.Info($"Assigned companion: {assignedCompanion.GetNPCName()}");
         }
         else
         {
-            Debug.LogWarning("No Companion NPC found in scene, u need load companion with player when u play scene");
+            GameLog.Warn("No Companion NPC found in scene, u need load companion with player when u play scene");
         }
     }
 
@@ -247,7 +254,7 @@ public class MultiChatManager : MonoBehaviour
 
         // ✅ FIX CAMERA BUG: Unlock camera khi đóng chat panel
         PlayerController.Instance?.SetCanMove(true);
-        Debug.Log("[MultiChatManager] Chat closed → SetCanMove(true)");
+        GameLog.Info("[MultiChatManager] Chat closed → SetCanMove(true)");
     }
 
     // Hàm xóa sạch các tin nhắn cũ trong UI
@@ -314,7 +321,7 @@ public class MultiChatManager : MonoBehaviour
                     return $"<link=\"{item.itemID}\"><color=#FF0000><b>[{innerText}]</b></color></link>";
                 }
 
-                Debug.Log($"Checking: '{cleanInnerText}' vs '{cleanItemName}'");
+                GameLog.Info($"Checking: '{cleanInnerText}' vs '{cleanItemName}'");
             }
 
             return bracketContent; // Không tìm thấy -> giữ nguyên
@@ -323,14 +330,99 @@ public class MultiChatManager : MonoBehaviour
         return formattedMessage;
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // BUBBLE ALIGNMENT (player phải / NPC trái)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // Cho mỗi dòng (bubble) chiếm trọn bề ngang Content -> mới có chỗ căn trái/phải.
+    private void EnsureContentLayout()
+    {
+        if (_contentLayout != null || companionChatContent == null) return;
+
+        _contentLayout = companionChatContent.GetComponent<VerticalLayoutGroup>();
+        if (_contentLayout != null)
+        {
+            _contentLayout.childControlWidth = true;
+            _contentLayout.childForceExpandWidth = true;
+
+            // Padding đối xứng để dòng chat không lệch trái/phải (trước đó L-4/R0)
+            var p = _contentLayout.padding;
+            _contentLayout.padding = new RectOffset(0, 0, p.top, p.bottom);
+        }
+    }
+
+    // Căn 1 bubble theo người gửi. O(1), chỉ gọi lúc tạo bubble (không trong Update).
+    private void ApplyBubbleAlignment(GameObject bubble, bool isPlayer)
+    {
+        if (bubble == null) return;
+
+        bool toRight = isPlayer && playerBubbleOnRight;
+
+        // Bỏ ràng buộc width ngang của bubble để không xung đột với row full-width
+        var fitter = bubble.GetComponent<ContentSizeFitter>();
+        if (fitter != null)
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+        // Lật alignment + đảo thứ tự (avatar sang phải) cho bubble của player
+        var hlg = bubble.GetComponent<HorizontalLayoutGroup>();
+        if (hlg != null)
+        {
+            hlg.childControlWidth = false;
+            hlg.childForceExpandWidth = false;
+            hlg.childAlignment = toRight ? TextAnchor.UpperRight : TextAnchor.UpperLeft;
+            hlg.reverseArrangement = toRight;
+        }
+
+        // Căn cột (tên + bong bóng) về đúng phía: phải cho player, trái cho NPC
+        var column = bubble.GetComponentInChildren<VerticalLayoutGroup>();
+        if (column != null)
+            column.childAlignment = toRight ? TextAnchor.UpperRight : TextAnchor.UpperLeft;
+    }
+
+    // Co khung chữ về đúng bề rộng nội dung nhưng KHÔNG vượt maxBubbleWidthRatio * bề ngang khung.
+    // Tin ngắn -> bubble hẹp -> căn phải/trái thấy rõ; tin dài -> wrap trong giới hạn.
+    private void FitBubbleWidth(GameObject bubble)
+    {
+        if (bubble == null || companionChatContent == null) return;
+
+        var msg = FindMessageText(bubble);
+        if (msg == null) return;
+
+        float contentWidth = ((RectTransform)companionChatContent).rect.width;
+        if (contentWidth <= 1f) return;
+
+        float maxWidth = contentWidth * maxBubbleWidthRatio;
+        float preferred = msg.GetPreferredValues().x;   // bề rộng 1 dòng (chưa wrap)
+        float width = Mathf.Min(preferred, maxWidth);
+
+        msg.enableWordWrapping = true;
+        var le = msg.GetComponent<LayoutElement>();
+        if (le == null) le = msg.gameObject.AddComponent<LayoutElement>();
+        le.preferredWidth = width;
+    }
+
+    // Message_Text trong prefab có LayoutFixer; fallback theo tên nếu prefab đổi.
+    private static TMP_Text FindMessageText(GameObject bubble)
+    {
+        foreach (var t in bubble.GetComponentsInChildren<TMP_Text>(true))
+            if (t.GetComponent<LayoutFixer>() != null) return t;
+        foreach (var t in bubble.GetComponentsInChildren<TMP_Text>(true))
+            if (t.name.IndexOf("Message", System.StringComparison.OrdinalIgnoreCase) >= 0) return t;
+        return null;
+    }
+
     private GameObject AddChatBubble(string message, bool isPlayer, string sender = "", Sprite icon = null)
     {
-        Debug.Log($"[AddChatBubble] sender='{sender}' | isPlayer={isPlayer} | msg='{message}'\n{new System.Diagnostics.StackTrace(true)}");
+        GameLog.Info($"[AddChatBubble] sender='{sender}' | isPlayer={isPlayer} | msg='{message}'\n{new System.Diagnostics.StackTrace(true)}");
 
         if (chatMessagePrefab == null || companionChatContent == null) return null;
 
         var go = Instantiate(chatMessagePrefab, companionChatContent);
         var ui = go.GetComponent<ChatMessageUI>();
+
+        // ✅ Căn lề theo người gửi: player bên phải, NPC bên trái
+        EnsureContentLayout();
+        ApplyBubbleAlignment(go, isPlayer);
      //   Canvas.ForceUpdateCanvases();
 
         // ✅ FIX 1: Disable layout before setup to prevent intermediate layouts
@@ -353,6 +445,9 @@ public class MultiChatManager : MonoBehaviour
 
             ui.Setup(finalMessage, displaySender, isPlayer, icon);
         }
+
+        // ✅ Co bubble về đúng bề rộng nội dung để căn trái/phải rõ rệt
+        FitBubbleWidth(go);
 
         // ✅ FIX 2: Ensure LayoutElement exists on chat bubble for proper sizing
         if (go.GetComponent<LayoutElement>() == null)
@@ -380,6 +475,11 @@ public class MultiChatManager : MonoBehaviour
         var ui = go.GetComponent<ChatMessageUI>();
         ui.Setup("đang nhập...", sender, isPlayer: false, icon);   // text = "đang nhập..."
 
+        // ✅ Typing bubble là của NPC -> căn trái
+        EnsureContentLayout();
+        ApplyBubbleAlignment(go, isPlayer: false);
+        FitBubbleWidth(go);
+
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(companionChatScroll.content);
         StartCoroutine(ScrollToBottomNextFrame());
@@ -398,7 +498,7 @@ public class MultiChatManager : MonoBehaviour
     {
         if (viewModel == null || viewModel.CurrentShopData == null)
         {
-            Debug.LogWarning("Không thể test vì chưa có dữ liệu Shop!");
+            GameLog.Warn("Không thể test vì chưa có dữ liệu Shop!");
             return;
         }
 
@@ -440,7 +540,7 @@ public class MultiChatManager : MonoBehaviour
 
         // ✅ FIX CAMERA BUG: Lock camera khi mở chat panel
         PlayerController.Instance?.SetCanMove(false);
-        Debug.Log("[MultiChatManager] Chat opened → SetCanMove(false)");
+        GameLog.Info("[MultiChatManager] Chat opened → SetCanMove(false)");
 
             // ✅ QUAN TRỌNG: Add Companion vào chat
             if (assignedCompanion != null && !activeParticipants.Contains(assignedCompanion))
@@ -467,7 +567,7 @@ public class MultiChatManager : MonoBehaviour
             // Don't auto-focus input field to avoid interrupting shopping
             // chatInputField?.ActivateInputField();
         
-        Debug.Log("Chat opened automatically with shop");
+        GameLog.Info("Chat opened automatically with shop");
     }
 
     private void ScrollChatToBottom()
@@ -488,7 +588,7 @@ public class MultiChatManager : MonoBehaviour
 
         // ✅ FIX CAMERA BUG: Unlock camera khi player rời NPC
         PlayerController.Instance?.SetCanMove(true);
-        Debug.Log("[MultiChatManager] Player leaving NPC → SetCanMove(true)");
+        GameLog.Info("[MultiChatManager] Player leaving NPC → SetCanMove(true)");
     }
 
     #region Product Context
@@ -652,6 +752,3 @@ public class MultiChatManager : MonoBehaviour
     }
 
 }
-
-
-

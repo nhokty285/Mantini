@@ -1,4 +1,4 @@
-﻿/*using System;
+/*using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -195,7 +195,7 @@ public class ShopItemUI : MonoBehaviour *//*IPointerClickHandler*//*
         }
         else
         {
-            Debug.LogWarning("ProductDetailUI not found or API data not available");
+            GameLog.Warn("ProductDetailUI not found or API data not available");
         }
     }
 
@@ -205,7 +205,7 @@ public class ShopItemUI : MonoBehaviour *//*IPointerClickHandler*//*
         if (shopItem.icon != null)
         {
             iconImage.sprite = shopItem.icon;
-            Debug.Log($"Used existing icon for {shopItem.itemName}");
+            GameLog.Info($"Used existing icon for {shopItem.itemName}");
             return;
         }
 
@@ -227,7 +227,7 @@ public class ShopItemUI : MonoBehaviour *//*IPointerClickHandler*//*
         }
         else
         {
-            Debug.LogWarning("Default item sprite is not assigned!");
+            GameLog.Warn("Default item sprite is not assigned!");
         }
     }
 
@@ -257,7 +257,7 @@ public class ShopItemUI : MonoBehaviour *//*IPointerClickHandler*//*
                 },
                 error => {
                     isLoadingImage = false;
-                    Debug.LogWarning($"Failed to load image for {shopItem.itemName}: {error}");
+                    GameLog.Warn($"Failed to load image for {shopItem.itemName}: {error}");
                 }
             );
         }
@@ -292,12 +292,12 @@ public class ShopItemUI : MonoBehaviour *//*IPointerClickHandler*//*
                 }
                 else
                 {
-                    Debug.LogWarning($"Invalid texture for {shopItem.itemName}");
+                    GameLog.Warn($"Invalid texture for {shopItem.itemName}");
                 }
             }
             else
             {
-                Debug.LogWarning($"Failed to load image from API for {shopItem.itemName}: {request.error}");
+                GameLog.Warn($"Failed to load image from API for {shopItem.itemName}: {request.error}");
             }
         }
     }
@@ -530,7 +530,7 @@ public class ShopItemUI : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[ShopItemUI] ProductDetailUI not found or API data not available");
+            GameLog.Warn("[ShopItemUI] ProductDetailUI not found or API data not available");
         }
     }
 
@@ -562,7 +562,7 @@ public class ShopItemUI : MonoBehaviour
         if (defaultItemSprite != null)
             iconImage.sprite = defaultItemSprite;
         else
-            Debug.LogWarning("[ShopItemUI] defaultItemSprite is not assigned!");
+            GameLog.Warn("[ShopItemUI] defaultItemSprite is not assigned!");
     }
 
     private void RequestDownload(string url, ShopItem shopItem)
@@ -595,7 +595,7 @@ public class ShopItemUI : MonoBehaviour
             error =>
             {
                 _loadRequested = false;
-                Debug.LogWarning($"[ShopItemUI] Load failed '{shopItem?.itemName}' | {url} | {error}");
+                GameLog.Warn($"[ShopItemUI] Load failed '{shopItem?.itemName}' | {url} | {error}");
             }
         );
     }

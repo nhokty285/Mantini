@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static MainMenuViewModel;
@@ -48,7 +48,7 @@ public class ShopData : ScriptableObject
     public void ClearCache()
     {
         itemsDict = null; // Reset dictionary cache
-        Debug.Log("Shop data cache cleared");
+        GameLog.Info("Shop data cache cleared");
     }
 
     // Optional: Method để clear specific item references

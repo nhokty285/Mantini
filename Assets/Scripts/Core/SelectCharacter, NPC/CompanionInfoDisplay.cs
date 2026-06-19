@@ -1,264 +1,214 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 public class CompanionInfoDisplay : MonoBehaviour
 {
     [Header("Companion Display")]
-    public Transform companionDisplayPosition; // Vị trí hiển thị companion model
-    public GameObject[] companionPrefabs; // Array companion prefabs
+    public Transform companionDisplayPosition;
+    public GameObject[] companionPrefabs;
 
     [Header("Companion Info")]
-    public TextMeshProUGUI companionGreetingText; // Text "Xin chào mình là Max, mình sẽ đồng hành cùng bạn"
-    public TextMeshProUGUI companionNameText; // Text hiển thị tên companion
-    public TextMeshProUGUI npcDescriptionText; // Text mô tả NPC và thông tin
+    public TextMeshProUGUI companionGreetingText;
+    public TextMeshProUGUI companionNameText;
+    public TextMeshProUGUI npcDescriptionText;
 
     [Header("UI Elements")]
-    public Button changeCompanionButton; // Nút "Đổi companion" 
-    public Button continueButton; // Nút "Tiếp tục"
+    public Button changeCompanionButton;
+    public Button continueButton;
 
     [Header("Popup")]
-    public GameObject confirmationPopup; // Popup xác nhận
-    public Button confirmYesButton; // Nút "Khoan đã" 
-    public Button confirmNoButton; // Nút "Đi nào"
-    public TextMeshProUGUI popupMessageText; // Text trong popup
+    public GameObject confirmationPopup;
+    public Button confirmYesButton;
+    public Button confirmNoButton;
+    public TextMeshProUGUI popupMessageText;
 
     [Header("Panels")]
-    public GameObject companionInfoPanel; // Panel hiện tại
-    public GameObject companionSelectionPanel; // Panel CompanionSelection
+    public GameObject companionInfoPanel;
+    public GameObject companionSelectionPanel;
 
-    private GameObject currentCompanionInstance;
-    private int selectedCompanionIndex;
+    private GameObject _currentCompanionInstance;
+    private int _selectedCompanionIndex;
 
-    void Start()
+    private const string KEY_SELECTED_COMPANION = "SelectedCompanion";
+
+    // Refactor: cache descriptions thành static readonly thay vì alloc array mỗi call GetCompanionDescription
+    private static readonly string[] CompanionDescriptions =
+    {
+        "NPC\nText ingame Text ingame Text ingame Text ingame\nText ingame Text ingame Text ingame Text ingame\nText ingame Text ingame Text ingame Text ingame",
+        "NPC\nMô tả companion thứ hai với những đặc điểm riêng biệt\nVà thông tin chi tiết về khả năng và tính cách\nCủa companion này trong game",
+        "NPC\nCompanion thứ ba với phong cách và khả năng độc đáo\nMang lại trải nghiệm khác biệt cho người chơi\nVới những tính năng đặc biệt của riêng mình"
+    };
+    private const string DefaultDescription = "NPC\nThông tin companion\nMô tả chi tiết về companion";
+
+    private void Start()
     {
         InitializeCompanionInfo();
         SetupButtonListeners();
         LoadSelectedCompanion();
     }
-    void OnEnable()
+
+    private void OnEnable()
     {
-        // THÊM: Auto refresh khi panel được kích hoạt
-        Debug.Log("[CompanionInfoDisplay] OnEnable - Auto refreshing companion info");
+#if UNITY_EDITOR
+        GameLog.Info("[CompanionInfoDisplay] OnEnable - Auto refreshing companion info");
+#endif
         RefreshCompanionInfo();
     }
 
-    void InitializeCompanionInfo()
+    private void InitializeCompanionInfo()
     {
-        // Lấy companion được chọn từ CompanionSelection
-        selectedCompanionIndex = PlayerPrefs.GetInt("SelectedCompanion", 0);
+        _selectedCompanionIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, 0);
 
-        // Setup popup message
         if (popupMessageText != null)
-        {
             popupMessageText.text = "Nào mình cùng bắt đầu Shoppin nhé! :D";
-        }
 
-        // Ẩn popup ban đầu
         if (confirmationPopup != null)
-        {
             confirmationPopup.SetActive(false);
-        }
     }
 
-    void SetupButtonListeners()
+    private void SetupButtonListeners()
     {
-        // Button để đổi companion
+        // Mantini convention: RemoveAllListeners trước AddListener
         if (changeCompanionButton != null)
         {
+            changeCompanionButton.onClick.RemoveAllListeners();
             changeCompanionButton.onClick.AddListener(OnChangeCompanionClicked);
         }
 
-        // Button tiếp tục
         if (continueButton != null)
         {
+            continueButton.onClick.RemoveAllListeners();
             continueButton.onClick.AddListener(OnContinueClicked);
         }
 
-        // Popup buttons
         if (confirmYesButton != null)
         {
+            confirmYesButton.onClick.RemoveAllListeners();
             confirmYesButton.onClick.AddListener(OnConfirmYesClicked);
         }
 
         if (confirmNoButton != null)
         {
+            confirmNoButton.onClick.RemoveAllListeners();
             confirmNoButton.onClick.AddListener(OnConfirmNoClicked);
         }
     }
 
-    /* void LoadSelectedCompanion()
-     {
-         // Hiển thị companion được chọn
-         DisplayCompanion(selectedCompanionIndex);
-
-         // Cập nhật thông tin companion
-         UpdateCompanionInfo();
-     }*/
-
-    void LoadSelectedCompanion()
+    private void LoadSelectedCompanion()
     {
-        // Lấy companion index từ PlayerPrefs
-        selectedCompanionIndex = PlayerPrefs.GetInt("SelectedCompanion", 0);
-        Debug.Log($"[CompanionInfoDisplay] Loading companion index {selectedCompanionIndex}");
+        _selectedCompanionIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, 0);
+#if UNITY_EDITOR
+        GameLog.Info($"[CompanionInfoDisplay] Loading companion index {_selectedCompanionIndex}");
+#endif
 
-        // Kiểm tra index hợp lệ
-        if (selectedCompanionIndex >= companionPrefabs.Length)
+        if (_selectedCompanionIndex >= companionPrefabs.Length)
         {
-            Debug.LogError($"[CompanionInfoDisplay] Invalid companion index {selectedCompanionIndex}, resetting to 0");
-            selectedCompanionIndex = 0;
-            PlayerPrefs.SetInt("SelectedCompanion", 0);
+            Debug.LogError($"[CompanionInfoDisplay] Invalid companion index {_selectedCompanionIndex}, resetting to 0");
+            _selectedCompanionIndex = 0;
+            PlayerPrefs.SetInt(KEY_SELECTED_COMPANION, 0);
             PlayerPrefs.Save();
         }
 
-        DisplayCompanion(selectedCompanionIndex);
+        DisplayCompanion(_selectedCompanionIndex);
         UpdateCompanionInfo();
     }
 
-    // QUAN TRỌNG: Method này được gọi từ CompanionSelection
     public void RefreshCompanionInfo()
     {
-        Debug.Log("[CompanionInfoDisplay] RefreshCompanionInfo() called");
+#if UNITY_EDITOR
+        GameLog.Info("[CompanionInfoDisplay] RefreshCompanionInfo() called");
+#endif
 
-        // Lấy lại companion index mới nhất từ PlayerPrefs
-        int newIndex = PlayerPrefs.GetInt("SelectedCompanion", 0);
+        int newIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, 0);
 
-        if (newIndex != selectedCompanionIndex || currentCompanionInstance == null)
+        if (newIndex != _selectedCompanionIndex || _currentCompanionInstance == null)
         {
-            Debug.Log($"[CompanionInfoDisplay] Companion changed from {selectedCompanionIndex} to {newIndex}");
-            selectedCompanionIndex = newIndex;
+#if UNITY_EDITOR
+            GameLog.Info($"[CompanionInfoDisplay] Companion changed from {_selectedCompanionIndex} to {newIndex}");
+#endif
+            _selectedCompanionIndex = newIndex;
             LoadSelectedCompanion();
         }
-        else
-        {
-            Debug.Log($"[CompanionInfoDisplay] Companion unchanged (index {selectedCompanionIndex})");
-        }
     }
 
-
-    void DisplayCompanion(int companionIndex)
+    private void DisplayCompanion(int companionIndex)
     {
-        // Xóa companion instance cũ
-        if (currentCompanionInstance != null)
-        {
-            DestroyImmediate(currentCompanionInstance);
-        }
+        if (_currentCompanionInstance != null)
+            DestroyImmediate(_currentCompanionInstance);
 
-        // Tạo companion instance mới
         if (companionIndex < companionPrefabs.Length)
         {
-            currentCompanionInstance = Instantiate(companionPrefabs[companionIndex], companionDisplayPosition);
-            currentCompanionInstance.transform.localPosition = Vector3.zero;
-            currentCompanionInstance.transform.localScale = Vector3.one;
+            _currentCompanionInstance = Instantiate(companionPrefabs[companionIndex], companionDisplayPosition);
+            _currentCompanionInstance.transform.localPosition = Vector3.zero;
+            _currentCompanionInstance.transform.localScale = Vector3.one;
         }
     }
 
-    void UpdateCompanionInfo()
+    private void UpdateCompanionInfo()
     {
-        if (selectedCompanionIndex < companionPrefabs.Length)
-        {
-            string companionName = companionPrefabs[selectedCompanionIndex].name;
+        if (_selectedCompanionIndex >= companionPrefabs.Length) return;
 
-            // Cập nhật greeting text
-            if (companionGreetingText != null)
-            {
-                companionGreetingText.text = $"Xin chào mình là {companionName}, mình sẽ đồng hành cùng bạn";
-            }
+        string companionName = companionPrefabs[_selectedCompanionIndex].name;
 
-            // Cập nhật companion name
-            if (companionNameText != null)
-            {
-                companionNameText.text = $"Character\nCompanion\n{companionName}";
-            }
+        if (companionGreetingText != null)
+            companionGreetingText.text = $"Xin chào mình là {companionName}, mình sẽ đồng hành cùng bạn";
 
-            // Cập nhật NPC description
-            if (npcDescriptionText != null)
-            {
-                npcDescriptionText.text = GetCompanionDescription(selectedCompanionIndex);
-            }
-        }
+        if (companionNameText != null)
+            companionNameText.text = $"Character\nCompanion\n{companionName}";
+
+        if (npcDescriptionText != null)
+            npcDescriptionText.text = GetCompanionDescription(_selectedCompanionIndex);
     }
 
-    string GetCompanionDescription(int companionIndex)
+    private static string GetCompanionDescription(int companionIndex)
     {
-        // Mô tả cho từng companion
-        string[] descriptions = {
-            "NPC\nText ingame Text ingame Text ingame Text ingame\nText ingame Text ingame Text ingame Text ingame\nText ingame Text ingame Text ingame Text ingame",
-            "NPC\nMô tả companion thứ hai với những đặc điểm riêng biệt\nVà thông tin chi tiết về khả năng và tính cách\nCủa companion này trong game",
-            "NPC\nCompanion thứ ba với phong cách và khả năng độc đáo\nMang lại trải nghiệm khác biệt cho người chơi\nVới những tính năng đặc biệt của riêng mình"
-        };
-
-        if (companionIndex < descriptions.Length)
-        {
-            return descriptions[companionIndex];
-        }
-
-        return "NPC\nThông tin companion\nMô tả chi tiết về companion";
+        if (companionIndex >= 0 && companionIndex < CompanionDescriptions.Length)
+            return CompanionDescriptions[companionIndex];
+        return DefaultDescription;
     }
 
-    void OnChangeCompanionClicked()
+    private void OnChangeCompanionClicked()
     {
-        Debug.Log("Chuyển về Companion Selection để đổi companion");
-
-        // Ẩn panel hiện tại
-        if (companionInfoPanel != null)
-        {
-            companionInfoPanel.SetActive(false);
-        }
-
-        // Hiển thị panel CompanionSelection
-        if (companionSelectionPanel != null)
-        {
-            companionSelectionPanel.SetActive(true);
-        }
+#if UNITY_EDITOR
+        GameLog.Info("[CompanionInfoDisplay] Chuyển về Companion Selection để đổi companion");
+#endif
+        if (companionInfoPanel != null) companionInfoPanel.SetActive(false);
+        if (companionSelectionPanel != null) companionSelectionPanel.SetActive(true);
     }
 
-    void OnContinueClicked()
+    private void OnContinueClicked()
     {
-        Debug.Log("Hiển thị popup xác nhận");
-
-        // Hiển thị popup
-        if (confirmationPopup != null)
-        {
-            confirmationPopup.SetActive(true);
-        }
+#if UNITY_EDITOR
+        GameLog.Info("[CompanionInfoDisplay] Hiển thị popup xác nhận");
+#endif
+        if (confirmationPopup != null) confirmationPopup.SetActive(true);
     }
 
-    void OnConfirmYesClicked()
+    private void OnConfirmYesClicked()
     {
-        Debug.Log("User chọn Khoan đã - Ẩn popup");
-
-        // Ẩn popup
-        if (confirmationPopup != null)
-        {
-            confirmationPopup.SetActive(false);
-        }
+#if UNITY_EDITOR
+        GameLog.Info("[CompanionInfoDisplay] User chọn Khoan đã - Ẩn popup");
+#endif
+        if (confirmationPopup != null) confirmationPopup.SetActive(false);
     }
 
-    void OnConfirmNoClicked()
+    private void OnConfirmNoClicked()
     {
-        Debug.Log("User chọn Đi nào - Bắt đầu game");
-
-        // Ẩn popup
-        if (confirmationPopup != null)
-        {
-            confirmationPopup.SetActive(false);
-        }
-
-        // Bắt đầu game
+#if UNITY_EDITOR
+        GameLog.Info("[CompanionInfoDisplay] User chọn Đi nào - Bắt đầu game");
+#endif
+        if (confirmationPopup != null) confirmationPopup.SetActive(false);
         StartGame();
     }
 
-    void StartGame()
+    private void StartGame()
     {
-        Debug.Log("Bắt đầu game với companion đã chọn!");
-
-        // Lưu trạng thái hoàn thành setup
+#if UNITY_EDITOR
+        GameLog.Info("[CompanionInfoDisplay] Bắt đầu game với companion đã chọn!");
+#endif
         PlayerPrefs.SetInt("SetupCompleted", 1);
         PlayerPrefs.Save();
-
         // TODO: Load game scene hoặc activate game UI
-        // SceneManager.LoadScene("GameScene");
     }
 }

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 
@@ -72,11 +72,11 @@ public class NameplateManager : MonoBehaviour
             if (_activeList[i].Target == target)
             {
                 _activeList[i].UI.Setup(newName);
-                Debug.Log($"[NameplateManager] Updated nameplate text for {target.name} to: {newName}");
+                GameLog.Info($"[NameplateManager] Updated nameplate text for {target.name} to: {newName}");
                 return;
             }
         }
-        Debug.LogWarning($"[NameplateManager] No nameplate found for target: {target.name}");
+        GameLog.Warn($"[NameplateManager] No nameplate found for target: {target.name}");
     }
 
     // --- CORE LOGIC (Chạy 1 vòng lặp duy nhất) ---

@@ -1,4 +1,4 @@
-﻿/*using System;
+/*using System;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using UnityEngine;
@@ -22,7 +22,7 @@ public class LoginControll_2 : MonoBehaviour
     {
         try
         {
-            Debug.Log("🔄 Google Sign-In...");
+            GameLog.Info("🔄 Google Sign-In...");
             await AuthenticationService.Instance.SignInWithGoogleAsync();
 
             string playerId = AuthenticationService.Instance.PlayerId;
@@ -31,9 +31,9 @@ public class LoginControll_2 : MonoBehaviour
             // Decode lấy email
             string email = DecodeEmailFromToken(token);
 
-            Debug.Log($"✅ GOOGLE LOGIN OK!");
-            Debug.Log($"📧 Email: {email}");
-            Debug.Log($"🆔 PlayerID: {playerId}");
+            GameLog.Info($"✅ GOOGLE LOGIN OK!");
+            GameLog.Info($"📧 Email: {email}");
+            GameLog.Info($"🆔 PlayerID: {playerId}");
 
             OnSignedIn?.Invoke(email); // Gửi email cho UI
         }

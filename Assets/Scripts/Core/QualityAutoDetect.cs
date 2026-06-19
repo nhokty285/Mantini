@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
@@ -108,7 +108,7 @@ public class QualityAutoDetect : MonoBehaviour
         if (asset != null)
             QualitySettings.renderPipeline = asset;
         else
-            Debug.LogWarning($"[QualityAutoDetect] Chưa gán URP asset cho tier {tier}!");
+            GameLog.Warn($"[QualityAutoDetect] Chưa gán URP asset cho tier {tier}!");
 
         // 2. Sync QualitySettings level nếu project có đủ 3 level (an toàn nếu không có)
         if (QualitySettings.names.Length > (int)tier)
@@ -125,7 +125,7 @@ public class QualityAutoDetect : MonoBehaviour
             PlayerPrefs.Save();
         }
 
-        Debug.Log($"[QualityAutoDetect] Tier={tier} | RAM={SystemInfo.systemMemorySize}MB " +
+        GameLog.Info($"[QualityAutoDetect] Tier={tier} | RAM={SystemInfo.systemMemorySize}MB " +
                   $"| VRAM={SystemInfo.graphicsMemorySize}MB | GPU={SystemInfo.graphicsDeviceName} " +
                   $"| API={SystemInfo.graphicsDeviceType} | FPS={Application.targetFrameRate}");
     }

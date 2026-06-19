@@ -1,9 +1,5 @@
-﻿// BaseNPC.cs
-using OpenAI;
-using System;
-using System.Collections;
+// BaseNPC.cs
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
 
 public enum NPCType
@@ -22,6 +18,7 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
     [SerializeField] protected NPCType npcType;
     [SerializeField] protected float interactionRange = 3f;
     [SerializeField] protected Sprite npcIcon;
+
     [Header("Dialogue Configuration")]
     [SerializeField] protected List<DialogueEntry> dialogueSequence = new List<DialogueEntry>();
 
@@ -29,26 +26,29 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
     [SerializeField] protected bool enableAIChat = false;
     [SerializeField] protected string aiPersonality; // "Friendly Companion" hoặc "Professional Vendor"
 
-    private string _conversationId = "";        // đã có sẵn
-    private bool _isWaitingResponse = false;    // ✅ move từ VendorNPC lên đây
+    [Header("Animation & Visual")]
+    [SerializeField] protected Animator npcAnimator;
+    [SerializeField] protected GameObject interactionIndicator;
+
+    // ── Conversation / session state ────────────────────────────────────────
+    private string _conversationId = "";
+    private bool _isWaitingResponse = false;
     private bool _sessionRestoredThisPlay = false;
+    private GameObject _typingBubble;
+
     public string ConversationId
     {
         get => _conversationId;
         set => _conversationId = value;
     }
-    [SerializeField] public bool HasActiveConversation => !string.IsNullOrEmpty(_conversationId);
-    [SerializeField] public bool SessionRestoredThisPlay => _sessionRestoredThisPlay;
-    private GameObject _typingBubble;           // ✅ thêm mới
+    // Refactor: bỏ [SerializeField] vô tác dụng trên expression-bodied property (Unity không serialize được)
+    public bool HasActiveConversation => !string.IsNullOrEmpty(_conversationId);
+    public bool SessionRestoredThisPlay => _sessionRestoredThisPlay;
 
-    // ✅ THÊM: Events — giống VendorNPC, để Base quản lý
-    public event System.Action<IChatParticipant,string> OnDifyResponseReceived;
-
-    [Header("Animation & Visual")]
-    [SerializeField] protected Animator npcAnimator;
-    [SerializeField] protected GameObject interactionIndicator;
-    // Events cho MainMenuView subscribe
+    // Events
+    public event System.Action<IChatParticipant, string> OnDifyResponseReceived;
     public System.Action<bool, string, BaseNPC> OnPlayerInteraction;
+
     protected bool isPlayerNearby = false;
     protected Transform playerTransform;
 
@@ -63,7 +63,7 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
     {
         InitializeNPCData();
         SetupInteractionIndicator();
-     
+
         // Tìm player reference
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
@@ -71,18 +71,14 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
 
         // Nếu dialogueSequence trống, gọi method setup mặc định
         if (dialogueSequence.Count == 0)
-        {
             SetupDefaultDialogue();
-        }
     }
 
     private void OnDestroy()
     {
         // Báo Manager thu hồi tên khi NPC bị hủy
         if (NameplateManager.Instance != null)
-        {
             NameplateManager.Instance.Unregister(this.transform);
-        }
     }
 
     protected virtual void SetupInteractionIndicator()
@@ -91,13 +87,11 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
             interactionIndicator.SetActive(false);
     }
 
-    // ✅ NEW: Lấy dialogue sequence - Có thể được override bởi child classes
+    // Lấy dialogue sequence - Có thể được override bởi child classes
     public virtual List<DialogueEntry> GetDialogueSequence()
-    {
-        return new List<DialogueEntry>(dialogueSequence);
-    }
+        => new List<DialogueEntry>(dialogueSequence);
 
-    // ✅ NEW: Setup dialogue mặc định - Override trong child classes nếu cần
+    // Setup dialogue mặc định - Override trong child classes nếu cần
     protected virtual void SetupDefaultDialogue()
     {
         dialogueSequence.Add(new DialogueEntry(
@@ -108,39 +102,37 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
         ));
     }
 
-
     // Collision Detection - Common cho tất cả NPCs
     protected virtual void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
-        {
-            isPlayerNearby = true;
-            OnPlayerEnterRange();
+        if (!other.CompareTag("Player")) return;
 
-            // ✅ THÊM debug log
-            Debug.Log($"🔍 {npcName} - OnTriggerEnter: this={this}, npcId={npcId}");
+        isPlayerNearby = true;
+        OnPlayerEnterRange();
 
-            // Notify UI System
-            OnPlayerInteraction?.Invoke(true, npcName, this);
+#if UNITY_EDITOR
+        GameLog.Info($"[BaseNPC] {npcName} OnTriggerEnter: npcId={npcId}");
+#endif
 
-            if (interactionIndicator != null)
-                interactionIndicator.SetActive(true);
-        }
+        // Notify UI System
+        OnPlayerInteraction?.Invoke(true, npcName, this);
+
+        if (interactionIndicator != null)
+            interactionIndicator.SetActive(true);
     }
 
     protected virtual void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
-        {
-            isPlayerNearby = false;
-            OnPlayerExitRange();
+        if (!other.CompareTag("Player")) return;
 
-            // Notify UI System
-            OnPlayerInteraction?.Invoke(false, npcName, this);
+        isPlayerNearby = false;
+        OnPlayerExitRange();
 
-            if (interactionIndicator != null)
-                interactionIndicator.SetActive(false);
-        }
+        // Notify UI System
+        OnPlayerInteraction?.Invoke(false, npcName, this);
+
+        if (interactionIndicator != null)
+            interactionIndicator.SetActive(false);
     }
 
     public virtual string GetAIResponse(string playerMessage)
@@ -154,7 +146,7 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
         string userId = string.IsNullOrEmpty(npcId) ? "player-guest" : npcId;
         _isWaitingResponse = true;
 
-        // ✅ Typing bubble — dùng _chatManager từ child nếu có
+        // Typing bubble — dùng _chatManager từ child nếu có
         _typingBubble = GetChatManager()?.AddTypingBubble(
             sender: GetParticipantName(),
             icon: GetParticipantIcon()
@@ -170,35 +162,36 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
                 _conversationId = newConvId;
                 _isWaitingResponse = false;
                 DestroyTypingBubble();
-                OnDifyResponseReceived?.Invoke(this,answer);
+                OnDifyResponseReceived?.Invoke(this, answer);
             },
             onError: (err) =>
             {
                 _isWaitingResponse = false;
                 DestroyTypingBubble();
-                Debug.LogError($"[{npcName}] Dify error: {err}");
-                OnDifyResponseReceived?.Invoke(this,GetDefaultResponse());
+                Debug.LogError($"[BaseNPC] {npcName} Dify error: {err}");
+                OnDifyResponseReceived?.Invoke(this, GetDefaultResponse());
             }
         );
 
         return null;
     }
 
-    // ✅ Helper — tránh duplicate destroy logic
+    // Helper — tránh duplicate destroy logic
     private void DestroyTypingBubble()
     {
         if (_typingBubble != null)
         {
-            UnityEngine.Object.Destroy(_typingBubble);
+            Destroy(_typingBubble);
             _typingBubble = null;
         }
     }
 
     public void RestoreConversationSession(System.Action<List<DifyMessage>> onRestored)
     {
-        Debug.Log($"[RESTORE][1] {npcName} — enableAIChat={enableAIChat}, " +
-            $"aiPersonality='{aiPersonality}', " +
-            $"_conversationId='{_conversationId}'");
+#if UNITY_EDITOR
+        GameLog.Info($"[BaseNPC][RESTORE] {npcName} — enableAIChat={enableAIChat}, " +
+                  $"aiPersonality='{aiPersonality}', _conversationId='{_conversationId}'");
+#endif
         if (!enableAIChat || string.IsNullOrEmpty(aiPersonality)) return;
         if (string.IsNullOrEmpty(_conversationId)) return;
 
@@ -211,93 +204,62 @@ public abstract class BaseNPC : MonoBehaviour, IChatParticipant
             onSuccess: (messages) =>
             {
                 _sessionRestoredThisPlay = true;
-                Debug.Log($"[{npcName}] Restored {messages.Count} messages from conversation {_conversationId}");
+                GameLog.Info($"[BaseNPC] {npcName} Restored {messages.Count} messages from conversation {_conversationId}");
                 onRestored?.Invoke(messages);
             },
             onError: (err) =>
             {
-                Debug.LogWarning($"[{npcName}] Could not restore conversation: {err}");
+                GameLog.Warn($"[BaseNPC] {npcName} Could not restore conversation: {err}");
                 onRestored?.Invoke(new List<DifyMessage>());
             }
         );
     }
 
-    // ✅ Abstract/Virtual để child inject _chatManager của mình
+    // Abstract/Virtual để child inject _chatManager của mình
     protected virtual MultiChatManager GetChatManager() => null;
-
-    /*  private string AddRemoteContext(string response)
-      {
-          return $"(Qua radio) {response}";
-      }*/
 
     protected abstract string GetDefaultResponse();
 
-
-    // Getter methods
+    // ── Getter methods ──────────────────────────────────────────────────────
     public string GetNPCName() => npcName;
     public string GetNPCId() => npcId;
     public NPCType GetNPCType() => npcType;
     public bool IsPlayerNearby() => isPlayerNearby;
 
-    public virtual Sprite GetParticipantIcon()
+    public virtual Sprite GetParticipantIcon() => npcIcon;
+
+    // ── IChatParticipant Implementation ─────────────────────────────────────
+    public virtual string GetParticipantName() => npcName;
+
+    public virtual string GetParticipantID() => npcId;
+
+    // Refactor: switch expression cho gọn + đỡ allocation/JIT
+    public virtual ChatParticipantType GetParticipantType() => npcType switch
     {
-        return npcIcon;
-    }
+        NPCType.Companion => ChatParticipantType.Companion,
+        NPCType.Vendor    => ChatParticipantType.VendorNPC,
+        _                 => ChatParticipantType.AIBot
+    };
 
-    // IChatParticipant Implementation
-    // ========================================
+    public virtual bool IsActive() => gameObject.activeInHierarchy && enabled;
 
-    // ✅ THÊM METHOD NÀY
-    public virtual string GetParticipantName()
-    {
-        Debug.Log($"[GetParticipantName] Returning: '{npcName}'");  // ← Debug log
-        return npcName;
-    }
-
-    // ✅ THÊM METHOD NÀY
-    public virtual string GetParticipantID()
-    {
-        return npcId;
-    }
-
-    // ✅ THÊM METHOD NÀY (nếu chưa có)
-    public virtual ChatParticipantType GetParticipantType()
-    {
-        // Map NPCType sang ChatParticipantType
-        switch (npcType)
-        {
-            case NPCType.Companion:
-                return ChatParticipantType.Companion;
-            case NPCType.Vendor:
-                return ChatParticipantType.VendorNPC;
-            default:
-                return ChatParticipantType.AIBot;
-        }
-    }
-
-    // ✅ THÊM METHOD NÀY (nếu chưa có)
-    public virtual bool IsActive()
-    {
-        return gameObject.activeInHierarchy && enabled;
-    }
-
-    // ✅ THÊM 2 METHOD NÀY (callbacks)
     public virtual void OnJoinChat()
     {
-        Debug.Log($"[{npcName}] Joined chat");
+#if UNITY_EDITOR
+        GameLog.Info($"[BaseNPC] {npcName} Joined chat");
+#endif
     }
 
     public virtual void OnLeaveChat()
     {
-        Debug.Log($"[{npcName}] Left chat");
+#if UNITY_EDITOR
+        GameLog.Info($"[BaseNPC] {npcName} Left chat");
+#endif
     }
 
-    // ✅ Abstract method - child class bắt buộc implement
+    // Abstract method - child class bắt buộc implement
     public abstract string ProcessMessage(string message, string sender);
-   // private string _conversationId = "";    
+
     public string GetAIPersonality() => aiPersonality;
     public bool GetEnableAIChat() => enableAIChat;
-/*    public string GetConversationId() => _conversationId;
-    public void SetConversationId(string id) => _conversationId = id;*/
 }
-

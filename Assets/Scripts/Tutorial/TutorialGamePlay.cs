@@ -17,7 +17,7 @@ using DG.Tweening;
 ///   VendorNPC.OnPlayerEnterRange()      → TutorialGamePlay.Instance?.OnPlayerEnterNPCRange()
 ///   VendorNPC.ProcessInteraction()      → TutorialGamePlay.Instance?.OnPlayerClickedNPC()
 ///   BaseNPC.HideDialogueAndOpenShop()   → TutorialGamePlay.Instance?.OnHideDialogueAndOpenShop()
-///   MultiChatManager (send)             → TutorialGamePlay.Instance?.OnPlayerSentChat()
+///   MultiChatController (SendChatButton click) → TutorialGamePlay.Instance?.OnPlayerSentChat()
 ///   DifyChatService (response)          → TutorialGamePlay.Instance?.OnAIResponseReceived()
 ///   ShopController.OnProductLinkCallback()  → TutorialGamePlay.Instance?.OnPlayerTappedItem()
 ///   ProductDetailUI (add to cart ok)    → TutorialGamePlay.Instance?.OnAddToCartSuccess()
@@ -29,6 +29,21 @@ using DG.Tweening;
 public class TutorialGamePlay : MonoBehaviour
 {
     public static TutorialGamePlay Instance { get; private set; }
+
+    /// <summary>
+    /// Section hiện tại player đang ở (= section đầu tiên CHƯA seen).
+    /// Dùng cho các script ngoài (như QuestNavigator) — nguồn truth duy nhất
+    /// để xác định quest step, không cần đọc PlayerPrefs trực tiếp.
+    /// </summary>
+    public TutorialSection CurrentSection
+    {
+        get
+        {
+            foreach (var s in AllSections)
+                if (!_seenSections.Contains(s)) return s;
+            return TutorialSection.Reward;
+        }
+    }
 
     // ── PlayerPrefs Keys ────────────────────────────────────────────────────
     private const string KEY_ENABLED      = "MapTest2_TutorialEnabled";
@@ -45,7 +60,7 @@ public class TutorialGamePlay : MonoBehaviour
         Approach,        // [Critical] Companion chào + arrow đến NPC
         NPCClick,        // [Critical] Hiện hint "bấm vào NPC"
         Chat,            // [Hint]     Shop vừa mở → giới thiệu ô chat
-        SelectItem,      // [Hint]     AI trả lời xong → giới thiệu khu vực item
+        SelectItem,      // [Hint]     Player nhấn Send → giới thiệu khu vực item
         ProductDetail,   // [Hint]     Mở ProductDetailUI → giới thiệu chọn size
         BackToShop,      // [Hint]     Add to cart xong → gợi ý quay lại shop
         OpenBag,         // [Hint]     Quay lại shop → gợi ý nút giỏ
@@ -54,12 +69,16 @@ public class TutorialGamePlay : MonoBehaviour
         Reward           // [Hint]     Checkout xong → chúc mừng
     }
 
+    // Refactor: cache mảng enum để tránh Enum.GetValues() (alloc + reflection) mỗi lần dùng.
+    // Số section nhỏ nhưng được duyệt nhiều chỗ (load/save/reset/debug UI).
+    private static readonly TutorialSection[] AllSections =
+        (TutorialSection[])System.Enum.GetValues(typeof(TutorialSection));
+
     // ── Internal State ──────────────────────────────────────────────────────
     private readonly HashSet<TutorialSection> _seenSections = new HashSet<TutorialSection>();
     private bool _isTutorialEnabled = true;
     private bool _continuePressed = false;
     private bool _introFlowDone = false;
-    private Coroutine _arrowBounce;
 
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — SETTINGS
@@ -97,6 +116,8 @@ public class TutorialGamePlay : MonoBehaviour
     // INSPECTOR — STEP APPROACH (Critical)
     // ════════════════════════════════════════════════════════════════════════
     [Header("══════ Approach NPC (Critical Section) ══════")]
+    // ⚠️ Các field dưới có thể đã được wire trong Inspector — giữ lại để không phá reference.
+    // Nếu confirmed chưa wire, có thể xoá sau:
     [SerializeField] private Transform firstNPCWorldTransform;
     [SerializeField] private RectTransform firstNPCScreenRect;
     [SerializeField] private float arrowUpdateInterval = 0.08f;
@@ -158,12 +179,12 @@ public class TutorialGamePlay : MonoBehaviour
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step2_Back =
-        "Đã thêm vào giỏ thành công!\nHãy nhấn nút ← Trở Lại để quay về Shop.";
+        "Đã thêm vào giỏ thành công!\nHãy nhấn nút <- Trở Lại để quay về Shop.";
 
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Step2_Bag =
-        "Ngon lắm! Bây giờ hãy bấm vào nút\nTÚI (🛒) để xem giỏ hàng của bạn!";
+        "Ngon lắm! Bây giờ hãy bấm vào nút\nTUI (gio hang) để xem giỏ hàng của bạn!";
 
     [TextArea(2, 4)]
     [SerializeField]
@@ -178,7 +199,7 @@ public class TutorialGamePlay : MonoBehaviour
     [TextArea(2, 4)]
     [SerializeField]
     private string msg_Reward =
-        "ĐƠN HÀNG ĐẦU TIÊN HOÀN THÀNH! ✅\nBạn đã thành thạo cơ bản.\nTiếp tục khám phá thêm nhé!";
+        "DON HANG DAU TIEN HOAN THANH!\nBạn đã thành thạo cơ bản.\nTiếp tục khám phá thêm nhé!";
 
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — DEBUG PANEL
@@ -211,18 +232,15 @@ public class TutorialGamePlay : MonoBehaviour
         if (companionContinueButton != null)
         {
             companionContinueButton.onClick.RemoveAllListeners();
-            companionContinueButton.onClick.AddListener(() =>
-            {
-                OnContinuePressed();
-                HideAllTutorialUI();
-            });
+            // Refactor: tách lambda thành method có tên (tránh alloc closure khó debug stack)
+            companionContinueButton.onClick.AddListener(OnCompanionContinueClicked);
         }
 
         UpdateDebugUI();
 
         if (!_isTutorialEnabled)
         {
-            DebugLog("Tutorial đang TẮT — bỏ qua, không khóa gì hết.");
+            DebugLog("Tutorial đang TAT — bỏ qua, không khóa gì hết.");
             RestoreAllShopUI();
             return;
         }
@@ -241,17 +259,19 @@ public class TutorialGamePlay : MonoBehaviour
         }
     }
 
-    private void Update()
+    // Refactor: bỏ Update() poll mỗi frame (Unity vẫn call empty Update qua reflection).
+    // Debug UI đã được refresh từ MarkSeen / Enable / Disable / Skip — không cần poll.
+
+    private void OnCompanionContinueClicked()
     {
-#if UNITY_EDITOR
-        if (showDebugPanel) UpdateDebugUI();
-#endif
+        OnContinuePressed();
+        HideAllTutorialUI();
     }
 
     #endregion
 
     // ════════════════════════════════════════════════════════════════════════
-    #region PUBLIC — BẬT / TẮT TUTORIAL
+    #region PUBLIC — BAT / TAT TUTORIAL
     // ════════════════════════════════════════════════════════════════════════
 
     /// <summary>Bật tutorial (lưu vào PlayerPrefs).</summary>
@@ -260,7 +280,7 @@ public class TutorialGamePlay : MonoBehaviour
         _isTutorialEnabled = true;
         PlayerPrefs.SetInt(KEY_ENABLED, 1);
         PlayerPrefs.Save();
-        DebugLog("Tutorial đã BẬT.");
+        DebugLog("Tutorial đã BAT.");
         UpdateDebugUI();
     }
 
@@ -273,7 +293,7 @@ public class TutorialGamePlay : MonoBehaviour
         StopAllCoroutines();
         RestoreAllShopUI();
         HideAllTutorialUI();
-        DebugLog("Tutorial đã TẮT.");
+        DebugLog("Tutorial đã TAT.");
         UpdateDebugUI();
     }
 
@@ -297,11 +317,12 @@ public class TutorialGamePlay : MonoBehaviour
         _seenSections.Clear();
         if (forceRunOnStart)
         {
-            DebugLog("forceRunOnStart = true → reset _seenSections.");
+            DebugLog("forceRunOnStart = true -> reset _seenSections.");
             return;
         }
 
-        foreach (TutorialSection s in System.Enum.GetValues(typeof(TutorialSection)))
+        // Refactor: dùng AllSections cache, tránh Enum.GetValues() mỗi lần
+        foreach (var s in AllSections)
         {
             if (PlayerPrefs.GetInt(KEY_SEEN_PREFIX + s.ToString(), 0) == 1)
                 _seenSections.Add(s);
@@ -327,8 +348,8 @@ public class TutorialGamePlay : MonoBehaviour
     // ════════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Gọi từ hook khi player tự mở 1 section. Nếu chưa thấy → hiện dialogue +
-    /// spotlight (optional) rồi tự tắt. Đã thấy → return ngay, không làm gì.
+    /// Gọi từ hook khi player tự mở 1 section. Nếu chưa thấy -> hiện dialogue +
+    /// spotlight (optional) rồi tự tắt. Đã thấy -> return ngay, không làm gì.
     /// KHÔNG block button, KHÔNG chặn thao tác player.
     /// </summary>
     private void TryShowHint(
@@ -360,8 +381,8 @@ public class TutorialGamePlay : MonoBehaviour
             ShowSpotlight(spotlightTarget);
 
         // ShowCompanionMessage tự xử lý:
-        //   waitContinue = true  → hiện Continue button, đợi player bấm
-        //   waitContinue = false → auto-hide sau autoHideDelay giây
+        //   waitContinue = true  -> hiện Continue button, đợi player bấm
+        //   waitContinue = false -> auto-hide sau autoHideDelay giây
         yield return ShowCompanionMessage(msg, wait: waitContinue);
 
         // Clean up — companion message đã tự hide khi wait=true; cần hide spotlight
@@ -392,17 +413,17 @@ public class TutorialGamePlay : MonoBehaviour
         AudioManager.Instance?.PlaySFXOneShot("Whoosh");
 
         // Lock button shop trong giai đoạn intro để player tập trung đi tới NPC
-        SetAllowedButtons();
+        LockAllBlockableButtons();
 
         DebugLog("Intro flow: chờ OnPlayerEnterNPCRange()...");
     }
 
-    /// <summary>Hook → VendorNPC.OnPlayerEnterRange()</summary>
+    /// <summary>Hook -> VendorNPC.OnPlayerEnterRange()</summary>
     public void OnPlayerEnterNPCRange()
     {
         if (!_isTutorialEnabled) return;
 
-        // Đã qua intro rồi → không cần làm gì khi player đi ngang NPC
+        // Đã qua intro rồi -> không cần làm gì khi player đi ngang NPC
         if (HasSeen(TutorialSection.NPCClick)) return;
 
         MarkSeen(TutorialSection.NPCClick);
@@ -417,12 +438,11 @@ public class TutorialGamePlay : MonoBehaviour
         HideAllTutorialUI();
     }
 
-    /// <summary>Hook → VendorNPC.ProcessInteraction()</summary>
+    /// <summary>Hook -> VendorNPC.ProcessInteraction()</summary>
     public void OnPlayerClickedNPC()
     {
         if (!_isTutorialEnabled) return;
 
-        StopArrowBounce();
         HideSpotlight();
         HideAllTutorialUI();
         if (spotlightEffectPrefab != null) spotlightEffectPrefab.SetActive(false);
@@ -433,7 +453,7 @@ public class TutorialGamePlay : MonoBehaviour
         DebugLog("Player bấm NPC — intro DONE, mở khóa toàn bộ UI.");
     }
 
-    /// <summary>Hook → BaseNPC.HideDialogueAndOpenShop()</summary>
+    /// <summary>Hook -> BaseNPC.HideDialogueAndOpenShop()</summary>
     public void OnHideDialogueAndOpenShop()
     {
         TryShowHint(TutorialSection.Chat, msg_Step2_Chat, chatInputArea, waitContinue: true);
@@ -445,28 +465,36 @@ public class TutorialGamePlay : MonoBehaviour
     #region HINT HOOKS — Passive, không block
     // ════════════════════════════════════════════════════════════════════════
 
-    /// <summary>Hook → MultiChatManager (player nhấn Send). No-op trong design mới.</summary>
-    public void OnPlayerSentChat() { /* no-op */ }
-
-    /// <summary>Hook → DifyChatService (AI trả về). Trigger SelectItem hint.</summary>
-    public void OnAIResponseReceived()
+    /// <summary>
+    /// Hook -> MultiChatController.SendChatButton.onClick
+    /// Đánh dấu bước Chat hoàn thành và trigger SelectItem hint NGAY KHI player nhấn Send,
+    /// KHÔNG chờ API trả về.
+    /// </summary>
+    public void OnPlayerSentChat()
     {
+        // Đánh dấu bước Chat đã hoàn thành (nếu chưa)
+        MarkSeen(TutorialSection.Chat);
+
+        // Trigger SelectItem hint ngay lập tức, không chờ AI response
         TryShowHint(TutorialSection.SelectItem, msg_Step2_Item, shopItemsContainerRect, waitContinue: true);
     }
 
-    /// <summary>Hook → ShopController.OnProductLinkCallback() (player tap item).</summary>
+    /// <summary>Hook -> DifyChatService (AI trả về). No-op — SelectItem đã trigger từ OnPlayerSentChat.</summary>
+    public void OnAIResponseReceived()
+    {
+        // no-op: SelectItem hint đã được trigger ngay khi player nhấn Send (OnPlayerSentChat),
+        // không cần chờ AI response nữa.
+    }
+
+    /// <summary>Hook -> ShopController.OnProductLinkCallback() (player tap item).</summary>
     public void OnPlayerTappedItem()
-    {
-        TryShowHint(TutorialSection.ProductDetail, msg_Step2_Size, null, waitContinue: true);
-    }
+        => TryShowHint(TutorialSection.ProductDetail, msg_Step2_Size, null, waitContinue: true);
 
-    /// <summary>Hook → ProductDetailUI (add to cart thành công).</summary>
+    /// <summary>Hook -> ProductDetailUI (add to cart thành công).</summary>
     public void OnAddToCartSuccess()
-    {
-        TryShowHint(TutorialSection.BackToShop, msg_Step2_Back, null, waitContinue: false);
-    }
+        => TryShowHint(TutorialSection.BackToShop, msg_Step2_Back, null, waitContinue: false);
 
-    /// <summary>Hook → ProductDetailUI (back button).</summary>
+    /// <summary>Hook -> ProductDetailUI (back button).</summary>
     public void OnPlayerBackToShop()
     {
         RectTransform cartBtnRect = quickCartButton != null
@@ -475,19 +503,15 @@ public class TutorialGamePlay : MonoBehaviour
         TryShowHint(TutorialSection.OpenBag, msg_Step2_Bag, cartBtnRect, waitContinue: true);
     }
 
-    /// <summary>Hook → ShopController (cartButton onClick → cartPanel active).</summary>
+    /// <summary>Hook -> ShopController (cartButton onClick -> cartPanel active).</summary>
     public void OnCartOpened()
-    {
-        TryShowHint(TutorialSection.Cart, msg_Step2_Cart, cartItemListRect, waitContinue: true);
-    }
+        => TryShowHint(TutorialSection.Cart, msg_Step2_Cart, cartItemListRect, waitContinue: true);
 
-    /// <summary>Hook → CartUI.addSelectedToCartButton.onClick</summary>
+    /// <summary>Hook -> CartUI.addSelectedToCartButton.onClick</summary>
     public void OnAddSelectedToCartSuccess()
-    {
-        TryShowHint(TutorialSection.Checkout, msg_Step3, null, waitContinue: false);
-    }
+        => TryShowHint(TutorialSection.Checkout, msg_Step3, null, waitContinue: false);
 
-    /// <summary>Hook → CheckoutController (thanh toán xong).</summary>
+    /// <summary>Hook -> CheckoutController (thanh toán xong).</summary>
     public void OnCheckoutCompleted()
     {
         TryShowHint(TutorialSection.Reward, msg_Reward, null, waitContinue: true);
@@ -534,21 +558,24 @@ public class TutorialGamePlay : MonoBehaviour
             companionChatText.text = msg;
             companionChatText.maxVisibleCharacters = 0;
 
-            for (int i = 0; i <= msg.Length; i++)
+            // Refactor: cache audio check 1 lần ngoài loop (tránh check null + property mỗi char)
+            bool canPlayTypeSound = audioSync != null && audioSync.typewriterSound != null;
+            AudioClip typeClip = canPlayTypeSound ? audioSync.typewriterSound : null;
+            int msgLen = msg.Length;
+
+            for (int i = 0; i <= msgLen; i++)
             {
                 companionChatText.maxVisibleCharacters = i;
 
-                if (i < msg.Length)
+                if (i < msgLen)
                 {
                     char currentChar = msg[i];
                     bool shouldPlayTypewriter =
                         !char.IsWhiteSpace(currentChar) &&
                         !char.IsPunctuation(currentChar);
 
-                    if (shouldPlayTypewriter && audioSync != null && audioSync.typewriterSound != null)
-                    {
-                        AudioManager.Instance?.PlayTypewriter(audioSync.typewriterSound, 0.4f);
-                    }
+                    if (shouldPlayTypewriter && canPlayTypeSound)
+                        AudioManager.Instance?.PlayTypewriter(typeClip, 0.4f);
 
                     yield return new WaitForSeconds(typewriterSpeed);
                 }
@@ -564,7 +591,7 @@ public class TutorialGamePlay : MonoBehaviour
 
             _continuePressed = false;
             yield return new WaitUntil(() => _continuePressed);
-            HideCompanionPanel();
+            // Refactor: HideAllTutorialUI đã gọi HideCompanionPanel, không cần call riêng
             HideAllTutorialUI();
         }
         else
@@ -586,17 +613,17 @@ public class TutorialGamePlay : MonoBehaviour
     }
 
     /// <summary>
-    /// Khóa toàn bộ allBlockableButtons trừ những button trong tham số.
-    /// CHỈ dùng trong IntroGuidedFlow. Sau khi OnPlayerClickedNPC → RestoreAllShopUI.
+    /// Khóa toàn bộ allBlockableButtons.
+    /// CHỈ dùng trong IntroGuidedFlow. Sau khi OnPlayerClickedNPC -> RestoreAllShopUI.
+    /// Refactor: trước đây nhận params Button[] allowed nhưng caller luôn truyền 0 args
+    /// → bỏ HashSet allocation, đơn giản hoá thành "lock tất cả".
     /// </summary>
-    private void SetAllowedButtons(params Button[] allowed)
+    private void LockAllBlockableButtons()
     {
         if (allBlockableButtons == null) return;
-        var allowedSet = new HashSet<Button>(allowed); // O(1) Contains
         foreach (var btn in allBlockableButtons)
         {
-            if (btn == null) continue;
-            btn.interactable = allowedSet.Contains(btn);
+            if (btn != null) btn.interactable = false;
         }
     }
 
@@ -606,16 +633,16 @@ public class TutorialGamePlay : MonoBehaviour
 
         string text = section switch
         {
-            TutorialSection.Approach       => "📍 Di chuyển đến NPC",
-            TutorialSection.NPCClick       => "📍 Bấm vào NPC để mở Shop",
-            TutorialSection.Chat           => "💬 Khám phá Chat AI",
-            TutorialSection.SelectItem     => "🛍️ Chọn sản phẩm",
-            TutorialSection.ProductDetail  => "👟 Chi tiết sản phẩm",
-            TutorialSection.BackToShop     => "↩️ Quay lại Shop",
-            TutorialSection.OpenBag        => "👜 Mở giỏ hàng",
-            TutorialSection.Cart           => "📦 Trong giỏ hàng",
-            TutorialSection.Checkout       => "💳 Thanh toán",
-            TutorialSection.Reward         => "🏆 Hoàn thành!",
+            TutorialSection.Approach       => "Di chuyen den NPC",
+            TutorialSection.NPCClick       => "Bam vao NPC de mo Shop",
+            TutorialSection.Chat           => "Kham pha Chat AI",
+            TutorialSection.SelectItem     => "Chon san pham",
+            TutorialSection.ProductDetail  => "Chi tiet san pham",
+            TutorialSection.BackToShop     => "Quay lai Shop",
+            TutorialSection.OpenBag        => "Mo gio hang",
+            TutorialSection.Cart           => "Trong gio hang",
+            TutorialSection.Checkout       => "Thanh toan",
+            TutorialSection.Reward         => "Hoan thanh!",
             _                              => ""
         };
 
@@ -655,42 +682,13 @@ public class TutorialGamePlay : MonoBehaviour
         if (quickCartButton != null) quickCartButton.interactable = true;
         chatSendButton?.gameObject.SetActive(true);
 
-        var sr = shopScrollViewRect?.GetComponent<ScrollRect>();
+        var sr = shopScrollViewRect != null ? shopScrollViewRect.GetComponent<ScrollRect>() : null;
         if (sr != null) sr.enabled = true;
 
         if (allBlockableButtons != null)
         {
             foreach (var btn in allBlockableButtons)
                 if (btn != null) btn.interactable = true;
-        }
-    }
-
-    #endregion
-
-    // ════════════════════════════════════════════════════════════════════════
-    #region ARROW BOUNCE
-    // ════════════════════════════════════════════════════════════════════════
-
-    private void StartArrowBounce(RectTransform arrow, Vector3 direction)
-    {
-        StopArrowBounce();
-        if (arrow != null) _arrowBounce = StartCoroutine(ArrowLoop(arrow, direction));
-    }
-
-    private void StopArrowBounce()
-    {
-        if (_arrowBounce != null) { StopCoroutine(_arrowBounce); _arrowBounce = null; }
-    }
-
-    private IEnumerator ArrowLoop(RectTransform arrow, Vector3 dir)
-    {
-        Vector3 origin = arrow.localPosition;
-        float t = 0f;
-        while (true)
-        {
-            t += Time.deltaTime;
-            arrow.localPosition = origin + dir * Mathf.Abs(Mathf.Sin(t * Mathf.PI * 2f)) * 0.5f;
-            yield return null;
         }
     }
 
@@ -704,7 +702,8 @@ public class TutorialGamePlay : MonoBehaviour
     {
         HideCompanionPanel();
         HideSpotlight();
-        StopArrowBounce();
+        // Refactor: bỏ StopArrowBounce — _arrowBounce field + StartArrowBounce/ArrowLoop
+        // không bao giờ được start từ bất kỳ đâu trong file, là dead code.
     }
 
     public void SkipTutorial()
@@ -714,7 +713,7 @@ public class TutorialGamePlay : MonoBehaviour
         HideAllTutorialUI();
 
         // Đánh dấu toàn bộ section đã thấy
-        foreach (TutorialSection s in System.Enum.GetValues(typeof(TutorialSection)))
+        foreach (var s in AllSections)
             MarkSeen(s);
 
         ActivateContextualTooltips();
@@ -733,20 +732,20 @@ public class TutorialGamePlay : MonoBehaviour
         debugPanelUI?.SetActive(showDebugPanel);
 
         if (debugStepText != null)
-            debugStepText.text = $"Seen: {_seenSections.Count}/{System.Enum.GetValues(typeof(TutorialSection)).Length}";
+            debugStepText.text = $"Seen: {_seenSections.Count}/{AllSections.Length}";
 
         if (debugStatusText != null)
             debugStatusText.text = $"Enabled: {_isTutorialEnabled} | IntroDone: {_introFlowDone}";
     }
 
-    private void DebugLog(string msg) => Debug.Log($"[TutorialGamePlay] {msg}");
+    private void DebugLog(string msg) => GameLog.Info($"[TutorialGamePlay] {msg}");
 
     // ── ContextMenu — Debug tools ────────────────────────────────────────
 
-    [ContextMenu("🔁 Reset Tutorial (xóa tất cả PlayerPrefs)")]
+    [ContextMenu("Reset Tutorial (xoa tat ca PlayerPrefs)")]
     public void DEBUG_ResetTutorial()
     {
-        foreach (TutorialSection s in System.Enum.GetValues(typeof(TutorialSection)))
+        foreach (var s in AllSections)
             PlayerPrefs.DeleteKey(KEY_SEEN_PREFIX + s.ToString());
 
         // Xóa cả legacy keys
@@ -757,48 +756,48 @@ public class TutorialGamePlay : MonoBehaviour
         _seenSections.Clear();
         _introFlowDone = false;
         UpdateDebugUI();
-        Debug.Log("[TutorialGamePlay] ✅ Reset xong! Reload scene để chạy lại từ đầu.");
+        GameLog.Info("[TutorialGamePlay] Reset xong! Reload scene để chạy lại từ đầu.");
     }
 
-    [ContextMenu("✅ Mark ALL sections as Seen")]
+    [ContextMenu("Mark ALL sections as Seen")]
     public void DEBUG_MarkAllSeen()
     {
-        foreach (TutorialSection s in System.Enum.GetValues(typeof(TutorialSection)))
+        foreach (var s in AllSections)
             MarkSeen(s);
         _introFlowDone = true;
         HideAllTutorialUI();
         RestoreAllShopUI();
-        Debug.Log("[TutorialGamePlay] ✅ Tất cả section đã được đánh dấu seen.");
+        GameLog.Info("[TutorialGamePlay] Tat ca section đã được đánh dấu seen.");
     }
 
-    [ContextMenu("🔔 Simulate: OnPlayerEnterNPCRange")]
+    [ContextMenu("Simulate: OnPlayerEnterNPCRange")]
     public void DEBUG_SimulateEnterRange() => OnPlayerEnterNPCRange();
 
-    [ContextMenu("🔔 Simulate: OnPlayerClickedNPC")]
+    [ContextMenu("Simulate: OnPlayerClickedNPC")]
     public void DEBUG_SimulateClickNPC() => OnPlayerClickedNPC();
 
-    [ContextMenu("🔔 Simulate: OnHideDialogueAndOpenShop")]
+    [ContextMenu("Simulate: OnHideDialogueAndOpenShop")]
     public void DEBUG_SimulateOpenShop() => OnHideDialogueAndOpenShop();
 
-    [ContextMenu("🔔 Simulate: OnAIResponseReceived")]
+    [ContextMenu("Simulate: OnAIResponseReceived")]
     public void DEBUG_SimulateAIResponse() => OnAIResponseReceived();
 
-    [ContextMenu("🔔 Simulate: OnPlayerTappedItem")]
+    [ContextMenu("Simulate: OnPlayerTappedItem")]
     public void DEBUG_SimulateTapItem() => OnPlayerTappedItem();
 
-    [ContextMenu("🔔 Simulate: OnAddToCartSuccess")]
+    [ContextMenu("Simulate: OnAddToCartSuccess")]
     public void DEBUG_SimulateAddToCart() => OnAddToCartSuccess();
 
-    [ContextMenu("🔔 Simulate: OnPlayerBackToShop")]
+    [ContextMenu("Simulate: OnPlayerBackToShop")]
     public void DEBUG_SimulateBackToShop() => OnPlayerBackToShop();
 
-    [ContextMenu("🔔 Simulate: OnCartOpened")]
+    [ContextMenu("Simulate: OnCartOpened")]
     public void DEBUG_SimulateCartOpened() => OnCartOpened();
 
-    [ContextMenu("🔔 Simulate: OnAddSelectedToCartSuccess")]
+    [ContextMenu("Simulate: OnAddSelectedToCartSuccess")]
     public void DEBUG_SimulateAddSelected() => OnAddSelectedToCartSuccess();
 
-    [ContextMenu("🔔 Simulate: OnCheckoutCompleted")]
+    [ContextMenu("Simulate: OnCheckoutCompleted")]
     public void DEBUG_SimulateCheckout() => OnCheckoutCompleted();
 
     #endregion

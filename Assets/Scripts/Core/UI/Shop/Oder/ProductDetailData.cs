@@ -1,51 +1,13 @@
-﻿// ProductDetailData.cs
+// ProductDetailData.cs
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using static MainMenuViewModel;
-using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
-
-/*[Serializable]
-public class ProductDetailData
-{
-    public string id;
-    public string title;
-    public string imageUrl;
-    public float price;
-    public float regularPrice;
-    public bool isPriceImpact;
-    public int totalReviews;
-    public float reviewStatFiveScale;
-    public string brandName;
-    public List<AttributeGroup> attributeGroups;
-    public List<APIImage> images;
-
-    // Convert từ APIProductItem
-    public static ProductDetailData FromAPIProduct(APIProductItem apiItem)
-    {
-        return new ProductDetailData
-        {
-            id = apiItem.id,
-            title = apiItem.title,
-            imageUrl = apiItem.imageUrl,
-            price = apiItem.price,
-            regularPrice = apiItem.regularPrice,
-            isPriceImpact = apiItem.isPriceImpact,
-            totalReviews = apiItem.totalReviews,
-            reviewStatFiveScale = apiItem.reviewStatFiveScale,
-            brandName = apiItem.brandName,
-            images = apiItem.images ?? new List<APIImage>()
-        };
-    }
-}*/
-
-
 
 [Serializable]
 public class ProductDetailData
 {
-    public string id;  // Product ID chung
-    public string customId;  // Custom ID từ backend
+    public string id;       // Product ID chung
+    public string customId; // Custom ID từ backend
     public string title;
     public string imageUrl;
     public float price;
@@ -55,7 +17,7 @@ public class ProductDetailData
     public float reviewStatFiveScale;
     public string brandName;
     public List<AttributeGroup> attributeGroups;
-    public List<ProductVariant> variants;  // THÊM DÒNG NÀY
+    public List<ProductVariant> variants;
     public List<APIImage> images;
 
     // Convert từ APIProductItem
@@ -74,13 +36,10 @@ public class ProductDetailData
             reviewStatFiveScale = apiItem.reviewStatFiveScale,
             brandName = apiItem.brandName,
             images = apiItem.images ?? new List<APIImage>(),
-            variants = apiItem.variants ?? new List<ProductVariant>()  // THÊM
+            variants = apiItem.variants ?? new List<ProductVariant>()
         };
     }
 }
-
-
-
 
 [Serializable]
 public class AttributeGroup
@@ -100,7 +59,6 @@ public class Attribute
     public string value;
 }
 
-
 [Serializable]
 public class ProductVariant
 {
@@ -111,7 +69,7 @@ public class ProductVariant
     public string title;
     public string tagName;
     public string tagColor;
-    public List<AttributeGroup> attributeGroups; // ✅ Thêm thuộc tính này
+    public List<AttributeGroup> attributeGroups;
 }
 
 [Serializable]

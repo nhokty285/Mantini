@@ -1,4 +1,4 @@
-﻿/*using System;
+/*using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Collections.Concurrent;
@@ -40,7 +40,7 @@ public class CacheService : MonoBehaviour, ICacheService
             StartCleanupCoroutine();
 
             if (enableDebugLogs)
-                Debug.Log("CacheService initialized successfully");
+                GameLog.Info("CacheService initialized successfully");
         }
         else
         {
@@ -98,7 +98,7 @@ public class CacheService : MonoBehaviour, ICacheService
             {
                 // Type mismatch - log warning and remove invalid entry
                 if (enableDebugLogs)
-                    Debug.LogWarning($"CacheService: Type mismatch for key '{key}'. Expected {typeof(T).Name}, got {cachedEntry.GetType().Name}");
+                    GameLog.Warn($"CacheService: Type mismatch for key '{key}'. Expected {typeof(T).Name}, got {cachedEntry.GetType().Name}");
                 Remove(key);
             }
         }
@@ -113,7 +113,7 @@ public class CacheService : MonoBehaviour, ICacheService
         if (string.IsNullOrEmpty(key) || value == null)
         {
             if (enableDebugLogs)
-                Debug.LogWarning($"CacheService: Invalid key or value for caching");
+                GameLog.Warn($"CacheService: Invalid key or value for caching");
             return;
         }
 
@@ -142,7 +142,7 @@ public class CacheService : MonoBehaviour, ICacheService
         }
 
         if (enableDebugLogs)
-            Debug.Log($"CacheService: Cached item '{key}' (expires: {entry.ExpiryTime})");
+            GameLog.Info($"CacheService: Cached item '{key}' (expires: {entry.ExpiryTime})");
     }
 
     public void Remove(string key)
@@ -166,7 +166,7 @@ public class CacheService : MonoBehaviour, ICacheService
             }
 
             if (enableDebugLogs)
-                Debug.Log($"CacheService: Removed item '{key}'");
+                GameLog.Info($"CacheService: Removed item '{key}'");
         }
     }
 
@@ -192,7 +192,7 @@ public class CacheService : MonoBehaviour, ICacheService
         totalMemoryUsage = 0;
 
         if (enableDebugLogs)
-            Debug.Log("CacheService: Cache cleared");
+            GameLog.Info("CacheService: Cache cleared");
     }
 
     #endregion
@@ -263,7 +263,7 @@ public class CacheService : MonoBehaviour, ICacheService
             }
 
             if (enableDebugLogs && expiredKeys.Count > 0)
-                Debug.Log($"CacheService: Cleaned up {expiredKeys.Count} expired items");
+                GameLog.Info($"CacheService: Cleaned up {expiredKeys.Count} expired items");
 
         }
     }
@@ -292,7 +292,7 @@ public class CacheService : MonoBehaviour, ICacheService
             Remove(lruKey);
 
             if (enableDebugLogs)
-                Debug.Log($"CacheService: Evicted LRU item '{lruKey}'");
+                GameLog.Info($"CacheService: Evicted LRU item '{lruKey}'");
         }
     }
 
@@ -335,11 +335,11 @@ public class CacheService : MonoBehaviour, ICacheService
 
     public void LogCacheStats()
     {
-        Debug.Log($"=== CacheService Statistics ===");
-        Debug.Log($"Items: {Count}/{maxCacheSize}");
-        Debug.Log($"Memory: {totalMemoryUsage / 1024f / 1024f:F2}MB / {maxMemoryUsage / 1024f / 1024f:F2}MB");
-        Debug.Log($"Hit Ratio: {HitRatio:P}");
-        Debug.Log($"Hits: {hitCount}, Misses: {missCount}");
+        GameLog.Info($"=== CacheService Statistics ===");
+        GameLog.Info($"Items: {Count}/{maxCacheSize}");
+        GameLog.Info($"Memory: {totalMemoryUsage / 1024f / 1024f:F2}MB / {maxMemoryUsage / 1024f / 1024f:F2}MB");
+        GameLog.Info($"Hit Ratio: {HitRatio:P}");
+        GameLog.Info($"Hits: {hitCount}, Misses: {missCount}");
     }
     #endregion
 }
@@ -448,7 +448,7 @@ public class CacheService : MonoBehaviour, ICacheService
 
             // Type mismatch → entry hỏng, dọn luôn
             if (enableDebugLogs)
-                Debug.LogWarning($"[CacheService] Type mismatch for '{key}'");
+                GameLog.Warn($"[CacheService] Type mismatch for '{key}'");
             Remove(key);
         }
 
@@ -541,7 +541,7 @@ public class CacheService : MonoBehaviour, ICacheService
         if (last == null) return;
 
         if (enableDebugLogs)
-            Debug.Log($"[CacheService] Evict LRU '{last.Value}'");
+            GameLog.Info($"[CacheService] Evict LRU '{last.Value}'");
 
         Remove(last.Value);
     }
@@ -573,7 +573,7 @@ public class CacheService : MonoBehaviour, ICacheService
                 Remove(_expiredBuffer[i]);
 
             if (enableDebugLogs && _expiredBuffer.Count > 0)
-                Debug.Log($"[CacheService] Cleaned {_expiredBuffer.Count} expired items");
+                GameLog.Info($"[CacheService] Cleaned {_expiredBuffer.Count} expired items");
         }
     }
 
@@ -597,14 +597,14 @@ public class CacheService : MonoBehaviour, ICacheService
 
     private void OnLowMemory()
     {
-        Debug.LogWarning("[CacheService] OS low memory → clear all");
+        GameLog.Warn("[CacheService] OS low memory → clear all");
         Clear();
         Resources.UnloadUnusedAssets();
     }
 
     public void LogCacheStats()
     {
-        Debug.Log($"=== CacheService Statistics ===\n" +
+        GameLog.Info($"=== CacheService Statistics ===\n" +
                   $"Items: {Count}/{maxCacheSize}\n" +
                   $"Memory: {_totalMemoryUsage / 1024f / 1024f:F2}MB / {maxMemoryUsage / 1024f / 1024f:F2}MB\n" +
                   $"Hit Ratio: {HitRatio:P} (hits {_hitCount}, misses {_missCount})");

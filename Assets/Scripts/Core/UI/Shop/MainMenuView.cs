@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -81,7 +81,7 @@ public class MainMenuView : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("⚠️ Child object 'IconImage' not found!");
+                GameLog.Warn("⚠️ Child object 'IconImage' not found!");
             }
         }
     }
@@ -89,7 +89,7 @@ public class MainMenuView : MonoBehaviour
     // ✅ NEW: Handle talk button click
     private void OnTalkButtonClicked()
     {
-        Debug.Log($"💬 Talk button clicked for {currentInteractingNPC?.GetNPCName()}");
+        GameLog.Info($"💬 Talk button clicked for {currentInteractingNPC?.GetNPCName()}");
 
         if (currentInteractingNPC != null)
         {
@@ -110,7 +110,7 @@ public class MainMenuView : MonoBehaviour
     // ✅ NEW: Auto-open shop khi dialogue kết thúc
     public void AutoOpenShop()
     {
-        Debug.Log($"🏪 Auto-opening shop from dialogue system");
+        GameLog.Info($"🏪 Auto-opening shop from dialogue system");
 
         if (shopController != null && shopController.shopButton != null)
         {
@@ -125,7 +125,7 @@ public class MainMenuView : MonoBehaviour
 
     public void SetNPCInteraction(bool isNear, string npcName, ShopData npcShopData = null, BaseNPC npc = null)
     {
-        Debug.Log($"🔍 SetNPCInteraction: isNear={isNear}, npcName={npcName}, npc={npc?.name}");
+        GameLog.Info($"🔍 SetNPCInteraction: isNear={isNear}, npcName={npcName}, npc={npc?.name}");
 
         shopController.SetNPCInteraction(isNear, npcName, npcShopData, npc);
 
@@ -208,7 +208,7 @@ public class MainMenuView : MonoBehaviour
             // ✅ Tin của player — isPlayer: true
             if (!string.IsNullOrEmpty(msg.query))
             {
-                Debug.Log($"[RESTORE] → Player bubble: '{msg.query.Substring(0, Mathf.Min(40, msg.query.Length))}'");
+                GameLog.Info($"[RESTORE] → Player bubble: '{msg.query.Substring(0, Mathf.Min(40, msg.query.Length))}'");
                 companionChatController.AddRestoredMessage(
                     message: msg.query,
                     isPlayer: true,
@@ -220,7 +220,7 @@ public class MainMenuView : MonoBehaviour
             // ✅ Tin của NPC — isPlayer: false
             if (!string.IsNullOrEmpty(msg.answer))
             {
-                Debug.Log($"[RESTORE] → NPC bubble: '{msg.answer.Substring(0, Mathf.Min(40, msg.answer.Length))}'");
+                GameLog.Info($"[RESTORE] → NPC bubble: '{msg.answer.Substring(0, Mathf.Min(40, msg.answer.Length))}'");
                 companionChatController.AddRestoredMessage(
                     message: msg.answer,
                     isPlayer: false,
@@ -230,7 +230,7 @@ public class MainMenuView : MonoBehaviour
             }
         }
 
-        Debug.Log($"[RESTORE][12] ✅ RestoreChatHistory DONE — {ordered.Count} pairs rendered");
+        GameLog.Info($"[RESTORE][12] ✅ RestoreChatHistory DONE — {ordered.Count} pairs rendered");
     }
 
 }

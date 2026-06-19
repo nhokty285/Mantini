@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class PlayerDataManager : MonoBehaviour
@@ -48,7 +48,7 @@ public class PlayerDataManager : MonoBehaviour
 
         if (idx < 0 || idx >= _characterDataArray.Length)
         {
-            Debug.LogWarning($"[PlayerDataManager] Invalid character index {idx}. Resetting to 0");
+            GameLog.Warn($"[PlayerDataManager] Invalid character index {idx}. Resetting to 0");
             idx = 0;
             SaveCharacterIndex(0); // Persist correction
         }

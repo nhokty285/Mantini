@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using UnityEngine;
@@ -15,7 +15,7 @@ public class GoogleEmailLogin : MonoBehaviour
             string idToken = await GetGoogleIdToken();
             await AuthenticationService.Instance.SignInWithGoogleAsync(idToken);
 
-            Debug.Log($"✅ PlayerID: {AuthenticationService.Instance.PlayerId}");
+            GameLog.Info($"✅ PlayerID: {AuthenticationService.Instance.PlayerId}");
             DecodeToken(); // Email ở đây!
         }
         catch (System.Exception ex)
@@ -42,7 +42,7 @@ public class GoogleEmailLogin : MonoBehaviour
             byte[] data = Convert.FromBase64String(payload);
             string json = System.Text.Encoding.UTF8.GetString(data);
 
-            Debug.Log($"🔍 GOOGLE TOKEN: {json}");
+            GameLog.Info($"🔍 GOOGLE TOKEN: {json}");
             // ← SẼ THẤY: "email": "your@gmail.com"
         }
     }

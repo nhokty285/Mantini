@@ -1,4 +1,4 @@
-﻿/*// SharedRoomContext.cs
+/*// SharedRoomContext.cs
 // ============================================================
 // Singleton quản lý 1 conversation_id CHUNG cho toàn bộ phòng chat.
 // Tất cả NPC và Player đều dùng chung ID này, phân biệt nhau
@@ -40,7 +40,7 @@ public class SharedRoomContext : MonoBehaviour
     public void ResetRoom()
     {
         _sharedConversationId = "";
-        Debug.Log("[SharedRoomContext] Room conversation reset.");
+        GameLog.Info("[SharedRoomContext] Room conversation reset.");
     }
 
     /// <summary>

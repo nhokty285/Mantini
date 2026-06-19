@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Networking;
@@ -16,135 +15,93 @@ public class CartImageItem : MonoBehaviour,
     [SerializeField] private TextMeshProUGUI selectedSize;
     [SerializeField] private TextMeshProUGUI quality;
 
-    // ✅ THÊM: Visual indicator cho items đã thêm vào giỏ
-    [SerializeField] private GameObject addedToCartIndicator; // Icon/Image overlay
-    [SerializeField] private Image addedToCartIcon; // Icon cụ thể (shopping cart, check mark, etc.)
+    [Header("Added-to-Cart Indicator")]
+    [SerializeField] private GameObject addedToCartIndicator;
+    [SerializeField] private Image addedToCartIcon;
 
     [SerializeField] private CartItem itemData;
-    private Action<CartItem> onClickCallback;
-    private CartUI cartUI; // ← ref đến CartUI để check long press
-    private bool isHighlighted = false;
 
-    private static CartImageItem currentHighlightedItem;
+    private Action<CartItem> _onClickCallback;
+    private CartUI _cartUI;
+    private bool _isHighlighted = false;
+    private Outline _cachedOutline; // Refactor: cache Outline thay vì GetComponent mỗi lần
+
+    private static CartImageItem _currentHighlightedItem;
     private static readonly HashSet<CartImageItem> _highlighted = new HashSet<CartImageItem>();
-    public void OnPointerDown(PointerEventData eventData) => cartUI?.BeginLongPress(itemData);
-    public void OnPointerUp(PointerEventData eventData) => cartUI?.CancelLongPress();
-    public void OnPointerExit(PointerEventData eventData) => cartUI?.CancelLongPress();
+
+    public void OnPointerDown(PointerEventData eventData) => _cartUI?.BeginLongPress(itemData);
+    public void OnPointerUp(PointerEventData eventData) => _cartUI?.CancelLongPress();
+    public void OnPointerExit(PointerEventData eventData) => _cartUI?.CancelLongPress();
+
+    private void Awake()
+    {
+        // Refactor: cache Outline 1 lần
+        if (productImage != null)
+            _cachedOutline = productImage.GetComponent<Outline>();
+    }
 
     public void Setup(CartItem item, Action<CartItem> clickCallback, CartUI cartUIRef = null)
     {
         itemData = item;
-        onClickCallback = clickCallback;
-        cartUI = cartUIRef;          // ← lưu ref
+        _onClickCallback = clickCallback;
+        _cartUI = cartUIRef;
 
-     /*   if (button != null)
-        {
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() =>
-            {
-                if (cartUI != null && cartUI.IsLongPressConsumed()) return; // guard
-                AudioManager.Instance.PlaySFXOneShot("Button_High");
-                onClickCallback?.Invoke(itemData);
-            });
-        }*/
-        // Setup click event
         if (button != null)
         {
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() =>
             {
-                AudioManager.Instance.PlaySFXOneShot("Button_High");
-                //SelectThisItem();
-                onClickCallback?.Invoke(itemData);
+                if (AudioManager.Instance != null)
+                    AudioManager.Instance.PlaySFXOneShot("Button_High");
+                _onClickCallback?.Invoke(itemData);
             });
         }
-
 
         InitializeHighlight();
 
         if (itemData != null && itemData.isSelectedForCheckout)
-        {
-            SetHighlight(true);           // bật highlight
-        }
+            SetHighlight(true);
 
-        // Load image
         LoadImage();
         UpdatePriceDisplay();
         UpdateQualityDisplay();
-        // ✅ THÊM: Cập nhật visual indicator
         UpdateAddedToCartIndicator();
     }
 
-
-
-    // ✅ THÊM: Method cập nhật visual indicator
     private void UpdateAddedToCartIndicator()
     {
         bool isAddedToCart = itemData != null && itemData.isSelectedForCheckout;
 
-        // Hiển thị/ẩn indicator overlay
         if (addedToCartIndicator != null)
-        {
             addedToCartIndicator.SetActive(isAddedToCart);
-        }
 
-        // Thay đổi màu sắc icon
         if (addedToCartIcon != null)
-        {
             addedToCartIcon.color = isAddedToCart ? Color.green : Color.gray;
-        }
 
-        // Thêm border highlight cho product image
-        if (isAddedToCart)
+        // Refactor: dùng cached _cachedOutline (set ở Awake) thay vì GetComponent<Outline>() mỗi call
+        if (_cachedOutline != null)
         {
-            if (productImage != null)
+            _cachedOutline.enabled = isAddedToCart;
+            if (isAddedToCart)
             {
-                // Thêm outline component nếu có
-                var outline = productImage.GetComponent<Outline>();
-                if (outline != null)
-                {
-                    outline.enabled = true;
-                    outline.effectColor = Color.green;
-                    outline.effectDistance = new Vector2(2, 2);
-                }
-            }
-        }
-        else
-        {
-            // Tắt các hiệu ứng khi chưa thêm vào giỏ
-            if (productImage != null)
-            {
-                var outline = productImage.GetComponent<Outline>();
-                if (outline != null)
-                {
-                    outline.enabled = false;
-                }
+                _cachedOutline.effectColor = Color.green;
+                _cachedOutline.effectDistance = new Vector2(2, 2);
             }
         }
     }
 
-    // ✅ THÊM: Public method để refresh indicator từ bên ngoài
-    public void RefreshCartIndicator()
-    {
-        UpdateAddedToCartIndicator();
-    }
+    public void RefreshCartIndicator() => UpdateAddedToCartIndicator();
 
     private void UpdatePriceDisplay()
     {
         if (selectedSize != null && itemData != null)
-        {
-            // Hiển thị giá nguyên từ API, không format
-            selectedSize.text = itemData.selectedSize.ToString();
-        }
+            selectedSize.text = itemData.selectedSize ?? string.Empty;
     }
 
     private void UpdateQualityDisplay()
     {
         if (quality != null && itemData != null)
-        {
-            //Hiển thị số lượng nguyên từ API, không format
             quality.text = itemData.quantity.ToString();
-        }
     }
 
     private void InitializeHighlight()
@@ -152,83 +109,64 @@ public class CartImageItem : MonoBehaviour,
         if (highlightProduct != null)
         {
             highlightProduct.gameObject.SetActive(false);
-            isHighlighted = false;
+            _isHighlighted = false;
         }
 
-        // ✅ THÊM: Khởi tạo indicator ở trạng thái ẩn
         if (addedToCartIndicator != null)
-        {
             addedToCartIndicator.SetActive(false);
-        }
     }
 
     public void SelectThisItem()
     {
         // Tắt highlight của item trước đó (nếu có)
-        if (currentHighlightedItem != null && currentHighlightedItem != this)
-        {
-            currentHighlightedItem.SetHighlight(false);
-        }
+        if (_currentHighlightedItem != null && _currentHighlightedItem != this)
+            _currentHighlightedItem.SetHighlight(false);
 
-        // Bật highlight cho item này
         SetHighlight(true);
-
-        // Cập nhật reference
-        currentHighlightedItem = this;
+        _currentHighlightedItem = this;
     }
 
     public void ToggleHighlightMultiSelect()
     {
-        
-        // Gọi SetHighlight trực tiếp, KHÔNG qua SelectThisItem()
         // SetHighlight không đụng đến currentHighlightedItem của item khác
-        SetHighlight(!isHighlighted);
+        SetHighlight(!_isHighlighted);
     }
 
-    public void SetHighlightVisual(bool value)
-    {
-        SetHighlight(value);
-    }
+    public void SetHighlightVisual(bool value) => SetHighlight(value);
 
-    // ✅ THÊM: để CartUI đọc list pending
     public static IReadOnlyCollection<CartImageItem> GetHighlightedItems() => _highlighted;
 
     public void SetHighlight(bool highlight)
     {
         if (highlightProduct == null) return;
 
-        isHighlighted = highlight;
-        highlightProduct.gameObject.SetActive(isHighlighted);
+        _isHighlighted = highlight;
+        highlightProduct.gameObject.SetActive(_isHighlighted);
 
         if (highlight) _highlighted.Add(this);
         else _highlighted.Remove(this);
 
-        if (!highlight && currentHighlightedItem == this)
-            currentHighlightedItem = null;
+        if (!highlight && _currentHighlightedItem == this)
+            _currentHighlightedItem = null;
     }
 
-    public bool IsHighlighted()
-    {
-        return isHighlighted;
-    }
+    public bool IsHighlighted() => _isHighlighted;
 
-    // Method để clear tất cả highlight (single hoặc multi)
     public static void ClearAllHighlights()
     {
+        // Snapshot để tránh modify collection trong loop
         var toClean = new List<CartImageItem>(_highlighted);
         foreach (var item in toClean)
             item?.SetHighlight(false);
-        // _highlighted đã empty sau khi SetHighlight(false) remove từng item
-        currentHighlightedItem = null;
+        _currentHighlightedItem = null;
     }
 
     private void OnDestroy()
     {
         _highlighted.Remove(this);
-        if (currentHighlightedItem == this)
-            currentHighlightedItem = null;
+        if (_currentHighlightedItem == this)
+            _currentHighlightedItem = null;
     }
-
 
     private void LoadImage()
     {
@@ -238,31 +176,30 @@ public class CartImageItem : MonoBehaviour,
         productImage.sprite = null;
         productImage.color = Color.gray;
 
-        if (!string.IsNullOrEmpty(itemData.imageUrl))
+        if (string.IsNullOrEmpty(itemData.imageUrl)) return;
+
+        // Ưu tiên ImageDownloadManager (shared cache) nếu có
+        if (ImageDownloadManager.Instance != null)
         {
-            // Use existing ImageDownloadManager if available
-            if (ImageDownloadManager.Instance != null)
-            {
-                ImageDownloadManager.Instance.DownloadImage(
-                    itemData.imageUrl,
-                    texture =>
+            ImageDownloadManager.Instance.DownloadImage(
+                itemData.imageUrl,
+                texture =>
+                {
+                    if (productImage != null && texture != null)
                     {
-                        if (productImage != null && texture != null)
-                        {
-                            productImage.sprite = Sprite.Create(texture,
-                                new Rect(0, 0, texture.width, texture.height),
-                                Vector2.one * 0.5f);
-                            productImage.color = Color.white;
-                        }
-                    },
-                    error => Debug.LogWarning($"Failed to load image: {error}")
-                );
-            }
-            else
-            {
-                // Fallback to coroutine
-                StartCoroutine(LoadImageFromURL(itemData.imageUrl));
-            }
+                        productImage.sprite = Sprite.Create(texture,
+                            new Rect(0, 0, texture.width, texture.height),
+                            Vector2.one * 0.5f);
+                        productImage.color = Color.white;
+                    }
+                },
+                error => GameLog.Warn($"[CartImageItem] Failed to load image: {error}")
+            );
+        }
+        else
+        {
+            // Fallback to coroutine nếu chưa có manager
+            StartCoroutine(LoadImageFromURL(itemData.imageUrl));
         }
     }
 
@@ -285,5 +222,6 @@ public class CartImageItem : MonoBehaviour,
             }
         }
     }
+
     public CartItem GetCurrentItem() => itemData;
 }

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -110,12 +110,12 @@ public class NPCDialogueSystem : MonoBehaviour
 
         if (currentDialogueSequence.Count == 0)
         {
-            Debug.LogWarning($"⚠️ {npc.GetNPCName()} không có dialogue sequence!");
+            GameLog.Warn($"⚠️ {npc.GetNPCName()} không có dialogue sequence!");
             EndDialogue();
             return;
         }
 
-        Debug.Log($"🎬 Starting dialogue with {npc.GetNPCName()} ({currentDialogueSequence.Count} lines)");
+        GameLog.Info($"🎬 Starting dialogue with {npc.GetNPCName()} ({currentDialogueSequence.Count} lines)");
 
         // Hiển thị panel và bắt đầu dialogue
         StartCoroutine(ShowDialoguePanel());
@@ -256,7 +256,7 @@ public class NPCDialogueSystem : MonoBehaviour
     /// </summary>
     private void EndDialogue()
     {
-        Debug.Log($"✅ Dialogue ended with {currentNPC.GetNPCName()}");
+        GameLog.Info($"✅ Dialogue ended with {currentNPC.GetNPCName()}");
      
         StartCoroutine(HideDialogueAndOpenShop());
     }
@@ -280,7 +280,7 @@ public class NPCDialogueSystem : MonoBehaviour
         // ✅ CHÍNH: Tự động mở shop thay vì chỉ show button
         if (MainMenuView.Instance != null && currentNPC != null)
         {
-            Debug.Log($"🎬 Auto-opening shop for {currentNPC.GetNPCName()}");
+            GameLog.Info($"🎬 Auto-opening shop for {currentNPC.GetNPCName()}");
 
             // Gọi SetNPCInteraction để setup state
             MainMenuView.Instance.SetNPCInteraction(
@@ -364,4 +364,3 @@ public class DialogueEntry
         imageLayout = layout ?? ImageLayout.Default;
     }
 }
-

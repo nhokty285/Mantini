@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -54,7 +54,7 @@ public class VoiceNameInput : MonoBehaviour, ISpeechToTextListener
     private void SimulateVoiceResult(string fakeName)
     {
         voiceButtonLabel.text = "🎤 Talk";
-        Debug.Log($"[VoiceNameInput] EDITOR MOCK → \"{fakeName}\"");
+        GameLog.Info($"[VoiceNameInput] EDITOR MOCK → \"{fakeName}\"");
         OnSpeechResult?.Invoke(CapitalizeName(fakeName));
     }
 #endif

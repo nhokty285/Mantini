@@ -59,13 +59,17 @@ public class WallFadeTarget : MonoBehaviour
             if (targetOccluded)
                 SetTransparent(e.material);
         }
+
+        // PERF: bật Update chạy fade (event-driven). Update tự tắt khi xong.
+        enabled = true;
     }
 
     private void Update()
     {
         if (!initialized || entries.Count == 0) return;
 
-        bool allRestored = true;
+        bool allRestored = true;   // tất cả material đã về alpha gốc?
+        bool allOccluded = true;   // tất cả material đã đạt occludedAlpha?
 
         foreach (var e in entries)
         {
@@ -90,6 +94,11 @@ public class WallFadeTarget : MonoBehaviour
                     allRestored = false;
                 }
             }
+            else
+            {
+                if (Mathf.Abs(newA - occludedAlpha) > 0.001f)
+                    allOccluded = false;
+            }
         }
 
         if (!targetOccluded && allRestored)
@@ -97,14 +106,25 @@ public class WallFadeTarget : MonoBehaviour
             foreach (var e in entries)
                 SetOpaque(e.material);
 
+            enabled = false; // restore xong → ngừng Update
+        }
+        else if (targetOccluded && allOccluded)
+        {
+            // PERF FIX: fade-in xong, alpha ổn định → tắt Update.
+            // Tránh 68 walls chạy Update vô tận mỗi frame.
             enabled = false;
         }
     }
 
-    private void LateUpdate()
+    // PERF: LateUpdate poll bị xóa. Bật/tắt Update giờ event-driven qua
+    // SetOccluded (theo rule "không logic nặng trong Update").
+
+    // PERF: dọn material instances do r.materials tạo (tránh leak).
+    private void OnDestroy()
     {
-        if (targetOccluded && !enabled)
-            enabled = true;
+        foreach (var e in entries)
+            if (e.material != null) Destroy(e.material);
+        entries.Clear();
     }
 
     private static void SetTransparent(Material mat)

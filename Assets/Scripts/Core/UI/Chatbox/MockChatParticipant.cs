@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class MockChatParticipant : MonoBehaviour, IChatParticipant
 {
@@ -24,11 +24,11 @@ public class MockChatParticipant : MonoBehaviour, IChatParticipant
         string response = mockResponses[responseIndex % mockResponses.Length];
         responseIndex++;
 
-        Debug.Log($"[MOCK-{mockName}] Received: '{message}' → Reply: '{response}'");
+        GameLog.Info($"[MOCK-{mockName}] Received: '{message}' → Reply: '{response}'");
         return response;
     }
     Sprite IChatParticipant.GetParticipantIcon() { return null; }
 
-    public void OnJoinChat() { Debug.Log($"[MOCK] {mockName} joined chat"); }
-    public void OnLeaveChat() { Debug.Log($"[MOCK] {mockName} left chat"); }
+    public void OnJoinChat() { GameLog.Info($"[MOCK] {mockName} joined chat"); }
+    public void OnLeaveChat() { GameLog.Info($"[MOCK] {mockName} left chat"); }
 }

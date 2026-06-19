@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -33,7 +33,7 @@ public class MemoryWatchdog : MonoBehaviour
 
     private void HandleLowMemory()
     {
-        Debug.LogWarning("[MemoryWatchdog] OS LOW MEMORY — flushing caches");
+        GameLog.Warn("[MemoryWatchdog] OS LOW MEMORY — flushing caches");
 
         // Xả texture cache (chiếm nhiều RAM nhất)
         ImageDownloadManager.Instance?.ClearCache();

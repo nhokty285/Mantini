@@ -218,7 +218,7 @@ public class ShopController_1 : MonoBehaviour
             ? currentCarouselItems[currentCenterIndex].itemName
             : "N/A";
 
-        Debug.Log($"🔍 ScrollPos: {scrollPos:F3} | CenterIndex: {currentCenterIndex} | Item: {itemName} | Total: {currentCarouselItems.Count} | Scale: {itemCenterScale}");
+        GameLog.Info($"🔍 ScrollPos: {scrollPos:F3} | CenterIndex: {currentCenterIndex} | Item: {itemName} | Total: {currentCarouselItems.Count} | Scale: {itemCenterScale}");
     }
 
     private void PopulateShopItems()
@@ -267,19 +267,19 @@ public class ShopController_1 : MonoBehaviour
         }
 
         isLayoutReady = true;
-        Debug.Log("✅ Shop Layout READY! ScrollPos: " + shopScrollRect.horizontalNormalizedPosition);
+        GameLog.Info("✅ Shop Layout READY! ScrollPos: " + shopScrollRect.horizontalNormalizedPosition);
     }
 
     private void OnCarouselItemClicked(ShopItem shopItem, int itemIndex)
     {
         if (itemIndex == currentCenterIndex)
         {
-            Debug.Log($"✅ BUY: {shopItem.itemName}");
+            GameLog.Info($"✅ BUY: {shopItem.itemName}");
             MainMenuViewModel.OnBuyItemClicked(shopItem.itemID);
         }
         else
         {
-            Debug.Log($"🔄 Scroll to Item {itemIndex}: {shopItem.itemName}");
+            GameLog.Info($"🔄 Scroll to Item {itemIndex}: {shopItem.itemName}");
             if (currentCarouselItems.Count > 1)
             {
                 float targetPos = itemIndex * distanceBetweenItems;

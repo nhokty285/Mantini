@@ -1,10 +1,14 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Collections;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
 
+/// <summary>
+/// Dev tool — gửi mock order tới backend để test flow checkout.
+/// ⚠️ Không attach prefab này vào production scene.
+/// </summary>
 public class MockCheckout : MonoBehaviour
 {
     [Header("Mock Data Button")]
@@ -12,24 +16,26 @@ public class MockCheckout : MonoBehaviour
 
     private void Start()
     {
-        // Gán sự kiện cho nút mock
         if (mockPurchaseButton != null)
+        {
+            mockPurchaseButton.onClick.RemoveAllListeners();
             mockPurchaseButton.onClick.AddListener(MockPurchaseAndCheckout);
+        }
     }
 
     [ContextMenu("Mock Purchase & Checkout")]
     public void MockPurchaseAndCheckout()
     {
-        Debug.Log("=== MOCK CHECKOUT STARTED ===");
+#if UNITY_EDITOR
+        GameLog.Info("[MockCheckout] === MOCK CHECKOUT STARTED ===");
+#endif
 
         // Tạo mock data cart items
         List<CartItem> mockCartItems = CreateMockCartItems();
 
         // Thêm vào giỏ hàng thật
         foreach (var item in mockCartItems)
-        {
             ShoppingCart.Instance.AddItem(item);
-        }
 
         // Tạo mock order request theo format API
         var mockOrderRequest = CreateMockOrderRequest();
@@ -38,47 +44,42 @@ public class MockCheckout : MonoBehaviour
         StartCoroutine(SendMockOrderToBackend(mockOrderRequest));
     }
 
-    private List<CartItem> CreateMockCartItems()
+    private static List<CartItem> CreateMockCartItems()
     {
-        List<CartItem> mockItems = new List<CartItem>();
-
-        // Mock item 1
-        CartItem item1 = new CartItem
+        // Pre-allocate capacity = 2
+        var mockItems = new List<CartItem>(2)
         {
-            productId = "59c1b838-0741-4a27-ab17-0d7515696139",
-            customId = "8552",
-            productName = "Mock Giày Nike Air",
-            brandName = "Nike",
-            price = 2500000f,
-            selectedSize = "42",
-            quantity = 1,
-            imageUrl = "https://via.placeholder.com/150x150/FF0000/FFFFFF?text=Nike"
+            new CartItem
+            {
+                productId = "59c1b838-0741-4a27-ab17-0d7515696139",
+                customId = "8552",
+                productName = "Mock Giày Nike Air",
+                brandName = "Nike",
+                price = 2500000f,
+                selectedSize = "42",
+                quantity = 1,
+                imageUrl = "https://via.placeholder.com/150x150/FF0000/FFFFFF?text=Nike"
+            },
+            new CartItem
+            {
+                productId = "f9a5c77c-1d15-4b9e-a419-d2c75a0b0e45",
+                customId = "21147",
+                productName = "Mock Áo Adidas",
+                brandName = "Adidas",
+                price = 1200000f,
+                selectedSize = "L",
+                quantity = 2,
+                imageUrl = "https://via.placeholder.com/150x150/0000FF/FFFFFF?text=Adidas"
+            }
         };
-
-        // Mock item 2
-        CartItem item2 = new CartItem
-        {
-            productId = "f9a5c77c-1d15-4b9e-a419-d2c75a0b0e45",
-            customId = "21147",
-            productName = "Mock Áo Adidas",
-            brandName = "Adidas",
-            price = 1200000f,
-            selectedSize = "L",
-            quantity = 2,
-            imageUrl = "https://via.placeholder.com/150x150/0000FF/FFFFFF?text=Adidas"
-        };
-
-        mockItems.Add(item1);
-        mockItems.Add(item2);
 
         return mockItems;
     }
 
-    private MockOrderRequest CreateMockOrderRequest()
+    private static MockOrderRequest CreateMockOrderRequest()
     {
-        var orderRequest = new MockOrderRequest
+        return new MockOrderRequest
         {
-           
             orderTypeId = "COD",
             departmentId = "62bc4cb7-51c9-4e03-662b-09a9e145dda7",
             buyerName = "NGUYEN VAN A",
@@ -87,36 +88,33 @@ public class MockCheckout : MonoBehaviour
             recipientCountryId = "E2C96513-1D11-4531-8E62-31CE91946556",
             recipientCountryName = "Vietnam",
             tenantCustomerCouponIds = new List<string>(),
-            items = new List<MockOrderItem>()
+            items = new List<MockOrderItem>(2)
+            {
+                new MockOrderItem
+                {
+                    tenantProductVariantId = "59c1b838-0741-4a27-ab17-0d7515696139",
+                    amount = 1,
+                    newProductSkuTitle = "42"
+                },
+                new MockOrderItem
+                {
+                    tenantProductVariantId = "f9a5c77c-1d15-4b9e-a419-d2c75a0b0e45",
+                    amount = 2,
+                    newProductSkuTitle = "L"
+                }
+            }
         };
-
-        // Thêm mock items
-        orderRequest.items.Add(new MockOrderItem
-        {
-            tenantProductVariantId = "59c1b838-0741-4a27-ab17-0d7515696139",
-            amount = 1,
-            newProductSkuTitle = "42"
-        });
-
-        orderRequest.items.Add(new MockOrderItem
-        {
-            tenantProductVariantId = "f9a5c77c-1d15-4b9e-a419-d2c75a0b0e45",
-            amount = 2,
-            newProductSkuTitle = "L"
-        });
-
-        return orderRequest;
     }
 
     private IEnumerator SendMockOrderToBackend(MockOrderRequest orderRequest)
     {
-        string url = "https://api.staging.storims.com/api/v1/RetailOrder/45A26BFC-F2B2-4CA2-AB49-9EE8E9ADCFEC/AnonymousOrder?PageIndex=0&PageSize=20";
-
+        const string url = "https://api.staging.storims.com/api/v1/RetailOrder/45A26BFC-F2B2-4CA2-AB49-9EE8E9ADCFEC/AnonymousOrder?PageIndex=0&PageSize=20";
         string jsonBody = JsonConvert.SerializeObject(orderRequest, Formatting.Indented);
 
-        Debug.Log("=== MOCK ORDER REQUEST ===");
-        Debug.Log($"URL: {url}");
-        Debug.Log($"JSON Body: {jsonBody}");
+#if UNITY_EDITOR
+        GameLog.Info($"[MockCheckout] === MOCK ORDER REQUEST === URL: {url}");
+        GameLog.Info($"[MockCheckout] JSON Body: {jsonBody}");
+#endif
 
         using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
         {
@@ -127,34 +125,39 @@ public class MockCheckout : MonoBehaviour
 
             yield return request.SendWebRequest();
 
-            Debug.Log("=== MOCK ORDER RESPONSE ===");
-            Debug.Log($"Response Code: {request.responseCode}");
-            Debug.Log($"Response Body: {request.downloadHandler.text}");
+#if UNITY_EDITOR
+            GameLog.Info($"[MockCheckout] === RESPONSE === code={request.responseCode}");
+            GameLog.Info($"[MockCheckout] Body: {request.downloadHandler.text}");
+#endif
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log("✅ Mock Order sent successfully!");
-                // Parse response nếu cần
+                GameLog.Info("[MockCheckout] ✅ Mock Order sent successfully!");
                 try
                 {
                     var response = JsonConvert.DeserializeObject<RetailOrderResult>(request.downloadHandler.text);
-                    Debug.Log($"Order ID: {response.retailOrderId}");
-                    Debug.Log($"Order Number: {response.retailOrderNumber}");
+#if UNITY_EDITOR
+                    GameLog.Info($"[MockCheckout] Order ID: {response.retailOrderId}");
+                    GameLog.Info($"[MockCheckout] Order Number: {response.retailOrderNumber}");
+#endif
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogWarning($"Could not parse response: {e.Message}");
+                    GameLog.Warn($"[MockCheckout] Could not parse response: {e.Message}");
                 }
             }
             else
             {
-                Debug.LogError($"❌ Mock Order failed: {request.error}");
+                Debug.LogError($"[MockCheckout] ❌ Mock Order failed: {request.error}");
             }
         }
     }
 }
 
-// Classes riêng cho mock request
+// ⚠️ Note: MockOrderRequest/MockOrderItem duplicate schema với RetailOrderRequest/CartOrderItem
+// trong ShoppingCart.cs. Có thể merge bằng cách dùng RetailOrderRequest cho mock — nhưng để giữ
+// tách biệt dev/prod data, vẫn giữ riêng.
+
 [System.Serializable]
 public class MockOrderRequest
 {

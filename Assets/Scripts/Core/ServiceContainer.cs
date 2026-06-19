@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -50,7 +50,7 @@ public class ServiceContainer : MonoBehaviour
         }
         Register<IAuthenticationService>(authService);
 
-        Debug.Log("✅ Authentication services registered");
+        GameLog.Info("✅ Authentication services registered");
 */
         
     }
@@ -61,7 +61,7 @@ public class ServiceContainer : MonoBehaviour
             throw new ArgumentNullException(nameof(service));
 
         services[typeof(T)] = service;
-        Debug.Log($"ServiceContainer: Registered {typeof(T).Name}");
+        GameLog.Info($"ServiceContainer: Registered {typeof(T).Name}");
     }
 
     public void RegisterFactory<T>(Func<object> factory)
@@ -70,7 +70,7 @@ public class ServiceContainer : MonoBehaviour
             throw new ArgumentNullException(nameof(factory));
 
         factories[typeof(T)] = factory;
-        Debug.Log($"ServiceContainer: Registered factory for {typeof(T).Name}");
+        GameLog.Info($"ServiceContainer: Registered factory for {typeof(T).Name}");
     }
 
     public T Get<T>()
@@ -104,7 +104,7 @@ public class ServiceContainer : MonoBehaviour
         Type type = typeof(T);
         services.Remove(type);
         factories.Remove(type);
-        Debug.Log($"ServiceContainer: Unregistered {type.Name}");
+        GameLog.Info($"ServiceContainer: Unregistered {type.Name}");
     }
 
     private void OnDestroy()

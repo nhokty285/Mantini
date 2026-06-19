@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Diagnostics; // BẮT BUỘC có thư viện này
 
 public class TraceInstantiate : MonoBehaviour
@@ -11,6 +11,6 @@ public class TraceInstantiate : MonoBehaviour
 
         // 2. In ra Console
         // stackTrace.ToString() sẽ chuyển toàn bộ lịch sử gọi hàm thành văn bản
-        UnityEngine.Debug.Log($"Object '{name}' được tạo bởi:\n{stackTrace.ToString()}");
+        GameLog.Info($"Object '{name}' được tạo bởi:\n{stackTrace.ToString()}");
     }
 }

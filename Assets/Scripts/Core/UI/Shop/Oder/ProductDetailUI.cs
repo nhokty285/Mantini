@@ -1,618 +1,3 @@
-﻿/*using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
-using static MainMenuViewModel; // Để dùng APIProductItem
-
-// 1. Adapter Class: Chứa dữ liệu chuẩn hóa để hiển thị lên UI
-[System.Serializable]
-public class ProductDetail
-{
-    // Thông tin hiển thị cơ bản
-    public string title;
-    public string brandName;
-    public float price;
-    public float originalPrice; // Giá gốc (để gạch ngang nếu có giảm giá)
-    public string description;
-    public float reviewScore;
-    public int reviewCount;
-    public string mainImageUrl;
-    public List<string> galleryUrls = new List<string>();
-
-    // Logic logic
-    public bool isPaidItem;       // Cờ đánh dấu hàng đã mua
-    public string selectedSize;   // Size đã chọn (nếu là hàng đã mua)
-    public string customId;       // ID sản phẩm cha (nếu có)
-
-    // Dữ liệu gốc (chỉ dùng khi cần logic sâu hơn)
-    public APIProductItem originalShopItem;
-
-
-    // Constructor 1: Tạo từ API Shop (Hàng chưa mua)
-    public ProductDetail(APIProductItem shopItem)
-    {
-        title = shopItem.title;
-        brandName = shopItem.brandName;
-        price = shopItem.price;
-        originalPrice = shopItem.regularPrice;
-        selectedSize = shopItem.selectSize;
-
-        // Tạo mô tả
-        description = $"Product ID: {shopItem.customId}\n";
-        description += $"Brand: {shopItem.brandName}\n";
-        description += $"Reviews: {shopItem.totalReviews} customers rated {shopItem.reviewStatFiveScale}★";
-
-        reviewScore = shopItem.reviewStatFiveScale;
-        reviewCount = shopItem.totalReviews;
-
-        // Xử lý ảnh
-        if (shopItem.images != null && shopItem.images.Count > 0)
-        {
-            mainImageUrl = shopItem.images[0].origin;
-            foreach (var img in shopItem.images)
-            {
-                if (!string.IsNullOrEmpty(img.origin))
-                    galleryUrls.Add(img.origin);
-            }
-        }
-
-        isPaidItem = false;
-        customId = shopItem.customId;
-        originalShopItem = shopItem;
-    }
-
-    // Constructor 2: Tạo từ Inventory (Hàng đã mua)
-    public ProductDetail(CartItem paidItem)
-    {
-        title = paidItem.productName;
-        price = paidItem.price;
-        originalPrice = 0;
-
-        // ✅ TẬN DỤNG DỮ LIỆU CÓ SẴN TỪ CARTITEM
-        // Không cần parse chuỗi description nữa vì CartItem đã lưu sẵn
-        brandName = !string.IsNullOrEmpty(paidItem.brandName) ? paidItem.brandName : "Unknown Brand";
-        selectedSize = !string.IsNullOrEmpty(paidItem.selectedSize) ? paidItem.selectedSize : "Freesize";
-
-        // Tạo nội dung hiển thị text mô tả
-        description = $"<color=green><b>ĐÃ SỞ HỮU</b></color>\n"; // Thêm màu cho nổi bật
-        description += $"----------------------\n";
-        description += $"<b>Thương hiệu:</b> {brandName}\n";
-        description += $"<b>Kích thước:</b> {selectedSize}\n";
-
-        // Nếu có description gốc từ backend (ví dụ: "Jeep - Size 36"), có thể hiển thị thêm nếu muốn
-        // description += $"\nChi tiết: {paidItem.description}"; 
-
-        if (paidItem.purchaseDate != default(System.DateTime))
-            description += $"<b>Ngày mua:</b> {paidItem.purchaseDate:dd/MM/yyyy}\n";
-
-        // Các thông số hiển thị khác
-        reviewScore = 5; // Mặc định 5 sao cho hàng mình đã mua ^^
-        reviewCount = 1;
-
-        mainImageUrl = paidItem.imageUrl;
-        if (!string.IsNullOrEmpty(paidItem.imageUrl))
-            galleryUrls.Add(paidItem.imageUrl);
-
-        isPaidItem = true;
-        customId = paidItem.customId;
-        originalShopItem = null;
-    }
-}
-
-public class ProductDetailUI : MonoBehaviour
-{
-    public static ProductDetailUI Instance { get; private set; }
-
-    [Header("Product Detail UI")]
-    [SerializeField] private GameObject productDetailPanel;
-    [SerializeField] private Image productMainImage;
-    [SerializeField] private TextMeshProUGUI productNameText;
-    [SerializeField] private TextMeshProUGUI productBrandText;
-    [SerializeField] private TextMeshProUGUI productPriceText;
-    [SerializeField] private TextMeshProUGUI productOriginalPriceText;
-    [SerializeField] private TextMeshProUGUI productDescriptionText;
-    [SerializeField] private TextMeshProUGUI productReviewsText;
-
-    [Header("Size Selection")]
-    [SerializeField] private TMP_Dropdown sizeDropdown;
-    [SerializeField] private TextMeshProUGUI selectedSizeText;
-
-    [Header("Buttons")]
-    [SerializeField] private Button addToCartButton;
-    [SerializeField] private Button buyNowButton;
-    [SerializeField] private Button closeDetailButton;
-    [SerializeField] private Button deleteButton;
-
-    [Header("Image Gallery")]
-    [SerializeField] private Transform imageScrollContent;
-    [SerializeField] private GameObject imagePagePrefab;
-    [SerializeField] private float snapSpeed = 10f;
-    [SerializeField] private ScrollRect imageScrollRect;
-
-    // State
-    private List<GameObject> imagePages = new List<GameObject>();
-    private ProductDetail currentDetail;
-    private CartItem currentCartItem; // Reference để delete
-    private string currentSelectedSize = "";
-    private string currentVariantId = "";
-    private string _lastSelectedSize = "";
-    [SerializeField] private CarouselIndicator carouselIndicator;
-
-    [Header("Chat Integration")]
-    [SerializeField] private RectTransform chatAnchor;
-
-    private MultiChatManager _chatManager;
-
-    private Coroutine _mainImageCoroutine;
-
-    private void Awake()
-    {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
-
-        _chatManager = FindAnyObjectByType<MultiChatManager>();
-        InitializeUI();
-    }
-
-    private void InitializeUI()
-    {
-        //addToCartButton?.onClick.AddListener(OnAddToCartClicked);
-        addToCartButton.onClick.AddListener(() =>
-        {
-            // Gọi Popup thay vì gọi hàm mua
-            PopupManager.Instance.ShowPopup(
-                "Xác nhận",
-                "Bạn có muốn thêm vật phẩm này vào giỏ hàng không?",
-                () =>
-                {
-                    // Khi bấm "Đồng ý" trên Popup thì mới chạy hàm này
-                    OnAddToCartClicked();
-                    TutorialGamePlay.Instance?.OnAddToCartSuccess();
-                }
-            );
-        });
-        closeDetailButton?.onClick.AddListener(CloseProductDetail);
-        sizeDropdown.onValueChanged.RemoveAllListeners();
-        sizeDropdown.onValueChanged.AddListener(OnSizeChanged);
-
-        if (productDetailPanel != null) productDetailPanel.SetActive(false);
-    }
-
-    // =================================================================================
-    // PUBLIC API: ENTRY POINTS
-    // =================================================================================
-
-    // 1. Gọi khi xem hàng đã mua (Từ Inventory) - KHÔNG GỌI API SHOP
-    public void ShowPaidProductDetail(CartItem paidItem)
-    {
-        Debug.Log($"[ProductDetail] Showing PAID item: {paidItem.productName}");
-
-        // Convert CartItem -> ProductDetail
-        currentDetail = new ProductDetail(paidItem);
-
-        OpenPanel();
-        PopulateCommonUI();
-
-        // Setup UI riêng cho hàng đã mua (Read-only)
-        SetupPaidItemUI();
-    }
-
-    // 2. Gọi khi xem hàng chưa mua (Từ Shop) - CÓ GỌI API SHOP
-    public void ShowUnpaidProductDetail(string customId, string preSelectedSize = "")
-    {
-        Debug.Log($"[ProductDetail] Fetching shop item: {customId}");
-        OpenPanel();
-        _lastSelectedSize = preSelectedSize;
-
-        // Lưu CartItem để dùng cho nút Delete
-        currentCartItem = ShoppingCart.Instance?.GetUnpaidItems()
-            .Find(i => i.customId == customId && i.selectedSize == preSelectedSize);
-        string detailUrl = $"https://data.storims.c1.hubcom.tech/api/v1/TenantProduct/45A26BFC-F2B2-4CA2-AB49-9EE8E9ADCFEC/{customId}";
-
-        APIClient.Instance.GetFull(detailUrl,
-            json =>
-            {
-                var shopItem = JsonUtility.FromJson<APIProductItem>(json);
-                currentDetail = new ProductDetail(shopItem);
-                currentDetail.selectedSize = _lastSelectedSize;
-
-                PopulateCommonUI();
-                SetupUnpaidItemUI(); // Setup dropdown, buttons cho việc mua hàng
-
-                _chatManager?.SetProductContext(currentDetail);
-                _chatManager?.ReparentChatPanelTo(chatAnchor);
-                _chatManager?.ShowProductWelcome();
-            },
-            error =>
-            {
-                Debug.LogError($"[ProductDetail] Failed to load detail: {error}");
-                // Có thể hiển thị thông báo lỗi lên UI tại đây
-            }
-        );
-    }
-
-    // =================================================================================
-    // CORE UI LOGIC
-    // =================================================================================
-
-    private void OpenPanel()
-    {
-        if (productDetailPanel != null) productDetailPanel.SetActive(true);
-
-        PlayerController.Instance?.SetCanMove(false);
-    }
-
-    // Hiển thị các thông tin chung (Tên, giá, ảnh, mô tả)
-    private void PopulateCommonUI()
-    {
-        if (currentDetail == null) return;
-
-        // 1. Text Info
-        if (productNameText != null) productNameText.text = currentDetail.title;
-        if (productBrandText != null) productBrandText.text = $"Brand: {currentDetail.brandName}";
-        if (productDescriptionText != null) productDescriptionText.text = currentDetail.description;
-
-        if (productReviewsText != null)
-            productReviewsText.text = $"⭐ {currentDetail.reviewScore}/5 ({currentDetail.reviewCount} reviews)";
-
-        // 2. Price Logic
-        if (productPriceText != null)
-            productPriceText.text = $"{currentDetail.price:N0} VND";
-
-        if (productOriginalPriceText != null)
-        {
-            if (currentDetail.originalPrice > currentDetail.price && !currentDetail.isPaidItem)
-            {
-                productOriginalPriceText.text = $"{currentDetail.originalPrice:N0} VND";
-                productOriginalPriceText.gameObject.SetActive(true);
-                productOriginalPriceText.fontStyle = FontStyles.Strikethrough;
-            }
-            else
-            {
-                productOriginalPriceText.gameObject.SetActive(false);
-            }
-        }
-
-        SetupSwipeableGallery(currentDetail.galleryUrls);
-
-        // ✅ BƯỚC 2: Load mainImage SAU — an toàn, không bị kill nữa
-        if (productMainImage != null && !string.IsNullOrEmpty(currentDetail.mainImageUrl))
-            StartCoroutine(LoadImage(currentDetail.mainImageUrl, productMainImage));
-    }
-
-    // Setup UI cho hàng ĐÃ MUA (Khóa nút mua, hiện size đã chọn)
-    private void SetupPaidItemUI()
-    {
-        // Ẩn nút mua và nút xóa
-        if (addToCartButton != null) addToCartButton.gameObject.SetActive(false);
-        if (buyNowButton != null) buyNowButton.gameObject.SetActive(false);
-        if (deleteButton != null) deleteButton.gameObject.SetActive(false);
-
-        // Khóa dropdown size và chỉ hiện size đã mua
-        if (sizeDropdown != null)
-        {
-            sizeDropdown.ClearOptions();
-            sizeDropdown.AddOptions(new List<string> { currentDetail.selectedSize });
-            sizeDropdown.interactable = false;
-        }
-
-        if (selectedSizeText != null)
-            selectedSizeText.text = $"Đã chọn: {currentDetail.selectedSize}";
-    }
-
-    // Setup UI cho hàng CHƯA MUA (Hiện nút mua, load danh sách size)
-    private void SetupUnpaidItemUI()
-    {
-        // Hiện nút mua
-        if (addToCartButton != null) addToCartButton.gameObject.SetActive(true);
-        if (buyNowButton != null) buyNowButton.gameObject.SetActive(true);
-
-        // Wire nút Delete — closure capture currentCartItem
-        if (deleteButton != null)
-        {
-            deleteButton.gameObject.SetActive(currentCartItem != null);
-            deleteButton.onClick.RemoveAllListeners();
-            deleteButton.onClick.AddListener(() =>
-            {
-                ShoppingCart.Instance.ClearUnpaidItems(currentCartItem);
-            });
-        }
-
-        if (sizeDropdown != null)
-        {
-            sizeDropdown.interactable = true;
-            sizeDropdown.ClearOptions();
-
-            // 1. Tìm nhóm attribute đầu tiên có dữ liệu (Size, Perfume, Color...)
-            var targetGroup = currentDetail.originalShopItem?.attributeGroups?.FirstOrDefault(g => g.attributes != null && g.attributes.Count > 0);
-
-            // 2. Tạo text mặc định dựa trên tên nhóm (VD: "Chọn Size", "Chọn Perfume")
-            string defaultText = targetGroup != null ? $"{targetGroup.name}" : "Size";
-            List<string> options = new List<string> { defaultText };
-
-            // 3. Add dữ liệu nếu tìm thấy group
-            if (targetGroup != null)
-            {
-                foreach (var attr in targetGroup.attributes) options.Add(attr.name);
-            }
-
-            sizeDropdown.AddOptions(options);
-            SizeCustomer(options); // (Lưu ý: Bạn cần update logic hàm này để check theo defaultText mới)
-        }
-
-        UpdateButtonsState();
-    }
-
-    private void SizeCustomer(List<string> sizeOptions)
-    {
-        Debug.Log($"🔍 CHECK 0: currentDetail.selectedSize = '{currentDetail.selectedSize}'"); // ← MỚI
-
-        if (!string.IsNullOrEmpty(currentDetail.selectedSize))
-        {
-            int targetIndex = sizeOptions.FindIndex(s => s.Equals(currentDetail.selectedSize,
-                StringComparison.OrdinalIgnoreCase));
-            Debug.Log($"🔍 Tìm size cũ: '{currentDetail.selectedSize}'");
-            Debug.Log($"📋 Size options: [{string.Join(" | ", sizeOptions)}]");
-            Debug.Log($"📊 Target index: {targetIndex}");
-            Debug.Log($"🔍 CHECK 1: targetIndex > 0 = {targetIndex > 0}");
-            if (targetIndex > 0)
-            {
-                sizeDropdown.value = targetIndex;
-                currentSelectedSize = currentDetail.selectedSize;
-                Debug.Log($"✅ [ProductDetail] Auto-selected size: {currentSelectedSize}");
-            }
-            else
-            {
-                Debug.Log($"❌ FAILED AUTO-SELECT: targetIndex={targetIndex}, sizeOptions count={sizeOptions.Count}"); // ← MỚI
-                sizeDropdown.value = 0;
-                currentSelectedSize = "";
-            }
-        }
-        else
-        {
-            Debug.Log("❌ selectedSize is null/empty → Reset");
-            sizeDropdown.value = 0;
-            currentSelectedSize = "";
-        }
-    }
-
-
-    public void ShowProductDetail(APIProductItem item)
-    {
-        if (item == null) return;
-
-        // Nếu item có customId (thường là từ Shop API), gọi logic Unpaid
-        if (!string.IsNullOrEmpty(item.customId))
-        {
-            ShowUnpaidProductDetail(item.customId, item.selectSize);
-        }
-        else
-        {
-            Debug.LogWarning("[ProductDetailUI] ShowProductDetail called with item missing customId.");
-        }
-    }
-
-    // =================================================================================
-    // IMAGE GALLERY SYSTEM
-    // =================================================================================
-
-    private void SetupSwipeableGallery(List<string> images)
-    {
-        if (imageScrollContent == null || imagePagePrefab == null) return;
-        StopAllCoroutines();
-
-        for (int i = imageScrollContent.childCount - 1; i >= 0; i--)
-            Destroy(imageScrollContent.GetChild(i).gameObject);
-        imagePages.Clear();
-
-        if (images == null || images.Count == 0) return;
-
-        // ✅ Tạo TẤT CẢ pages trước
-        var targetImages = new List<Image>();
-        foreach (var url in images)
-        {
-            if (string.IsNullOrEmpty(url)) continue;
-            var page = Instantiate(imagePagePrefab, imageScrollContent);
-            var imgComp = page.GetComponent<Image>();
-            if (imgComp != null)
-            {
-                imgComp.preserveAspect = true;
-                imgComp.type = Image.Type.Simple;
-                targetImages.Add(imgComp);
-            }
-            imagePages.Add(page);
-        }
-
-        // ✅ Force layout rebuild TRƯỚC khi load ảnh
-        Canvas.ForceUpdateCanvases();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(
-            imageScrollContent as RectTransform
-        );
-
-        // ✅ Load ảnh SAU khi layout đã đúng vị trí
-        for (int i = 0; i < targetImages.Count; i++)
-        {
-            // Dùng index thay vì foreach để tránh closure issue
-            int index = i;
-            string url = images[index];
-            StartCoroutine(LoadImage(url, targetImages[index]));
-        }
-
-        // ✅ Load productMainImage SAU CÙNG
-        if (productMainImage != null && !string.IsNullOrEmpty(currentDetail?.mainImageUrl))
-            StartCoroutine(LoadImage(currentDetail.mainImageUrl, productMainImage));
-
-        ResetGalleryScroll();
-    }
-
-
-    private void ResetGalleryScroll()
-    {
-        if (imageScrollRect != null)
-        {
-            imageScrollRect.horizontalNormalizedPosition = 0f;
-        }
-    }
-
-    private void Update()
-    {
-        if (imageScrollRect != null) SnapToNearestPage();
-    }
-
-    private void SnapToNearestPage()
-    {
-        if (imagePages.Count == 0) return;
-
-        float pageWidth = 1f / Mathf.Max(imagePages.Count - 1, 1);
-        int currentPageIndex = Mathf.RoundToInt(imageScrollRect.horizontalNormalizedPosition / pageWidth);
-        float targetScrollPosition = currentPageIndex * pageWidth;
-
-        imageScrollRect.horizontalNormalizedPosition = Mathf.Lerp(
-            imageScrollRect.horizontalNormalizedPosition,
-            targetScrollPosition,
-            Time.deltaTime * snapSpeed
-        );
-        carouselIndicator.UpdateDots(currentPageIndex, imagePages.Count);
-    }
-
-    private IEnumerator LoadImage(string url, Image target)
-    {
-        // ✅ CHECK NULL + ACTIVE ngay đầu (QUAN TRỌNG)
-        if (target == null || target.gameObject == null)
-        {
-            Debug.LogWarning("[LoadImage] Target Image is null or destroyed");
-            yield break;
-        }
-
-        // ✅ CHECK panel còn active không
-        if (productDetailPanel != null && !productDetailPanel.activeInHierarchy)
-        {
-            Debug.LogWarning("[LoadImage] Product panel is inactive");
-            yield break;
-        }
-
-        ImageDownloadManager.Instance.DownloadImage(
-     url,
-     tex => {*//* apply to Image *//* },
-     err => {*//* log error, set default sprite nếu muốn *//* }
-        );
-
-        Debug.Log($"[DEBUG] MainImage color: {productMainImage.color}");
-        Debug.Log($"[DEBUG] MainImage sprite: {productMainImage.sprite}");
-        Debug.Log($"[DEBUG] MainImage enabled: {productMainImage.enabled}");
-        Debug.Log($"[DEBUG] MainImage GO active: {productMainImage.gameObject.activeInHierarchy}");
-    }
-
-
-    // =================================================================================
-    // INTERACTION LOGIC
-    // =================================================================================
-
-    private void OnSizeChanged(int index)
-    {
-        AudioManager.Instance.PlaySFXOneShot("Button_High");
-        if (currentDetail.isPaidItem) return;
-        if (index > 0 && sizeDropdown != null)
-        {
-            currentSelectedSize = sizeDropdown.options[index].text;
-            currentVariantId = GetVariantIdForSize(currentSelectedSize);
-            Debug.Log($"🎮 Player selected: {currentSelectedSize}");
-        }
-        else
-        {
-            currentSelectedSize = "";
-            currentVariantId = "";
-        }
-        UpdateButtonsState();
-    }
-
-    private string GetVariantIdForSize(string sizeName)
-    {
-        var item = currentDetail.originalShopItem;
-        if (item?.variants == null) return item?.id ?? "";
-
-        var variant = item.variants.FirstOrDefault(v =>
-            v.attributeGroups != null &&
-            v.attributeGroups.Any(g =>
-                g.attributes != null &&
-                g.attributes.Any(a =>
-                    a.name != null && a.name.Equals(sizeName, StringComparison.OrdinalIgnoreCase)
-                )
-            )
-        );
-        return variant?.id ?? item.id ?? "";
-    }
-
-    private void UpdateButtonsState()
-    {
-        if (currentDetail == null || currentDetail.isPaidItem) return;
-
-        bool hasSize = !string.IsNullOrEmpty(currentSelectedSize);
-        if (addToCartButton != null) addToCartButton.interactable = hasSize;
-        if (buyNowButton != null) buyNowButton.interactable = hasSize;
-    }
-
-    public void CloseProductDetail()
-    {
-        // ✅ STOP TẤT CẢ COROUTINES (AN TOÀN 100%)
-        StopAllCoroutines();
-
-        _chatManager?.ClearProductContext();
-        _chatManager?.RestoreChatPanel();
-
-        if (productDetailPanel != null)
-            productDetailPanel.SetActive(false);
-        PlayerController.Instance?.SetCanMove(true);
-
-
-        ResetGalleryScroll();
-        imagePages.Clear();
-        //Debug.Log("[ProductDetailUI] Panel closed safely");
-        TutorialGamePlay.Instance?.OnPlayerBackToShop();
-    }
-
-    // =================================================================================
-    // BUYING ACTIONS
-    // =================================================================================
-
-    private void OnAddToCartClicked()
-    {
-        if (currentDetail.isPaidItem || string.IsNullOrEmpty(currentSelectedSize)) return;
-
-        CartItem cartItem = new CartItem
-        {
-            customId = currentDetail.customId,
-            productId = currentVariantId,
-            productName = currentDetail.title,
-            brandName = currentDetail.brandName,
-            price = currentDetail.price,
-            selectedSize = currentSelectedSize,
-            imageUrl = currentDetail.mainImageUrl,
-            quantity = 1,
-            isPaid = false, // ✅ QUAN TRỌNG: Mặc định chưa thanh toán
-            isSelectedForCheckout = false // ← Mặc định KHÔNG select để checkout
-        };
-
-        if (ShoppingCart.Instance != null)
-        {
-            ShoppingCart.Instance.AddToInventory(cartItem);
-            Debug.Log("Added to cart successfully!");
-
-        }
-
-    }
-
-
-
-
-}
-
-
-*/
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -741,12 +126,18 @@ public class ProductDetailUI : MonoBehaviour
 
     // ── Runtime state ─────────────────────────────────────────────────────────
 
-    private List<GameObject> imagePages = new List<GameObject>();
-    private ProductDetail currentDetail;
-    private CartItem currentCartItem;
-    private string currentSelectedSize = "";
-    private string currentProductId = "";
+    private readonly List<GameObject> _imagePages = new List<GameObject>();
+    private ProductDetail _currentDetail;
+    private CartItem _currentCartItem;
+    private string _currentSelectedSize = "";
+    private string _currentProductId = "";
     private string _lastSelectedSize = "";
+
+    // Variant thật resolve theo size đã chọn (storims: mỗi size = 1 variant riêng).
+    // _currentVariantId       = variant.id (UUID) -> gửi server làm tenantProductVariantId
+    // _currentVariantCustomId = variant.customId (vd 200599/201445) -> định danh mặt hàng
+    private string _currentVariantId = "";
+    private string _currentVariantCustomId = "";
 
     // Main-image CTS (cancel khi mở sản phẩm mới hoặc đóng panel)
     private CancellationTokenSource _mainImageCts;
@@ -755,6 +146,7 @@ public class ProductDetailUI : MonoBehaviour
     // Preload window: load ngay page 0..1, lazy-load phần còn lại khi swipe
     private const int PreloadPages = 2;
     private int _lastLoadedPageIndex = -1;
+    private int _lastDotIndex = -1;
 
     private MultiChatManager _chatManager;
 
@@ -771,24 +163,46 @@ public class ProductDetailUI : MonoBehaviour
 
     private void InitializeUI()
     {
-        addToCartButton?.onClick.AddListener(() =>
+        // Refactor: RemoveAllListeners trước AddListener theo Mantini convention
+        if (addToCartButton != null)
         {
-            PopupManager.Instance.ShowPopup(
-                "Xác nhận",
-                "Bạn có muốn thêm vật phẩm này vào giỏ hàng không?",
-                () =>
-                {
-                    OnAddToCartClicked();
-                    TutorialGamePlay.Instance?.OnAddToCartSuccess();
-                }
-            );
-        });
+            addToCartButton.onClick.RemoveAllListeners();
+            addToCartButton.onClick.AddListener(OnAddToCartButtonClicked);
+        }
 
-        closeDetailButton?.onClick.AddListener(CloseProductDetail);
-        sizeDropdown.onValueChanged.RemoveAllListeners();
-        sizeDropdown.onValueChanged.AddListener(OnSizeChanged);
+        if (buyNowButton != null)
+        {
+            buyNowButton.onClick.RemoveAllListeners();
+            buyNowButton.onClick.AddListener(OnBuyNowButtonClicked);
+        }
+
+        if (closeDetailButton != null)
+        {
+            closeDetailButton.onClick.RemoveAllListeners();
+            closeDetailButton.onClick.AddListener(CloseProductDetail);
+        }
+
+        if (sizeDropdown != null)
+        {
+            sizeDropdown.onValueChanged.RemoveAllListeners();
+            sizeDropdown.onValueChanged.AddListener(OnSizeChanged);
+        }
 
         if (productDetailPanel != null) productDetailPanel.SetActive(false);
+    }
+
+    // Refactor: tách lambda Popup thành method có tên — đỡ alloc closure mỗi Awake
+    private void OnAddToCartButtonClicked()
+    {
+        PopupManager.Instance.ShowPopup(
+            "Xác nhận",
+            "Bạn có muốn thêm vật phẩm này vào giỏ hàng không?",
+            () =>
+            {
+                OnAddToCartClicked();
+                TutorialGamePlay.Instance?.OnAddToCartSuccess();
+            }
+        );
     }
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -798,8 +212,10 @@ public class ProductDetailUI : MonoBehaviour
     /// <summary>Hiển thị sản phẩm đã mua (từ Inventory).</summary>
     public void ShowPaidProductDetail(CartItem paidItem)
     {
-        Debug.Log($"[ProductDetail] Showing PAID item: {paidItem.productName}");
-        currentDetail = new ProductDetail(paidItem);
+#if UNITY_EDITOR
+        GameLog.Info($"[ProductDetailUI] Showing PAID item: {paidItem.productName}");
+#endif
+        _currentDetail = new ProductDetail(paidItem);
         OpenPanel();
         PopulateCommonUI();
         SetupPaidItemUI();
@@ -808,11 +224,13 @@ public class ProductDetailUI : MonoBehaviour
     /// <summary>Hiển thị sản phẩm chưa mua (từ Shop) – có gọi API.</summary>
     public void ShowUnpaidProductDetail(string customId, string preSelectedSize = "")
     {
-        Debug.Log($"[ProductDetail] Fetching shop item: {customId}");
+#if UNITY_EDITOR
+        GameLog.Info($"[ProductDetailUI] Fetching shop item: {customId}");
+#endif
         OpenPanel();
         _lastSelectedSize = preSelectedSize;
 
-        currentCartItem = ShoppingCart.Instance?.GetUnpaidItems()
+        _currentCartItem = ShoppingCart.Instance?.GetUnpaidItems()
             .Find(i => i.customId == customId && i.selectedSize == preSelectedSize);
 
         string detailUrl =
@@ -823,7 +241,7 @@ public class ProductDetailUI : MonoBehaviour
             json =>
             {
                 var shopItem = JsonUtility.FromJson<APIProductItem>(json);
-                currentDetail = new ProductDetail(shopItem)
+                _currentDetail = new ProductDetail(shopItem)
                 {
                     selectedSize = _lastSelectedSize
                 };
@@ -831,11 +249,11 @@ public class ProductDetailUI : MonoBehaviour
                 PopulateCommonUI();
                 SetupUnpaidItemUI();
 
-                _chatManager?.SetProductContext(currentDetail);
+                _chatManager?.SetProductContext(_currentDetail);
                 _chatManager?.ReparentChatPanelTo(chatAnchor);
                 _chatManager?.ShowProductWelcome();
             },
-            error => Debug.LogError($"[ProductDetail] Failed to load detail: {error}")
+            error => Debug.LogError($"[ProductDetailUI] Failed to load detail: {error}")
         );
     }
 
@@ -846,7 +264,7 @@ public class ProductDetailUI : MonoBehaviour
         if (!string.IsNullOrEmpty(item.customId))
             ShowUnpaidProductDetail(item.customId, item.selectSize);
         else
-            Debug.LogWarning("[ProductDetailUI] ShowProductDetail: item missing customId.");
+            GameLog.Warn("[ProductDetailUI] ShowProductDetail: item missing customId.");
     }
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -865,33 +283,33 @@ public class ProductDetailUI : MonoBehaviour
 
     private void PopulateCommonUI()
     {
-        if (currentDetail == null) return;
+        if (_currentDetail == null) return;
 
         // ── Text ──────────────────────────────────────────────────────────────
-        if (productNameText != null) productNameText.text = currentDetail.title;
-        if (productBrandText != null) productBrandText.text = $"Brand: {currentDetail.brandName}";
-        if (productDescriptionText != null) productDescriptionText.text = currentDetail.description;
+        if (productNameText != null) productNameText.text = _currentDetail.title;
+        if (productBrandText != null) productBrandText.text = $"Brand: {_currentDetail.brandName}";
+        if (productDescriptionText != null) productDescriptionText.text = _currentDetail.description;
         if (productReviewsText != null)
-            productReviewsText.text = $"⭐ {currentDetail.reviewScore}/5 ({currentDetail.reviewCount} reviews)";
+            productReviewsText.text = $"⭐ {_currentDetail.reviewScore}/5 ({_currentDetail.reviewCount} reviews)";
 
         // ── Price ─────────────────────────────────────────────────────────────
         if (productPriceText != null)
-            productPriceText.text = $"{currentDetail.price:N0} VND";
+            productPriceText.text = $"{_currentDetail.price:N0} VND";
 
         if (productOriginalPriceText != null)
         {
-            bool hasDiscount = currentDetail.originalPrice > currentDetail.price && !currentDetail.isPaidItem;
+            bool hasDiscount = _currentDetail.originalPrice > _currentDetail.price && !_currentDetail.isPaidItem;
             productOriginalPriceText.gameObject.SetActive(hasDiscount);
             if (hasDiscount)
             {
-                productOriginalPriceText.text = $"{currentDetail.originalPrice:N0} VND";
+                productOriginalPriceText.text = $"{_currentDetail.originalPrice:N0} VND";
                 productOriginalPriceText.fontStyle = FontStyles.Strikethrough;
             }
         }
 
         // ── Gallery + Main Image ──────────────────────────────────────────────
-        SetupSwipeableGallery(currentDetail.galleryUrls);
-        LoadMainImage(currentDetail.mainImageUrl);
+        SetupSwipeableGallery(_currentDetail.galleryUrls);
+        LoadMainImage(_currentDetail.mainImageUrl);
     }
 
     private void SetupPaidItemUI()
@@ -903,12 +321,12 @@ public class ProductDetailUI : MonoBehaviour
         if (sizeDropdown != null)
         {
             sizeDropdown.ClearOptions();
-            sizeDropdown.AddOptions(new List<string> { currentDetail.selectedSize });
+            sizeDropdown.AddOptions(new List<string> { _currentDetail.selectedSize });
             sizeDropdown.interactable = false;
         }
 
         if (selectedSizeText != null)
-            selectedSizeText.text = $"Đã chọn: {currentDetail.selectedSize}";
+            selectedSizeText.text = $"Đã chọn: {_currentDetail.selectedSize}";
     }
 
     private void SetupUnpaidItemUI()
@@ -918,9 +336,9 @@ public class ProductDetailUI : MonoBehaviour
 
         if (deleteButton != null)
         {
-            deleteButton.gameObject.SetActive(currentCartItem != null);
+            deleteButton.gameObject.SetActive(_currentCartItem != null);
             deleteButton.onClick.RemoveAllListeners();
-            deleteButton.onClick.AddListener(() => ShoppingCart.Instance.ClearUnpaidItems(currentCartItem));
+            deleteButton.onClick.AddListener(() => ShoppingCart.Instance.ClearUnpaidItems(_currentCartItem));
         }
 
         if (sizeDropdown != null)
@@ -928,7 +346,7 @@ public class ProductDetailUI : MonoBehaviour
             sizeDropdown.interactable = true;
             sizeDropdown.ClearOptions();
 
-            var targetGroup = currentDetail.originalShopItem?.attributeGroups?
+            var targetGroup = _currentDetail.originalShopItem?.attributeGroups?
                 .FirstOrDefault(g => g.attributes != null && g.attributes.Count > 0);
 
             string defaultText = targetGroup != null ? targetGroup.name : "Size";
@@ -945,26 +363,26 @@ public class ProductDetailUI : MonoBehaviour
 
     private void SizeCustomer(List<string> sizeOptions)
     {
-        if (!string.IsNullOrEmpty(currentDetail.selectedSize))
+        if (!string.IsNullOrEmpty(_currentDetail.selectedSize))
         {
             int idx = sizeOptions.FindIndex(s =>
-                s.Equals(currentDetail.selectedSize, StringComparison.OrdinalIgnoreCase));
+                s.Equals(_currentDetail.selectedSize, StringComparison.OrdinalIgnoreCase));
 
             if (idx > 0)
             {
                 sizeDropdown.value = idx;
-                currentSelectedSize = currentDetail.selectedSize;
+                _currentSelectedSize = _currentDetail.selectedSize;
             }
             else
             {
                 sizeDropdown.value = 0;
-                currentSelectedSize = "";
+                _currentSelectedSize = "";
             }
         }
         else
         {
             sizeDropdown.value = 0;
-            currentSelectedSize = "";
+            _currentSelectedSize = "";
         }
     }
 
@@ -989,7 +407,7 @@ public class ProductDetailUI : MonoBehaviour
                 if (productDetailPanel == null || !productDetailPanel.activeInHierarchy) return;
                 ApplyTextureToImage(texture, productMainImage, ref _ownsMainSprite);
             },
-            error => Debug.LogWarning($"[Detail] Main image failed: {url} | {error}")
+            error => GameLog.Warn($"[ProductDetailUI] Main image failed: {url} | {error}")
         );
     }
 
@@ -1034,7 +452,7 @@ public class ProductDetailUI : MonoBehaviour
         // Dọn pages cũ (DetailGalleryImage.OnDestroy tự release sprite)
         for (int i = imageScrollContent.childCount - 1; i >= 0; i--)
             Destroy(imageScrollContent.GetChild(i).gameObject);
-        imagePages.Clear();
+        _imagePages.Clear();
         _lastLoadedPageIndex = -1;
 
         if (images == null || images.Count == 0) return;
@@ -1057,7 +475,7 @@ public class ProductDetailUI : MonoBehaviour
                 holder.targetImage = imgComp;
             }
 
-            imagePages.Add(page);
+            _imagePages.Add(page);
         }
 
         // Force layout rebuild trước khi load ảnh
@@ -1065,7 +483,8 @@ public class ProductDetailUI : MonoBehaviour
         LayoutRebuilder.ForceRebuildLayoutImmediate(imageScrollContent as RectTransform);
 
         // Preload window ban đầu (page 0 .. PreloadPages-1)
-        for (int i = 0; i < Mathf.Min(PreloadPages, images.Count); i++)
+        int preloadCount = Mathf.Min(PreloadPages, images.Count);
+        for (int i = 0; i < preloadCount; i++)
             RequestPageLoad(i, images);
 
         _lastLoadedPageIndex = Mathf.Min(PreloadPages - 1, images.Count - 1);
@@ -1076,10 +495,10 @@ public class ProductDetailUI : MonoBehaviour
     /// <summary>Yêu cầu load ảnh cho page index nếu chưa load.</summary>
     private void RequestPageLoad(int pageIndex, List<string> urls)
     {
-        if (pageIndex < 0 || pageIndex >= imagePages.Count) return;
+        if (pageIndex < 0 || pageIndex >= _imagePages.Count) return;
         if (pageIndex >= urls.Count) return;
 
-        var holder = imagePages[pageIndex].GetComponent<DetailGalleryImage>();
+        var holder = _imagePages[pageIndex].GetComponent<DetailGalleryImage>();
         if (holder == null) return;
 
         // Nếu đã có sprite thì skip (đã load rồi)
@@ -1100,25 +519,16 @@ public class ProductDetailUI : MonoBehaviour
 
     private void Update()
     {
-        if (imageScrollRect == null || imagePages.Count == 0) return;
+        if (imageScrollRect == null || _imagePages.Count == 0) return;
         if (productDetailPanel == null || !productDetailPanel.activeSelf) return;
 
         SnapToNearestPage();
         TryLazyLoadNextPage();
     }
-    private int _lastDotIndex = -1;
+
     private void SnapToNearestPage()
     {
-        /* float pageWidth = 1f / Mathf.Max(imagePages.Count - 1, 1);
-         int currentPageIndex = Mathf.RoundToInt(
-             imageScrollRect.horizontalNormalizedPosition / pageWidth);
-
-         float target = currentPageIndex * pageWidth;
-         imageScrollRect.horizontalNormalizedPosition = Mathf.Lerp(
-             imageScrollRect.horizontalNormalizedPosition, target, Time.deltaTime * snapSpeed);
-
-         carouselIndicator.UpdateDots(currentPageIndex, imagePages.Count);*/
-        float pageWidth = 1f / Mathf.Max(imagePages.Count - 1, 1);
+        float pageWidth = 1f / Mathf.Max(_imagePages.Count - 1, 1);
         int currentPageIndex = Mathf.RoundToInt(
             imageScrollRect.horizontalNormalizedPosition / pageWidth);
 
@@ -1134,24 +544,24 @@ public class ProductDetailUI : MonoBehaviour
         if (currentPageIndex != _lastDotIndex)
         {
             _lastDotIndex = currentPageIndex;
-            carouselIndicator.UpdateDots(currentPageIndex, imagePages.Count);
+            if (carouselIndicator != null)
+                carouselIndicator.UpdateDots(currentPageIndex, _imagePages.Count);
         }
-
     }
 
     /// <summary>Khi user swipe đến gần cuối vùng đã load → load thêm PreloadPages.</summary>
     private void TryLazyLoadNextPage()
     {
-        if (currentDetail?.galleryUrls == null) return;
+        if (_currentDetail?.galleryUrls == null) return;
 
-        float pageWidth = 1f / Mathf.Max(imagePages.Count - 1, 1);
+        float pageWidth = 1f / Mathf.Max(_imagePages.Count - 1, 1);
         int visiblePage = Mathf.RoundToInt(imageScrollRect.horizontalNormalizedPosition / pageWidth);
         int wantUpTo = visiblePage + PreloadPages;
 
         if (wantUpTo <= _lastLoadedPageIndex) return;
 
         for (int i = _lastLoadedPageIndex + 1; i <= wantUpTo; i++)
-            RequestPageLoad(i, currentDetail.galleryUrls);
+            RequestPageLoad(i, _currentDetail.galleryUrls);
 
         _lastLoadedPageIndex = Mathf.Max(_lastLoadedPageIndex, wantUpTo);
     }
@@ -1179,7 +589,7 @@ public class ProductDetailUI : MonoBehaviour
 
         // 4. Xóa pages
         ResetGalleryScroll();
-        imagePages.Clear();
+        _imagePages.Clear();
 
         TutorialGamePlay.Instance?.OnPlayerBackToShop();
     }
@@ -1196,7 +606,7 @@ public class ProductDetailUI : MonoBehaviour
 
     private void ReleaseAllGallerySprites()
     {
-        foreach (var page in imagePages)
+        foreach (var page in _imagePages)
         {
             if (page == null) continue;
             var holder = page.GetComponent<DetailGalleryImage>();
@@ -1210,65 +620,164 @@ public class ProductDetailUI : MonoBehaviour
 
     private void OnSizeChanged(int index)
     {
-        AudioManager.Instance.PlaySFXOneShot("Button_High");
-        if (currentDetail.isPaidItem) return;
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFXOneShot("Button_High");
+
+        if (_currentDetail == null || _currentDetail.isPaidItem) return;
 
         if (index > 0 && sizeDropdown != null)
         {
-            currentSelectedSize = sizeDropdown.options[index].text;
-            currentProductId = GetVariantIdForSize(currentSelectedSize);
+            _currentSelectedSize = sizeDropdown.options[index].text;
+            ResolveVariantForSize(_currentSelectedSize);
         }
         else
         {
-            currentSelectedSize = "";
-            currentProductId = "";
+            _currentSelectedSize = "";
+            _currentProductId = "";
+            _currentVariantId = "";
+            _currentVariantCustomId = "";
         }
 
         UpdateButtonsState();
     }
 
-    private string GetVariantIdForSize(string sizeName)
+    // Resolve variant theo size đã chọn: tra trong variants[] (mỗi variant = 1 size).
+    // Set _currentVariantId = variant.id (UUID thật) và _currentVariantCustomId = variant.customId.
+    // Fallback: nếu không tìm thấy variant, dùng lại attribute id (giữ behavior cũ, tránh null).
+    private void ResolveVariantForSize(string sizeName)
     {
-        var item = currentDetail.originalShopItem;
-        if (item?.attributeGroups == null) return "";
+        _currentVariantId = "";
+        _currentVariantCustomId = "";
+        _currentProductId = "";
 
-        foreach (var group in item.attributeGroups)
+        var item = _currentDetail?.originalShopItem;
+        if (item == null) return;
+
+        // 1) Ưu tiên match trong variants[] theo tên size trong attributeGroups của variant
+        if (item.variants != null)
         {
-            if (group.attributes == null) continue;
-            var attr = group.attributes.Find(a =>
-                a.name.Equals(sizeName, StringComparison.OrdinalIgnoreCase));
-            if (attr != null) return attr.id ?? "";
+            foreach (var v in item.variants)
+            {
+                if (v == null || v.attributeGroups == null) continue;
+                bool matched = false;
+                foreach (var g in v.attributeGroups)
+                {
+                    if (g?.attributes == null) continue;
+                    if (g.attributes.Exists(a =>
+                            a != null && a.name != null &&
+                            a.name.Equals(sizeName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        matched = true;
+                        break;
+                    }
+                }
+
+                if (matched)
+                {
+                    _currentVariantId = v.id ?? "";
+                    _currentVariantCustomId = v.customId ?? "";
+                    _currentProductId = _currentVariantId; // productId = variant UUID thật
+                    return;
+                }
+            }
         }
-        return "";
+
+        // 2) Fallback: không có variants[] khớp -> dùng attribute id như cũ
+        if (item.attributeGroups != null)
+        {
+            foreach (var group in item.attributeGroups)
+            {
+                if (group.attributes == null) continue;
+                var attr = group.attributes.Find(a =>
+                    a.name.Equals(sizeName, StringComparison.OrdinalIgnoreCase));
+                if (attr != null)
+                {
+                    _currentProductId = attr.id ?? "";
+                    _currentVariantId = _currentProductId;
+                    // customId fallback: dùng product-level customId nếu không có variant
+                    _currentVariantCustomId = _currentDetail?.customId ?? "";
+                    GameLog.Warn($"[ProductDetailUI] No variant matched size '{sizeName}', fallback to attribute id.");
+                    return;
+                }
+            }
+        }
     }
 
     private void UpdateButtonsState()
     {
-        bool canBuy = !string.IsNullOrEmpty(currentSelectedSize);
+        bool canBuy = !string.IsNullOrEmpty(_currentSelectedSize);
         if (addToCartButton != null) addToCartButton.interactable = canBuy;
         if (buyNowButton != null) buyNowButton.interactable = canBuy;
     }
 
     private void OnAddToCartClicked()
     {
-        if (currentDetail == null || string.IsNullOrEmpty(currentSelectedSize))
+        if (_currentDetail == null || string.IsNullOrEmpty(_currentSelectedSize))
         {
-            Debug.LogWarning("[ProductDetail] No size selected.");
+            GameLog.Warn("[ProductDetailUI] No size selected.");
             return;
         }
 
         ShoppingCart.Instance?.AddItem(new CartItem
         {
-            customId = currentDetail.customId,
-            productId = currentProductId,
-            productName = currentDetail.title,
-            brandName = currentDetail.brandName,
-            price = currentDetail.price,
-            selectedSize = currentSelectedSize,
-            imageUrl = currentDetail.mainImageUrl,
+            // customId = variant customId (200599/201445) — định danh mặt hàng theo nghiệp vụ
+            customId = !string.IsNullOrEmpty(_currentVariantCustomId)
+                ? _currentVariantCustomId
+                : _currentDetail.customId,
+            productId = _currentProductId, // = variant.id (UUID thật) sau resolve
+            productName = _currentDetail.title,
+            brandName = _currentDetail.brandName,
+            price = _currentDetail.price,
+            selectedSize = _currentSelectedSize,
+            imageUrl = _currentDetail.mainImageUrl,
             quantity = 1,
         });
 
-        Debug.Log($"[ProductDetail] Added to cart: {currentDetail.title} – {currentSelectedSize}");
+#if UNITY_EDITOR
+        GameLog.Info($"[ProductDetailUI] Added to cart: {_currentDetail.title} – {_currentSelectedSize}");
+#endif
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // BUY NOW — mua ngay đúng vật phẩm đang xem (kiểu Shopee)
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private void OnBuyNowButtonClicked()
+    {
+        if (_currentDetail == null || string.IsNullOrEmpty(_currentSelectedSize))
+        {
+            PopupManager.Instance.ShowPopup("Thông báo", "Vui lòng chọn size trước khi mua.", null, "Đóng");
+            return;
+        }
+
+        if (ShoppingCart.Instance == null || ShoppingCart.Instance.cartUI == null)
+        {
+            Debug.LogError("[ProductDetailUI] ShoppingCart/cartUI not available for Buy Now.");
+            return;
+        }
+
+        var item = BuildCurrentCartItem();
+
+        // Mở panel nhập thông tin + thanh toán dùng chung của CartUI ở chế độ Buy Now.
+        // Chỉ khi player điền đủ và bấm xác nhận (BT_BuyItemToCart) mới thật sự đặt đơn.
+        ShoppingCart.Instance.cartUI.OpenCheckoutForBuyNow(item);
+    }
+
+    // Tạo CartItem từ vật phẩm đang xem (dùng variant id/customId đã resolve).
+    private CartItem BuildCurrentCartItem()
+    {
+        return new CartItem
+        {
+            customId = !string.IsNullOrEmpty(_currentVariantCustomId)
+                ? _currentVariantCustomId
+                : _currentDetail.customId,
+            productId = _currentProductId, // = variant.id (UUID thật) sau resolve
+            productName = _currentDetail.title,
+            brandName = _currentDetail.brandName,
+            price = _currentDetail.price,
+            selectedSize = _currentSelectedSize,
+            imageUrl = _currentDetail.mainImageUrl,
+            quantity = 1,
+        };
     }
 }

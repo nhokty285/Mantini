@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
 
@@ -91,7 +91,7 @@ public class AudioManager : MonoBehaviour
         BuildClipLookup();
 
         isInitialized = true;
-        Debug.Log("[AudioManager] ✅ Initialized with " + sfxPoolSize + " SFX sources");
+        GameLog.Info("[AudioManager] ✅ Initialized with " + sfxPoolSize + " SFX sources");
     }
 
     #region BGM CONTROL
@@ -100,7 +100,7 @@ public class AudioManager : MonoBehaviour
     {
         if (clip == null)
         {
-            Debug.LogWarning("[AudioManager] BGM clip is null");
+            GameLog.Warn("[AudioManager] BGM clip is null");
             return;
         }
 
@@ -116,7 +116,7 @@ public class AudioManager : MonoBehaviour
             bgmSource.clip = clip;
             bgmSource.Play();
             currentBGM = clip;
-            Debug.Log("[AudioManager] 🎵 Playing BGM: " + clip.name);
+            GameLog.Info("[AudioManager] 🎵 Playing BGM: " + clip.name);
         }
     }
 
@@ -167,7 +167,7 @@ public class AudioManager : MonoBehaviour
     {
         if (clip == null)
         {
-            Debug.LogWarning("[AudioManager] SFX clip is null");
+            GameLog.Warn("[AudioManager] SFX clip is null");
             return;
         }
        
@@ -185,7 +185,7 @@ public class AudioManager : MonoBehaviour
         source.Play();       
       
         currentSfxIndex = (currentSfxIndex + 1) % sfxPool.Count;
-        Debug.Log("[AudioManager] 🔊 Playing SFX: " + clip.name);
+        GameLog.Info("[AudioManager] 🔊 Playing SFX: " + clip.name);
     }
 
     public void StopSFX(AudioClip clip)
@@ -217,14 +217,14 @@ public class AudioManager : MonoBehaviour
     {
         if (clip == null)
         {
-            Debug.LogWarning("[AudioManager] Dialogue clip is null");
+            GameLog.Warn("[AudioManager] Dialogue clip is null");
             return;
         }
 
         dialogueSource.clip = clip;
         dialogueSource.pitch = speed;
         dialogueSource.Play();
-        Debug.Log("[AudioManager] 💬 Playing dialogue: " + clip.name);
+        GameLog.Info("[AudioManager] 💬 Playing dialogue: " + clip.name);
     }
 
     public void StopDialogue()
@@ -245,7 +245,7 @@ public class AudioManager : MonoBehaviour
     {
         if (clip == null)
         {
-            Debug.LogWarning("[AudioManager] Ambient clip is null");
+            GameLog.Warn("[AudioManager] Ambient clip is null");
             return;
         }
 
@@ -254,7 +254,7 @@ public class AudioManager : MonoBehaviour
 
         ambientSource.clip = clip;
         ambientSource.Play();
-        Debug.Log("[AudioManager] 🌍 Playing ambient: " + clip.name);
+        GameLog.Info("[AudioManager] 🌍 Playing ambient: " + clip.name);
     }
 
     public void StopAmbient()
@@ -344,7 +344,7 @@ public class AudioManager : MonoBehaviour
         isMuted = muted;
         AudioListener.pause = isMuted;
         SaveVolumeSettings();
-        Debug.Log("[AudioManager] 🔇 Muted: " + isMuted);
+        GameLog.Info("[AudioManager] 🔇 Muted: " + isMuted);
     }
 
     public bool IsMuted() => isMuted;
@@ -360,14 +360,14 @@ public class AudioManager : MonoBehaviour
                  return clip;
          }
 
-         Debug.LogWarning("[AudioManager] Clip not found: " + name);
+         GameLog.Warn("[AudioManager] Clip not found: " + name);
          return null;
      }*/
     private AudioClip FindClipByName(string name, AudioClip[] _unused = null)
     {
         if (_clipLookup != null && _clipLookup.TryGetValue(name, out var clip))
             return clip;
-        Debug.LogWarning("[AudioManager] Clip not found: " + name);
+        GameLog.Warn("[AudioManager] Clip not found: " + name);
         return null;
     }
 
@@ -419,4 +419,3 @@ public class AudioManager : MonoBehaviour
     public float GetDialogueVolume() => dialogueVolume;
     public float GetAmbientVolume() => ambientVolume;
 }
-

@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,7 +30,7 @@ public class DetailGalleryImage : MonoBehaviour
                 if (targetImage == null || !targetImage.gameObject.activeInHierarchy) return;
                 ApplyTexture(texture);
             },
-            error => Debug.LogWarning($"[GalleryImage] Failed: {url} | {error}")
+            error => GameLog.Warn($"[GalleryImage] Failed: {url} | {error}")
         );
     }
 

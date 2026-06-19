@@ -51,7 +51,7 @@ public class PlayerController : MonoBehaviour
         // PlayerController.Instance?.SetCanMove(...) ở các script khác sẽ bị bỏ qua im lặng.
         if (Instance != null && Instance != this)
         {
-            Debug.LogWarning("[PlayerController] Duplicate instance found, destroying new one.");
+            GameLog.Warn("[PlayerController] Duplicate instance found, destroying new one.");
             Destroy(gameObject);
             return;
         }
@@ -96,7 +96,7 @@ public class PlayerController : MonoBehaviour
             inputAxisController = _allInputControllers[0];
         }
 
-        Debug.Log($"[PlayerController] Refreshed input controllers cache. Count = {_allInputControllers.Length}");
+        GameLog.Info($"[PlayerController] Refreshed input controllers cache. Count = {_allInputControllers.Length}");
     }
 
     public void OnMove(InputAction.CallbackContext ctx) => moveInput = ctx.ReadValue<Vector2>();
@@ -148,7 +148,7 @@ public class PlayerController : MonoBehaviour
             validCount++;
         }
 
-        Debug.Log($"[PlayerController] CinemachineInputAxisController.enabled = {enabled} on {validCount} controllers (lockCount={_lockCount})");
+        GameLog.Info($"[PlayerController] CinemachineInputAxisController.enabled = {enabled} on {validCount} controllers (lockCount={_lockCount})");
     }
 
     void LateUpdate()
@@ -197,7 +197,7 @@ public class PlayerController : MonoBehaviour
         if (cameraObject != null)
         {
             cameraTransform = cameraObject.transform;
-            Debug.Log($"[PlayerController] Found camera by tag '{cameraTag}': {cameraTransform.name}");
+            GameLog.Info($"[PlayerController] Found camera by tag '{cameraTag}': {cameraTransform.name}");
         }
     }
 
@@ -309,4 +309,3 @@ public class PlayerController : MonoBehaviour
 
     
 }
-

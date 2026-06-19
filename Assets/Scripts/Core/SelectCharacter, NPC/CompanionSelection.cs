@@ -1,40 +1,39 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class CompanionSelection : MonoBehaviour
 {
     [Header("Companion Data")]
-    public CharacterData[] companionDataArray; // Array CompanionData thay vì GameObject[]
+    public CharacterData[] companionDataArray;
 
     [Header("Display Parents")]
-    public Transform selectionDisplayParent; // Vị trí hiển thị trong màn selection
-    public Transform infoDisplayParent;      // Vị trí hiển thị trong màn info
+    public Transform selectionDisplayParent;
+    public Transform infoDisplayParent;
 
     [Header("Selection UI")]
-    public GameObject selectionPanel;          // Panel chọn companion
-    public Button[] selectionButtons;          // 3 nút chọn (button-based selection)
-    public TextMeshProUGUI selectionNameText;  // Tên companion đang chọn
-    public Button selectionContinueButton;     // Nút "Tiếp tục"
+    public GameObject selectionPanel;
+    public Button[] selectionButtons;
+    public TextMeshProUGUI selectionNameText;
+    public Button selectionContinueButton;
     public Image[] characterIcons;
 
     [Header("Info UI")]
-    public GameObject infoPanel;                 // Panel hiển thị info
-    public TextMeshProUGUI greetingText;         // "Xin chào mình là..."
-    public TextMeshProUGUI infoNameText;         // Tên companion
-    public TextMeshProUGUI npcDescriptionText;   // Mô tả companion
-    public Button changeCompanionButton;         // Nút "Đổi companion"
-    public Button infoContinueButton;            // Nút "Tiếp tục"
+    public GameObject infoPanel;
+    public TextMeshProUGUI greetingText;
+    public TextMeshProUGUI infoNameText;
+    public TextMeshProUGUI npcDescriptionText;
+    public Button changeCompanionButton;
+    public Button infoContinueButton;
 
     [Header("Description Skip Button")]
-    [SerializeField] private Button btContinue;  // Button ẩn (alpha 0) trùm lên Text_ChatnPC
+    [SerializeField] private Button btContinue;
 
     [Header("Confirmation Popup")]
     public GameObject confirmationPopup;
     public TextMeshProUGUI popupMessageText;
-    public Button popupCancelButton; // "Khoan đã"
-    public Button popupConfirmButton; // "Đi nào"
+    public Button popupCancelButton;
+    public Button popupConfirmButton;
 
     [Header("Dialogue UI")]
     public GameObject dialoguePanel;
@@ -42,32 +41,30 @@ public class CompanionSelection : MonoBehaviour
     public DialogueAudioSync dialogueAudioSync;
 
     [Header("UI Resources")]
-    public Sprite normalSprite;   // Trạng thái thường  
-    public Sprite selectedSprite; // Trạng thái được chọn
+    public Sprite normalSprite;
+    public Sprite selectedSprite;
 
-    // State management
-    private int selectedIndex = 0;
-    private int infoStep = 0;
-    private GameObject currentSelectionInstance;
-    private GameObject currentInfoInstance;
+    // ── State ─────────────────────────────────────────────────────────────────
+    private int _selectedIndex = 0;
+    private GameObject _currentSelectionInstance;
+    private GameObject _currentInfoInstance;
 
-    // State cho hệ thống description nhiều đoạn
     private int _currentDescriptionIndex = 0;
     private string _currentFullDescription = "";
 
-    const string KEY_SELECTED_COMPANION = "SelectedCompanion";
+    private const string KEY_SELECTED_COMPANION = "SelectedCompanion";
 
-    void Start()
+    private void Start()
     {
         PlayerDataManager.Instance.RegisterCompanionData(companionDataArray);
 
         SetupInfoListeners();
         SetupSelectionListeners();
 
-        selectedIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, 0);
+        _selectedIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, 0);
 
-        dialoguePanel.SetActive(false);
-        if (dialogueContinueButton)
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
+        if (dialogueContinueButton != null)
         {
             dialogueContinueButton.onClick.RemoveAllListeners();
             dialogueContinueButton.onClick.AddListener(EndDialogue);
@@ -78,12 +75,11 @@ public class CompanionSelection : MonoBehaviour
             dialogueAudioSync.OnTypewriterComplete += OnDescriptionTypewriterFinished;
 
         ShowSelectionPanel();
-        selectionPanel.SetActive(false);
+        if (selectionPanel != null) selectionPanel.SetActive(false);
     }
 
     private void OnDestroy()
     {
-        // Hủy đăng ký để tránh memory leak
         if (dialogueAudioSync != null)
             dialogueAudioSync.OnTypewriterComplete -= OnDescriptionTypewriterFinished;
 
@@ -91,57 +87,63 @@ public class CompanionSelection : MonoBehaviour
     }
 
     #region Dialogue Logic
-    void EndDialogue()
+    private void EndDialogue()
     {
-        if (dialoguePanel) dialoguePanel.SetActive(false);
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
         ShowInfoPanel();
     }
     #endregion
 
     #region Selection Panel
 
-    void SetupSelectionListeners()
+    private void SetupSelectionListeners()
     {
         for (int i = 0; i < selectionButtons.Length && i < companionDataArray.Length; i++)
         {
-            int index = i;
+            int index = i; // capture
+            selectionButtons[i].onClick.RemoveAllListeners();
             selectionButtons[i].onClick.AddListener(() => OnSelectCompanion(index));
         }
 
-        selectionContinueButton.onClick.AddListener(GoToInfoPanel);
+        if (selectionContinueButton != null)
+        {
+            selectionContinueButton.onClick.RemoveAllListeners();
+            selectionContinueButton.onClick.AddListener(GoToInfoPanel);
+        }
     }
 
-    void OnSelectCompanion(int index)
+    private void OnSelectCompanion(int index)
     {
         if (index < 0 || index >= companionDataArray.Length)
         {
-            Debug.LogWarning($"[CompanionSelection] Invalid index {index}");
+            GameLog.Warn($"[CompanionSelection] Invalid index {index}");
             return;
         }
 
-        selectedIndex = index;
-        PlayerPrefs.SetInt(KEY_SELECTED_COMPANION, selectedIndex);
+        _selectedIndex = index;
+        PlayerPrefs.SetInt(KEY_SELECTED_COMPANION, _selectedIndex);
         PlayerPrefs.Save();
 
-        SpawnPreviewAt(ref currentSelectionInstance, selectionDisplayParent,
-                       companionDataArray[selectedIndex].previewPrefab);
+        SpawnPreviewAt(ref _currentSelectionInstance, selectionDisplayParent,
+                       companionDataArray[_selectedIndex].previewPrefab);
 
-        if (selectionNameText)
-            selectionNameText.text = companionDataArray[selectedIndex].characterName;
+        if (selectionNameText != null)
+            selectionNameText.text = companionDataArray[_selectedIndex].characterName;
 
         UpdateSelectionButtonStates();
-
-        Debug.Log($"[CompanionSelection] Selected: {companionDataArray[selectedIndex].characterName}");
+#if UNITY_EDITOR
+        GameLog.Info($"[CompanionSelection] Selected: {companionDataArray[_selectedIndex].characterName}");
+#endif
     }
 
-    void UpdateSelectionButtonStates()
+    private void UpdateSelectionButtonStates()
     {
         for (int i = 0; i < selectionButtons.Length; i++)
         {
             if (i >= companionDataArray.Length) continue;
 
             var button = selectionButtons[i];
-            bool isSelected = (i == selectedIndex);
+            bool isSelected = (i == _selectedIndex);
 
             if (button.image != null)
                 button.image.sprite = isSelected ? selectedSprite : normalSprite;
@@ -161,27 +163,27 @@ public class CompanionSelection : MonoBehaviour
         }
     }
 
-    void GoToInfoPanel()
+    private void GoToInfoPanel()
     {
-        PlayerPrefs.SetInt(KEY_SELECTED_COMPANION, selectedIndex);
+        PlayerPrefs.SetInt(KEY_SELECTED_COMPANION, _selectedIndex);
         PlayerPrefs.Save();
 
-        selectionPanel.SetActive(false);
+        if (selectionPanel != null) selectionPanel.SetActive(false);
         ShowInfoPanel();
     }
 
-    void ShowSelectionPanel()
+    private void ShowSelectionPanel()
     {
-        if (infoPanel) infoPanel.SetActive(false);
-        if (selectionPanel) selectionPanel.SetActive(true);
+        if (infoPanel != null) infoPanel.SetActive(false);
+        if (selectionPanel != null) selectionPanel.SetActive(true);
 
-        selectedIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, selectedIndex);
+        _selectedIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, _selectedIndex);
 
-        SpawnPreviewAt(ref currentSelectionInstance, selectionDisplayParent,
-                       companionDataArray[selectedIndex].previewPrefab);
+        SpawnPreviewAt(ref _currentSelectionInstance, selectionDisplayParent,
+                       companionDataArray[_selectedIndex].previewPrefab);
 
-        if (selectionNameText)
-            selectionNameText.text = companionDataArray[selectedIndex].characterName;
+        if (selectionNameText != null)
+            selectionNameText.text = companionDataArray[_selectedIndex].characterName;
 
         UpdateSelectionButtonStates();
     }
@@ -190,13 +192,19 @@ public class CompanionSelection : MonoBehaviour
 
     #region Info Panel
 
-    void SetupInfoListeners()
+    private void SetupInfoListeners()
     {
-        if (changeCompanionButton)
+        if (changeCompanionButton != null)
+        {
+            changeCompanionButton.onClick.RemoveAllListeners();
             changeCompanionButton.onClick.AddListener(ShowSelectionPanel);
+        }
 
-        if (infoContinueButton)
+        if (infoContinueButton != null)
+        {
+            infoContinueButton.onClick.RemoveAllListeners();
             infoContinueButton.onClick.AddListener(ConfirmAndStart);
+        }
 
         if (btContinue != null)
         {
@@ -205,52 +213,49 @@ public class CompanionSelection : MonoBehaviour
         }
     }
 
-    void ShowInfoPanel()
+    private void ShowInfoPanel()
     {
-        infoPanel.SetActive(true);
+        if (infoPanel != null) infoPanel.SetActive(true);
 
-        selectedIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, selectedIndex);
+        _selectedIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, _selectedIndex);
 
-        SpawnPreviewAt(ref currentInfoInstance, infoDisplayParent,
-                       companionDataArray[selectedIndex].previewPrefab);
+        SpawnPreviewAt(ref _currentInfoInstance, infoDisplayParent,
+                       companionDataArray[_selectedIndex].previewPrefab);
 
         // Reset description sequence
         _currentDescriptionIndex = 0;
 
         // Ẩn 2 nút action khi mới vào info panel
-        if (changeCompanionButton) changeCompanionButton.gameObject.SetActive(false);
-        if (infoContinueButton) infoContinueButton.gameObject.SetActive(false);
+        if (changeCompanionButton != null) changeCompanionButton.gameObject.SetActive(false);
+        if (infoContinueButton != null) infoContinueButton.gameObject.SetActive(false);
 
         // Hiện nút skip
-        if (btContinue) btContinue.gameObject.SetActive(true);
+        if (btContinue != null) btContinue.gameObject.SetActive(true);
 
         UpdateInfoTexts();
         ShowDescription(_currentDescriptionIndex);
     }
 
-    void UpdateInfoTexts()
+    private void UpdateInfoTexts()
     {
-        var companionData = companionDataArray[selectedIndex];
-
-        if (infoNameText)
-            infoNameText.text = companionData.characterName;
+        var companionData = companionDataArray[_selectedIndex];
+        if (infoNameText != null) infoNameText.text = companionData.characterName;
     }
 
-    // Hiển thị 1 đoạn description theo index, có typewriter
-    void ShowDescription(int index)
+    private void ShowDescription(int index)
     {
-        var companionData = companionDataArray[selectedIndex];
+        var companionData = companionDataArray[_selectedIndex];
 
         if (companionData.description == null || companionData.description.Length == 0)
         {
-            Debug.LogWarning($"[CompanionSelection] description array is empty for {companionData.characterName}");
+            GameLog.Warn($"[CompanionSelection] description array is empty for {companionData.characterName}");
             ShowFinalInfoButtons();
             return;
         }
 
         if (index < 0 || index >= companionData.description.Length)
         {
-            Debug.LogWarning($"[CompanionSelection] description index {index} out of range");
+            GameLog.Warn($"[CompanionSelection] description index {index} out of range");
             return;
         }
 
@@ -263,24 +268,23 @@ public class CompanionSelection : MonoBehaviour
             dialogueAudioSync.StartTypewriter(npcDescriptionText, _currentFullDescription);
     }
 
-    // Callback: được gọi tự động khi typewriter chạy xong hoàn toàn
     private void OnDescriptionTypewriterFinished()
     {
-        var companionData = companionDataArray[selectedIndex];
+        var companionData = companionDataArray[_selectedIndex];
         int lastIndex = (companionData.description != null)
             ? companionData.description.Length - 1
             : -1;
 
-        // Nếu đây là đoạn description cuối → tự động hiện nút action
         if (_currentDescriptionIndex >= lastIndex)
         {
-            Debug.Log("[CompanionSelection] Last description finished. Auto-showing final buttons.");
+#if UNITY_EDITOR
+            GameLog.Info("[CompanionSelection] Last description finished. Auto-showing final buttons.");
+#endif
             ShowFinalInfoButtons();
         }
     }
 
-    // Logic 2 bước: nếu đang typing → skip về full text; nếu đã xong → sang đoạn tiếp
-    void OnContinueDescriptionClicked()
+    private void OnContinueDescriptionClicked()
     {
         bool isRunning = (dialogueAudioSync != null && dialogueAudioSync.IsTypewriting());
 
@@ -292,31 +296,29 @@ public class CompanionSelection : MonoBehaviour
 
             dialogueAudioSync.StopTypewriter();
 
-            // StopTypewriter() cancel coroutine → OnTypewriterComplete không tự gọi
-            // Cần kiểm tra thủ công nếu đây là đoạn cuối
-            var companionData = companionDataArray[selectedIndex];
+            // StopTypewriter cancel coroutine → OnTypewriterComplete không tự gọi → check thủ công
+            var companionData = companionDataArray[_selectedIndex];
             int lastIndex = (companionData.description != null)
                 ? companionData.description.Length - 1
                 : -1;
 
             if (_currentDescriptionIndex >= lastIndex)
             {
-                Debug.Log("[CompanionSelection] Last description skipped. Auto-showing final buttons.");
+#if UNITY_EDITOR
+                GameLog.Info("[CompanionSelection] Last description skipped. Auto-showing final buttons.");
+#endif
                 ShowFinalInfoButtons();
             }
-
             return;
         }
 
         // Bước 2: typewriter đã xong → sang đoạn tiếp theo
-        var data = companionDataArray[selectedIndex];
-        int last = (data.description != null)
-            ? data.description.Length - 1
-            : -1;
+        var data = companionDataArray[_selectedIndex];
+        int last = (data.description != null) ? data.description.Length - 1 : -1;
 
         if (_currentDescriptionIndex >= last)
         {
-            // Đã ở đoạn cuối mà vẫn nhấn → ShowFinalInfoButtons phòng trường hợp callback bị miss
+            // Đã ở đoạn cuối mà vẫn nhấn → phòng trường hợp callback bị miss
             ShowFinalInfoButtons();
             return;
         }
@@ -325,23 +327,25 @@ public class CompanionSelection : MonoBehaviour
         ShowDescription(_currentDescriptionIndex);
     }
 
-    void ShowFinalInfoButtons()
+    private void ShowFinalInfoButtons()
     {
-        if (btContinue) btContinue.gameObject.SetActive(false);
-
-        if (changeCompanionButton) changeCompanionButton.gameObject.SetActive(true);
-        if (infoContinueButton) infoContinueButton.gameObject.SetActive(true);
-
-        Debug.Log("[CompanionSelection] All descriptions shown. Final buttons revealed.");
+        if (btContinue != null) btContinue.gameObject.SetActive(false);
+        if (changeCompanionButton != null) changeCompanionButton.gameObject.SetActive(true);
+        if (infoContinueButton != null) infoContinueButton.gameObject.SetActive(true);
+#if UNITY_EDITOR
+        GameLog.Info("[CompanionSelection] All descriptions shown. Final buttons revealed.");
+#endif
     }
     #endregion
 
     #region Confirmation Popup
 
-    void ConfirmAndStart()
+    private void ConfirmAndStart()
     {
-        PlayerDataManager.Instance.SaveCompanionIndex(selectedIndex);
-        Debug.Log($"[CompanionSelection] Starting game with companion: {companionDataArray[selectedIndex].characterName}");
+        PlayerDataManager.Instance.SaveCompanionIndex(_selectedIndex);
+#if UNITY_EDITOR
+        GameLog.Info($"[CompanionSelection] Starting game with companion: {companionDataArray[_selectedIndex].characterName}");
+#endif
 
         if (dialogueAudioSync != null)
             dialogueAudioSync.StopTypewriter();
@@ -350,15 +354,16 @@ public class CompanionSelection : MonoBehaviour
         if (syncer != null)
             syncer.SyncSelectionToServer();
         else
-            Debug.LogWarning("[CompanionSelection] PlayerSelectionSync not found in scene!");
+            GameLog.Warn("[CompanionSelection] PlayerApiService not found in scene!");
 
-        LevelLoader.Instance.LoadLevel("MapTest2");
+        if (LevelLoader.Instance != null)
+            LevelLoader.Instance.LoadLevel("MapTest2");
     }
     #endregion
 
     #region Helper Methods
 
-    void SpawnPreviewAt(ref GameObject holder, Transform parent, GameObject prefab)
+    private static void SpawnPreviewAt(ref GameObject holder, Transform parent, GameObject prefab)
     {
         if (prefab == null)
         {
@@ -376,11 +381,8 @@ public class CompanionSelection : MonoBehaviour
 
     private void CleanupInstances()
     {
-        if (currentSelectionInstance != null)
-            Destroy(currentSelectionInstance);
-
-        if (currentInfoInstance != null)
-            Destroy(currentInfoInstance);
+        if (_currentSelectionInstance != null) Destroy(_currentSelectionInstance);
+        if (_currentInfoInstance != null) Destroy(_currentInfoInstance);
     }
 
     #endregion

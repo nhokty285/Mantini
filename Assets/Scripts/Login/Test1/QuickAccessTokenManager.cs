@@ -1,4 +1,4 @@
-﻿/*// QuickAccessTokenManager.cs
+/*// QuickAccessTokenManager.cs
 using UnityEngine;
 
 public class QuickAccessTokenManager : MonoBehaviour
@@ -15,7 +15,7 @@ public class QuickAccessTokenManager : MonoBehaviour
     {
         if (autoLoginOnStart && !string.IsNullOrEmpty(myAccessToken))
         {
-            Debug.Log("🚀 Auto-login with stored access token...");
+            GameLog.Info("🚀 Auto-login with stored access token...");
             LoginWithStoredToken();
         }
     }
@@ -37,14 +37,14 @@ public class QuickAccessTokenManager : MonoBehaviour
     public void ClearStoredToken()
     {
         myAccessToken = "";
-        Debug.Log("🗑️ Access token cleared");
+        GameLog.Info("🗑️ Access token cleared");
     }
 
     // Method để set token từ code khác
     public void SetAccessToken(string token)
     {
         myAccessToken = token;
-        Debug.Log("🔑 Access token updated");
+        GameLog.Info("🔑 Access token updated");
     }
 
     // Method để login ngay lập tức từ UI button
@@ -56,7 +56,7 @@ public class QuickAccessTokenManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("⚠️ No access token provided!");
+            GameLog.Warn("⚠️ No access token provided!");
         }
     }
 }

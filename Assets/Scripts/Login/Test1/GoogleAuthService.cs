@@ -1,4 +1,4 @@
-﻿/*using System;
+/*using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -43,7 +43,7 @@ public class GoogleAuthService : MonoBehaviour
         if (ServiceContainer.Instance != null)
         {
             ServiceContainer.Instance.Register<GoogleAuthService>(this);
-            Debug.Log("✅ GoogleAuthService registered");
+            GameLog.Info("✅ GoogleAuthService registered");
         }
 
         // Try to restore previous session
@@ -52,7 +52,7 @@ public class GoogleAuthService : MonoBehaviour
 
     public void InitiateGoogleLogin()
     {
-        Debug.Log("🔍 Initiating Google Login...");
+        GameLog.Info("🔍 Initiating Google Login...");
 
         // For different platforms
 #if UNITY_EDITOR || UNITY_STANDALONE
@@ -80,7 +80,7 @@ public class GoogleAuthService : MonoBehaviour
 #if UNITY_ANDROID
     private void AndroidGoogleAuth()
     {
-        Debug.Log("📱 Android Google Auth");
+        GameLog.Info("📱 Android Google Auth");
         StartCoroutine(SimulateAndroidAuth());
     }
 
@@ -96,7 +96,7 @@ public class GoogleAuthService : MonoBehaviour
 #if UNITY_IOS
     private void IOSGoogleAuth()
     {
-        Debug.Log("🍎 iOS Google Auth");
+        GameLog.Info("🍎 iOS Google Auth");
         StartCoroutine(SimulateIOSAuth());
     }
     
@@ -119,8 +119,8 @@ public class GoogleAuthService : MonoBehaviour
 
         string jsonData = JsonConvert.SerializeObject(request);
 
-        Debug.Log($"🚀 Sending Google auth request to: {backendLoginUrl}");
-        Debug.Log($"📦 Request data: {jsonData}");
+        GameLog.Info($"🚀 Sending Google auth request to: {backendLoginUrl}");
+        GameLog.Info($"📦 Request data: {jsonData}");
 
         using (UnityWebRequest webRequest = new UnityWebRequest(backendLoginUrl, "POST"))
         {
@@ -132,8 +132,8 @@ public class GoogleAuthService : MonoBehaviour
 
             yield return webRequest.SendWebRequest();
 
-            Debug.Log($"📡 Response Code: {webRequest.responseCode}");
-            Debug.Log($"📄 Response Body: {webRequest.downloadHandler.text}");
+            GameLog.Info($"📡 Response Code: {webRequest.responseCode}");
+            GameLog.Info($"📄 Response Body: {webRequest.downloadHandler.text}");
 
             if (webRequest.result == UnityWebRequest.Result.Success)
             {
@@ -171,9 +171,9 @@ public class GoogleAuthService : MonoBehaviour
         // Save session data
         SaveUserSession();
 
-        Debug.Log($"✅ Login successful! Welcome {currentUser.displayName}");
-        Debug.Log($"Account ID: {currentUser.accountId}");
-        Debug.Log($"Tenant: {currentUser.tenantName} (Owner: {currentUser.isTenantOwner})");
+        GameLog.Info($"✅ Login successful! Welcome {currentUser.displayName}");
+        GameLog.Info($"Account ID: {currentUser.accountId}");
+        GameLog.Info($"Tenant: {currentUser.tenantName} (Owner: {currentUser.isTenantOwner})");
 
         OnLoginSuccess?.Invoke(currentUser);
 
@@ -191,7 +191,7 @@ public class GoogleAuthService : MonoBehaviour
 
     public void Logout()
     {
-        Debug.Log("🔓 Logging out...");
+        GameLog.Info("🔓 Logging out...");
 
         currentUser = null;
         currentAccessToken = null;
@@ -202,7 +202,7 @@ public class GoogleAuthService : MonoBehaviour
         OnLogoutComplete?.Invoke();
         UpdateMainMenuAuthState(false);
 
-        Debug.Log("✅ Logout complete");
+        GameLog.Info("✅ Logout complete");
     }
 
     private void SaveUserSession()
@@ -223,7 +223,7 @@ public class GoogleAuthService : MonoBehaviour
             PlayerPrefs.SetString("auth_provider", currentUser.provider);
             PlayerPrefs.Save();
 
-            Debug.Log("💾 User session saved");
+            GameLog.Info("💾 User session saved");
         }
     }
 
@@ -247,14 +247,14 @@ public class GoogleAuthService : MonoBehaviour
                 provider = PlayerPrefs.GetString("auth_provider", "google")
             };
 
-            Debug.Log($"🔄 Restored session for: {currentUser.displayName}");
-            Debug.Log($"Account: {currentUser.accountId}, Tenant: {currentUser.tenantName}");
+            GameLog.Info($"🔄 Restored session for: {currentUser.displayName}");
+            GameLog.Info($"Account: {currentUser.accountId}, Tenant: {currentUser.tenantName}");
 
             UpdateMainMenuAuthState(true);
         }
         else
         {
-            Debug.Log("📝 No previous session found");
+            GameLog.Info("📝 No previous session found");
         }
     }
 
@@ -272,7 +272,7 @@ public class GoogleAuthService : MonoBehaviour
         }
 
         PlayerPrefs.Save();
-        Debug.Log("🗑️ User session cleared");
+        GameLog.Info("🗑️ User session cleared");
     }
 
     private void UpdateMainMenuAuthState(bool isLoggedIn)
@@ -431,7 +431,7 @@ public class GoogleAuthService : MonoBehaviour
         if (ServiceContainer.Instance != null)
         {
             ServiceContainer.Instance.Register<GoogleAuthService>(this);
-            Debug.Log("✅ GoogleAuthService registered");
+            GameLog.Info("✅ GoogleAuthService registered");
         }
 
         // Auto login with preset token
@@ -462,7 +462,7 @@ public class GoogleAuthService : MonoBehaviour
 
     private IEnumerator QuickLoginWithToken()
     {
-        Debug.Log("🚀 Quick login with preset access token...");
+        GameLog.Info("🚀 Quick login with preset access token...");
 
         if (string.IsNullOrEmpty(presetAccessToken))
         {
@@ -479,7 +479,7 @@ public class GoogleAuthService : MonoBehaviour
 
     private IEnumerator GetUserInfoFromBackend()
     {
-        Debug.Log($"🌐 Getting user info from: {backendLoginUrl}");
+        GameLog.Info($"🌐 Getting user info from: {backendLoginUrl}");
 
         using (UnityWebRequest webRequest = UnityWebRequest.Get(backendLoginUrl))
         {
@@ -488,8 +488,8 @@ public class GoogleAuthService : MonoBehaviour
 
             yield return webRequest.SendWebRequest();
 
-            Debug.Log($"📡 Response Code: {webRequest.responseCode}");
-            Debug.Log($"📄 Response Body: {webRequest.downloadHandler.text}");
+            GameLog.Info($"📡 Response Code: {webRequest.responseCode}");
+            GameLog.Info($"📄 Response Body: {webRequest.downloadHandler.text}");
 
             if (webRequest.result == UnityWebRequest.Result.Success)
             {
@@ -522,7 +522,7 @@ public class GoogleAuthService : MonoBehaviour
     // Manual login method (giữ lại cho sau này)
     public void InitiateGoogleLogin()
     {
-        Debug.Log("🔍 Initiating Google Login...");
+        GameLog.Info("🔍 Initiating Google Login...");
 
         // Nếu có preset token, sử dụng nó
         if (!string.IsNullOrEmpty(presetAccessToken))
@@ -532,7 +532,7 @@ public class GoogleAuthService : MonoBehaviour
         }
 
         // Nếu không có preset token, dùng flow cũ (để làm sau)
-        Debug.LogWarning("⚠️ No preset token, full OAuth flow not implemented yet");
+        GameLog.Warn("⚠️ No preset token, full OAuth flow not implemented yet");
         OnLoginFailed?.Invoke("Full OAuth login not implemented yet. Please set preset access token.");
     }
 
@@ -544,10 +544,10 @@ public class GoogleAuthService : MonoBehaviour
         // Save session data
         SaveUserSession();
 
-        Debug.Log($"✅ Quick login successful! Welcome {currentUser.displayName}");
-        Debug.Log($"📧 Email: {currentUser.email}");
-        Debug.Log($"🆔 Account ID: {currentUser.accountId}");
-        Debug.Log($"🏢 Tenant: {currentUser.tenantName} (Owner: {currentUser.isTenantOwner})");
+        GameLog.Info($"✅ Quick login successful! Welcome {currentUser.displayName}");
+        GameLog.Info($"📧 Email: {currentUser.email}");
+        GameLog.Info($"🆔 Account ID: {currentUser.accountId}");
+        GameLog.Info($"🏢 Tenant: {currentUser.tenantName} (Owner: {currentUser.isTenantOwner})");
 
         OnLoginSuccess?.Invoke(currentUser);
 
@@ -568,7 +568,7 @@ public class GoogleAuthService : MonoBehaviour
 
     public void Logout()
     {
-        Debug.Log("🔓 Logging out...");
+        GameLog.Info("🔓 Logging out...");
 
         currentUser = null;
         currentAccessToken = null;
@@ -579,7 +579,7 @@ public class GoogleAuthService : MonoBehaviour
         OnLogoutComplete?.Invoke();
         UpdateAuthenticationUI(false);
 
-        Debug.Log("✅ Logout complete");
+        GameLog.Info("✅ Logout complete");
     }
 
     private void ShowGameInterface()
@@ -591,7 +591,7 @@ public class GoogleAuthService : MonoBehaviour
         }
 
         // Bạn có thể thêm code để show main game UI ở đây
-        Debug.Log("🎮 Game interface should be shown now!");
+        GameLog.Info("🎮 Game interface should be shown now!");
     }
 
     private void SaveUserSession()
@@ -613,7 +613,7 @@ public class GoogleAuthService : MonoBehaviour
             PlayerPrefs.SetString("auth_access_token", currentAccessToken ?? ""); // Save access token
             PlayerPrefs.Save();
 
-            Debug.Log("💾 User session saved with access token");
+            GameLog.Info("💾 User session saved with access token");
         }
     }
 
@@ -639,15 +639,15 @@ public class GoogleAuthService : MonoBehaviour
 
             currentAccessToken = PlayerPrefs.GetString("auth_access_token", "");
 
-            Debug.Log($"🔄 Restored session for: {currentUser.displayName}");
-            Debug.Log($"Account: {currentUser.accountId}, Tenant: {currentUser.tenantName}");
+            GameLog.Info($"🔄 Restored session for: {currentUser.displayName}");
+            GameLog.Info($"Account: {currentUser.accountId}, Tenant: {currentUser.tenantName}");
 
             UpdateAuthenticationUI(true);
             ShowGameInterface();
         }
         else
         {
-            Debug.Log("📝 No previous session found");
+            GameLog.Info("📝 No previous session found");
             UpdateAuthenticationUI(false);
         }
     }
@@ -667,7 +667,7 @@ public class GoogleAuthService : MonoBehaviour
         }
 
         PlayerPrefs.Save();
-        Debug.Log("🗑️ User session cleared");
+        GameLog.Info("🗑️ User session cleared");
     }
 
     private void UpdateAuthenticationUI(bool isLoggedIn)
@@ -703,7 +703,7 @@ public class GoogleAuthService : MonoBehaviour
     public void SetAccessToken(string token)
     {
         presetAccessToken = token;
-        Debug.Log("🔑 Access token updated");
+        GameLog.Info("🔑 Access token updated");
     }
 }
 
@@ -765,4 +765,3 @@ public class UserProfile
         };
     }
 }
-

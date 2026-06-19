@@ -8,16 +8,16 @@ public class EventTriggerTest : MonoBehaviour,
 {
     public void OnPointerClick(PointerEventData eventData)
     {
-        Debug.Log("[EventTriggerTest] Button clicked!");
+        GameLog.Info("[EventTriggerTest] Button clicked!");
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        Debug.Log("[EventTriggerTest] Pointer entered button.");
+        GameLog.Info("[EventTriggerTest] Pointer entered button.");
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        Debug.Log("[EventTriggerTest] Pointer exited button.");
+        GameLog.Info("[EventTriggerTest] Pointer exited button.");
     }
 }

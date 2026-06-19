@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -23,7 +23,7 @@ public class SellerTrigger : MonoBehaviour
                 {
                     var baseNPC = GetComponent<BaseNPC>();
                     MainMenuView.Instance.SetNPCInteraction(true, npcConfig.npcName, null, baseNPC);
-                    Debug.Log($"[SellerTrigger] Showed talk button for {npcConfig.npcName}");
+                    GameLog.Info($"[SellerTrigger] Showed talk button for {npcConfig.npcName}");
                 }
 
                 FetchShopDataFromAPI();
@@ -60,7 +60,7 @@ public class SellerTrigger : MonoBehaviour
 
     private void OnAPISuccess(List<ShopItem> shopItems)
     {
-        Debug.Log($"API Success: Received {shopItems.Count} items for {npcConfig.npcName}");
+        GameLog.Info($"API Success: Received {shopItems.Count} items for {npcConfig.npcName}");
 
         // Tạo ShopData động
         dynamicShopData = ScriptableObject.CreateInstance<ShopData>();
@@ -96,4 +96,3 @@ public class SellerTrigger : MonoBehaviour
         }
     }
 }
-

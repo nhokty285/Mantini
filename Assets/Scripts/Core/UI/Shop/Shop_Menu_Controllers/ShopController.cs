@@ -5,7 +5,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static MainMenuViewModel;
-using static System.Net.Mime.MediaTypeNames;
 
 [System.Serializable]
 public struct CarouselPosition
@@ -28,7 +27,7 @@ public struct CarouselPosition
 
 public class ShopController : MonoBehaviour
 {
-    [Header("✅ NEW: Multi Chat Integration")]
+    [Header("Multi Chat Integration")]
     [SerializeField] private MultiChatManager multiChatController;
     [SerializeField] private bool enableChatDuringShop = true;
 
@@ -52,22 +51,18 @@ public class ShopController : MonoBehaviour
     [SerializeField] private GameObject cartPanel;
     [SerializeField] private Sprite globalDefaultSprite;
 
-    [Header("✅ NEW: Fixed Position System")]
+    [Header("Fixed Position System")]
     [SerializeField] private bool useFixedPositions = true;
 
-    [Header("✅ Canvas Absolute Positions")]
-    [SerializeField] private float leftPosition_3 = 251f;      // Vị trí 1
-    [SerializeField] private float centerPosition_5 = 421F;   // Vị trí 2  
-    [SerializeField] private float rightPosition_4 = 590f;    // Vị trí 3
+    [Header("Canvas Absolute Positions")]
+    [SerializeField] private float leftPosition_3 = 251f;
+    [SerializeField] private float centerPosition_5 = 421F;
+    [SerializeField] private float rightPosition_4 = 590f;
     [SerializeField] private float leftPosition_1 = 151f;
     [SerializeField] private float rightPosition_2 = 690f;
     [SerializeField] private float positionY_first = 23f;
     [SerializeField] private float positionY_between = 94f;
     [SerializeField] private float positionY_Center = -130f;
-
-    // Cache các vị trí cố định
-    private readonly Dictionary<string, CarouselPosition> fixedPositions = new();
-    private bool positionsInitialized = false;
 
     [SerializeField] private bool useCarouselMode = true;
     [SerializeField] private float carouselOffsetX = 300f;
@@ -75,57 +70,70 @@ public class ShopController : MonoBehaviour
     [SerializeField] private float sideScale = 0.8f;
     [SerializeField] private float sideAlpha = 0.6f;
 
-    [Header("✅ Center Item DOTween Animation")]
+    [Header("Center Item DOTween Animation")]
     [SerializeField] private bool enableCenterPunchAnimation = true;
     [SerializeField] private float centerPunchDuration = 0.45f;
-    [SerializeField] private float centerPunchStrength = 0.18f; // scale punch amount
-    [SerializeField] private int centerPunchVibrato = 3;        // số lần nẩy
+    [SerializeField] private float centerPunchStrength = 0.18f;
+    [SerializeField] private int centerPunchVibrato = 3;
     [SerializeField] private float centerPunchElasticity = 0.5f;
 
-    [Header("✅ External UI References (outside prefab)")]
+    [Header("External UI References (outside prefab)")]
     [SerializeField] private TextMeshProUGUI externalPriceText;
 
     [SerializeField] private RectTransform ParticipantsContainer;
     [SerializeField] private bool debugTouchArea = false;
 
-    [Header("✅ NEW: Swipe Control Settings")]
+    [Header("Swipe Control Settings")]
     [SerializeField] private bool enableSwipeControl = true;
     [SerializeField] private float minSwipeDistance = 40f;
     [SerializeField] private float maxSwipeTime = 0.5f;
     [SerializeField] private bool debugSwipe = false;
 
-    [Header("✅ Dynamic Multi-Step Swipe")]
-    [SerializeField] private float velocityStep1 = 800f;   // px/s
-    [SerializeField] private float velocityStep2 = 1600f;  // px/s
-    [SerializeField] private float velocityStep3 = 2400f;  // px/s
-    [SerializeField] private int maxSwipeSteps = 3;        // tối đa 3 items/swipe
+    [Header("Arrow Navigation Buttons")]
+    [SerializeField] private Button leftArrowButton;
+    [SerializeField] private Button rightArrowButton;
+
+    [Header("Dynamic Multi-Step Swipe")]
+    [SerializeField] private float velocityStep1 = 800f;
+    [SerializeField] private float velocityStep2 = 1600f;
+    [SerializeField] private float velocityStep3 = 2400f;
+    [SerializeField] private int maxSwipeSteps = 3;
     [SerializeField] private float stepAnimDuration = 0.28f;
     [SerializeField] private bool enableMomentumSwipe = true;
-    private Vector3 _containerOriginalPos;
-
-    // Runtime state - O(1) memory
-    private bool _isAnimating = false;
-    private float _accumulatedDelta = 0f;  // tracking drag liên tục
-
-    // Private variables
-    private MainMenuViewModel MainMenuViewModel;
-    private BaseNPC currentInteractingNPC;
-    private int carouselCenterIndex = 0;
-    private List<ShopItem> currentCarouselItems = new();
-
-    // Swipe detection variables
-    private Vector2 swipeStartPos;
-    private Vector2 swipeEndPos;
-    private float swipeStartTime;
-    private bool isSwipeActive = false;
-    private bool swipeProcessed = false;
 
     [SerializeField] private CarouselIndicator carouselIndicator;
-    private int lastCarouselIndex = -1;
 
     [Header("Sound")]
     [SerializeField] private AudioClip openBGM;
     [SerializeField] private AudioClip openaAmbient;
+
+    // ── Runtime state ─────────────────────────────────────────────────────────
+    private readonly Dictionary<string, CarouselPosition> _fixedPositions = new();
+    private bool _positionsInitialized = false;
+
+    private Vector3 _containerOriginalPos;
+    private bool _isAnimating = false;
+    private float _accumulatedDelta = 0f;
+
+    private MainMenuViewModel MainMenuViewModel;
+    private BaseNPC _currentInteractingNPC;
+    private int _carouselCenterIndex = 0;
+    private readonly List<ShopItem> _currentCarouselItems = new();
+
+    // Swipe detection state
+    private Vector2 _swipeStartPos;
+    private Vector2 _swipeEndPos;
+    private float _swipeStartTime;
+    private bool _isSwipeActive = false;
+    private bool _swipeProcessed = false;
+
+    private int _lastCarouselIndex = -1;
+    private readonly List<GameObject> _spawnedItems = new();
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // INIT
+    // ═════════════════════════════════════════════════════════════════════════
+
     public void Initialize(MainMenuViewModel viewModel)
     {
         this.MainMenuViewModel = viewModel;
@@ -136,186 +144,210 @@ public class ShopController : MonoBehaviour
 
     private void SetupEventListeners()
     {
-        // Hide in canvas , it will be shown when player press talk button near NPC with shop
-        shopButton.onClick.AddListener(() =>
+        // Mantini convention: RemoveAllListeners trước AddListener
+        if (shopButton != null)
         {
-            MainMenuViewModel.IsDialogueVisible = false;
-            MainMenuViewModel.OnShopClicked();
+            shopButton.onClick.RemoveAllListeners();
+            shopButton.onClick.AddListener(OnShopButtonClicked);
+        }
 
-            // ✅ THÊM: Gọi trực tiếp MultiChatManager
-            if (multiChatController != null && enableChatDuringShop)
-            {
-                multiChatController.OpenDialogWithShop();
-            }
-        });
-        closeShopButton.onClick.AddListener(() =>
+        if (closeShopButton != null)
         {
+            closeShopButton.onClick.RemoveAllListeners();
+            closeShopButton.onClick.AddListener(OnCloseShopButtonClicked);
+        }
+
+        // Arrow navigation: di chuyển carousel 1 bước/lần nhấn (giống swipe nhưng cho người không muốn vuốt)
+        if (leftArrowButton != null)
+        {
+            leftArrowButton.onClick.RemoveAllListeners();
+            leftArrowButton.onClick.AddListener(OnLeftArrowClicked);
+        }
+
+        if (rightArrowButton != null)
+        {
+            rightArrowButton.onClick.RemoveAllListeners();
+            rightArrowButton.onClick.AddListener(OnRightArrowClicked);
+        }
+    }
+
+    // Refactor: tách lambda thành method có tên — đỡ alloc closure, dễ debug
+    private void OnShopButtonClicked()
+    {
+        MainMenuViewModel.IsDialogueVisible = false;
+        MainMenuViewModel.OnShopClicked();
+
+        if (multiChatController != null && enableChatDuringShop)
+            multiChatController.OpenDialogWithShop();
+    }
+
+    private void OnCloseShopButtonClicked()
+    {
+        if (multiChatController != null)
             multiChatController.CloseCompanionChat();
 
+        MainMenuViewModel.OnCloseShopClicked();
 
-            MainMenuViewModel.OnCloseShopClicked();
+        if (AudioManager.Instance != null)
+        {
             AudioManager.Instance.PlayBGM(openBGM);
             AudioManager.Instance.PlayAmbient(openaAmbient);
-        });
+        }
+    }
+
+    // Nhấn mũi tên TRÁI → xem vật phẩm bên trái (về item trước đó)
+    private void OnLeftArrowClicked()
+    {
+        if (!useCarouselMode) return;
+        if (_currentCarouselItems == null || _currentCarouselItems.Count <= 1) return;
+        if (_isAnimating) return;
+
+        if (_carouselCenterIndex > 0)
+        {
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFXOneShot("Swipe");
+            PreviousCarouselItem();
+        }
+        else
+        {
+            StartCoroutine(ShowBounceEffect(SwipeDirection.Right));
+        }
+    }
+
+    // Nhấn mũi tên PHẢI → xem vật phẩm bên phải (sang item kế tiếp)
+    private void OnRightArrowClicked()
+    {
+        if (!useCarouselMode) return;
+        if (_currentCarouselItems == null || _currentCarouselItems.Count <= 1) return;
+        if (_isAnimating) return;
+
+        if (_carouselCenterIndex < _currentCarouselItems.Count - 1)
+        {
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFXOneShot("Swipe");
+            NextCarouselItem();
+        }
+        else
+        {
+            StartCoroutine(ShowBounceEffect(SwipeDirection.Left));
+        }
     }
 
     private void SetupInitialState()
     {
-        shopButton.gameObject.SetActive(false);
-        shopPanel.SetActive(false);
-        playerImage.gameObject.SetActive(false);
+        if (shopButton != null) shopButton.gameObject.SetActive(false);
+        if (shopPanel != null) shopPanel.SetActive(false);
+        if (playerImage != null) playerImage.gameObject.SetActive(false);
     }
 
-    // ✅ THÊM: Update method để detect swipe
+    // ═════════════════════════════════════════════════════════════════════════
+    // UPDATE — swipe detection
+    // ═════════════════════════════════════════════════════════════════════════
+
     private void Update()
     {
         if (!useCarouselMode || !enableSwipeControl) return;
-        if (currentCarouselItems == null || currentCarouselItems.Count <= 1) return;
+        if (_currentCarouselItems == null || _currentCarouselItems.Count <= 1) return;
         if (shopPanel == null || !shopPanel.activeInHierarchy) return;
 
-        if (useCarouselMode && enableSwipeControl &&
-            currentCarouselItems != null &&
-            currentCarouselItems.Count > 1)
-        {
-            Vector2 inputPos = Vector2.zero;
-            bool hasValidInput = false;
+        Vector2 inputPos = Vector2.zero;
+        bool hasValidInput = false;
 
 #if UNITY_ANDROID || UNITY_IOS
-            if (Input.touchCount > 0)
-            {
-                inputPos = Input.GetTouch(0).position;
-                hasValidInput = true;
-            }
-/*#else
-            if (Input.GetMouseButton(0) || Input.GetMouseButtonDown(0) || Input.GetMouseButtonUp(0))
-            {
-                inputPos = Input.mousePosition;
-                hasValidInput = true;
-            }*/
+        if (Input.touchCount > 0)
+        {
+            inputPos = Input.GetTouch(0).position;
+            hasValidInput = true;
+        }
 #endif
 
-            // ✅ CHỈ PROCESS SWIPE KHI TRONG VÙNG CAROUSEL
-            if (hasValidInput && IsPointerInCarouselArea(inputPos) && 
-               !cartPanel.activeInHierarchy && !productDetailPanel.activeInHierarchy)
-            {
-                DetectSwipeInput();
-            }
-            else if (isSwipeActive && !IsPointerInCarouselArea(inputPos))
-            {
-                // Cancel swipe nếu drag ra ngoài vùng
-                CancelCurrentSwipe();
-            }
+        // CHỈ PROCESS SWIPE KHI TRONG VÙNG CAROUSEL
+        bool cartActive = cartPanel != null && cartPanel.activeInHierarchy;
+        bool detailActive = productDetailPanel != null && productDetailPanel.activeInHierarchy;
+
+        if (hasValidInput && IsPointerInCarouselArea(inputPos) && !cartActive && !detailActive)
+        {
+            DetectSwipeInput();
+        }
+        else if (_isSwipeActive && !IsPointerInCarouselArea(inputPos))
+        {
+            // Cancel swipe nếu drag ra ngoài vùng
+            CancelCurrentSwipe();
         }
     }
 
     private void CancelCurrentSwipe()
     {
-        if (debugSwipe)
-            Debug.Log("Swipe cancelled - moved outside carousel area");
-
-        isSwipeActive = false;
-        swipeProcessed = false;
+#if UNITY_EDITOR
+        if (debugSwipe) GameLog.Info("[ShopController] Swipe cancelled - moved outside carousel area");
+#endif
+        _isSwipeActive = false;
+        _swipeProcessed = false;
     }
 
-    // ✅ THÊM: Main swipe detection method
     private void DetectSwipeInput()
     {
 #if UNITY_ANDROID || UNITY_IOS
         DetectTouchSwipe();
-#else
-        DetectMouseSwipe();
 #endif
     }
 
-    // Touch swipe detection for mobile
     private void DetectTouchSwipe()
     {
-        if (Input.touchCount > 0)
+        if (Input.touchCount <= 0) return;
+
+        Touch touch = Input.GetTouch(0);
+        switch (touch.phase)
         {
-            Touch touch = Input.GetTouch(0);
-
-            switch (touch.phase)
-            {
-                case TouchPhase.Began:
-                        StartSwipeDetection(touch.position);
-                    break;
-
-                case TouchPhase.Moved:
-                    if (isSwipeActive && !swipeProcessed)
-                    {
-                        ProcessSwipeMovement(touch.position);
-                    }
-                    break;
-
-                case TouchPhase.Ended:
-                case TouchPhase.Canceled:
-                    EndSwipeDetection(touch.position);
-                    break;
-            }
+            case TouchPhase.Began:
+                StartSwipeDetection(touch.position);
+                break;
+            case TouchPhase.Moved:
+                if (_isSwipeActive && !_swipeProcessed) ProcessSwipeMovement(touch.position);
+                break;
+            case TouchPhase.Ended:
+            case TouchPhase.Canceled:
+                EndSwipeDetection(touch.position);
+                break;
         }
     }
 
-    // ✅ THÊM: Mouse swipe detection for desktop
-/*    private void DetectMouseSwipe()
-    {
-        if (Input.GetMouseButtonDown(0))
-        {
-            StartSwipeDetection(Input.mousePosition);
-        }
-        else if (Input.GetMouseButton(0) && isSwipeActive && !swipeProcessed)
-        {
-            ProcessSwipeMovement(Input.mousePosition);
-        }
-        else if (Input.GetMouseButtonUp(0))
-        {
-            EndSwipeDetection(Input.mousePosition);
-        }
-    }*/
-
-    // ✅ THÊM: Start swipe detection
     private void StartSwipeDetection(Vector2 position)
     {
-        if (!IsPointerInCarouselArea(position))
-            return;
+        if (!IsPointerInCarouselArea(position)) return;
 
-        swipeStartPos = position;
-        swipeStartTime = Time.time;
-        isSwipeActive = true;
-        swipeProcessed = false;
-        if (debugSwipe)
-            Debug.Log($"Swipe started at: {position}");
+        _swipeStartPos = position;
+        _swipeStartTime = Time.time;
+        _isSwipeActive = true;
+        _swipeProcessed = false;
+
+#if UNITY_EDITOR
+        if (debugSwipe) GameLog.Info($"[ShopController] Swipe started at: {position}");
+#endif
     }
+
     private int CalculateSwipeSteps(float rawDeltaX)
     {
         float absDeltaX = Mathf.Abs(rawDeltaX);
+        if (absDeltaX < minSwipeDistance) return 0;
 
-        if (absDeltaX < minSwipeDistance)
-            return 0;
-
-        float swipeTime = Mathf.Max(Time.time - swipeStartTime, 0.05f);
+        float swipeTime = Mathf.Max(Time.time - _swipeStartTime, 0.05f);
         float absVelocityX = absDeltaX / swipeTime;
 
-        int steps = 1;
-
-        if (absVelocityX >= velocityStep3)
-            steps = 3;
-        else if (absVelocityX >= velocityStep2)
-            steps = 2;
-        else if (absVelocityX >= velocityStep1)
-            steps = 1;
-        else
-            return 0;
+        int steps;
+        if (absVelocityX >= velocityStep3) steps = 3;
+        else if (absVelocityX >= velocityStep2) steps = 2;
+        else if (absVelocityX >= velocityStep1) steps = 1;
+        else return 0;
 
         return Mathf.Clamp(steps, 1, maxSwipeSteps);
     }
+
     private void ProcessSwipeMovement(Vector2 currentPosition)
     {
-        if (swipeProcessed) return;
+        if (_swipeProcessed) return;
         if (_isAnimating && !enableMomentumSwipe) return;
 
-        Vector2 swipeDelta = currentPosition - swipeStartPos;
+        Vector2 swipeDelta = currentPosition - _swipeStartPos;
         float rawDeltaX = swipeDelta.x;
-
         _accumulatedDelta = rawDeltaX;
 
         int steps = CalculateSwipeSteps(rawDeltaX);
@@ -323,16 +355,18 @@ public class ShopController : MonoBehaviour
 
         bool goLeft = rawDeltaX < 0;
 
+#if UNITY_EDITOR
         if (debugSwipe)
         {
-            float swipeTime = Mathf.Max(Time.time - swipeStartTime, 0.05f);
+            float swipeTime = Mathf.Max(Time.time - _swipeStartTime, 0.05f);
             float absVelocityX = Mathf.Abs(rawDeltaX) / swipeTime;
-            Debug.Log($"Swipe commit | deltaX={rawDeltaX:F1} | time={swipeTime:F3} | velocityX={absVelocityX:F1} | steps={steps}");
+            GameLog.Info($"[ShopController] Swipe commit | deltaX={rawDeltaX:F1} | time={swipeTime:F3} | velocityX={absVelocityX:F1} | steps={steps}");
         }
+#endif
 
-        swipeProcessed = true;
+        _swipeProcessed = true;
         _accumulatedDelta = 0f;
-        AudioManager.Instance.PlaySFXOneShot("Swipe");
+        if (AudioManager.Instance != null) AudioManager.Instance.PlaySFXOneShot("Swipe");
 
         StartCoroutine(ExecuteMultiStepSwipe(goLeft ? -1 : 1, steps));
     }
@@ -344,27 +378,23 @@ public class ShopController : MonoBehaviour
         for (int i = 0; i < steps; i++)
         {
             bool canContinue = direction < 0
-                ? carouselCenterIndex < currentCarouselItems.Count - 1
-                : carouselCenterIndex > 0;
+                ? _carouselCenterIndex < _currentCarouselItems.Count - 1
+                : _carouselCenterIndex > 0;
 
             if (!canContinue)
             {
-                // Bounce effect khi chạm biên
                 if (i == 0)
                     StartCoroutine(ShowBounceEffect(
                         direction < 0 ? SwipeDirection.Left : SwipeDirection.Right));
                 break;
             }
 
-            // Advance index
-            carouselCenterIndex = direction < 0
-                ? carouselCenterIndex + 1
-                : carouselCenterIndex - 1;
+            _carouselCenterIndex = direction < 0
+                ? _carouselCenterIndex + 1
+                : _carouselCenterIndex - 1;
 
-            // Animate slide với DOTween - smooth hơn SmoothStep
             yield return StartCoroutine(AnimateCarouselTransition(direction, stepAnimDuration));
 
-            // Haptic mỗi step (mobile only)
 #if UNITY_ANDROID || UNITY_IOS
             if (SystemInfo.supportsVibration && i == 0)
                 Handheld.Vibrate();
@@ -374,97 +404,44 @@ public class ShopController : MonoBehaviour
         _isAnimating = false;
     }
 
-    // End swipe detection
     private void EndSwipeDetection(Vector2 position)
     {
-        swipeEndPos = position;
-        float swipeTime = Time.time - swipeStartTime;
+        _swipeEndPos = position;
+        float swipeTime = Time.time - _swipeStartTime;
 
+#if UNITY_EDITOR
         if (debugSwipe)
         {
-            Vector2 swipeDelta = swipeEndPos - swipeStartPos;
+            Vector2 swipeDelta = _swipeEndPos - _swipeStartPos;
             float velocityX = Mathf.Abs(swipeDelta.x) / Mathf.Max(swipeTime, 0.05f);
-
-            Debug.Log(
-                $"Swipe ended | Delta={swipeDelta} | Distance={swipeDelta.magnitude:F1} | Time={swipeTime:F3} | VelocityX={velocityX:F1}"
-            );
+            GameLog.Info($"[ShopController] Swipe ended | Delta={swipeDelta} | Distance={swipeDelta.magnitude:F1} | Time={swipeTime:F3} | VelocityX={velocityX:F1}");
         }
+#endif
 
-        isSwipeActive = false;
-        swipeProcessed = false;
+        _isSwipeActive = false;
+        _swipeProcessed = false;
     }
 
-/*    private void OnSwipeLeft()
-    {
-        if (carouselCenterIndex < currentCarouselItems.Count - 1)
-        {
-            if (debugSwipe)
-                Debug.Log("Swiped Left - Next Item");
-
-            NextCarouselItem();
-
-            // Optional: Add haptic feedback
-#if UNITY_ANDROID || UNITY_IOS
-            if (SystemInfo.supportsVibration)
-                Handheld.Vibrate();
-#endif
-        }
-        else
-        {
-            // At end of carousel - show bounce effect
-            if (debugSwipe)
-                Debug.Log("Already at last item");
-            StartCoroutine(ShowBounceEffect(SwipeDirection.Left));
-        }
-    }
-
-    // Handle swipe right (previous item)
-    private void OnSwipeRight()
-    {
-        if (carouselCenterIndex > 0)
-        {
-            if (debugSwipe)
-                Debug.Log("Swiped Right - Previous Item");
-
-            PreviousCarouselItem();
-
-            // Optional: Add haptic feedback
-#if UNITY_ANDROID || UNITY_IOS
-            if (SystemInfo.supportsVibration)
-                Handheld.Vibrate();
-#endif
-        }
-        else
-        {
-            // At beginning of carousel - show bounce effect
-            if (debugSwipe)
-                Debug.Log("Already at first item");
-            StartCoroutine(ShowBounceEffect(SwipeDirection.Right));
-        }
-    }*/
     private bool IsPointerInCarouselArea(Vector2 screenPos)
     {
         if (ParticipantsContainer == null) return false;
-
-        // Kiểm tra screen position có nằm trong RectTransform không
-        bool isInside = RectTransformUtility.RectangleContainsScreenPoint(
-            ParticipantsContainer, screenPos, null);
-
-        return isInside;
+        return RectTransformUtility.RectangleContainsScreenPoint(ParticipantsContainer, screenPos, null);
     }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // NPC INTERACTION
+    // ═════════════════════════════════════════════════════════════════════════
 
     public void SetNPCInteraction(bool isNear, string npcName, ShopData npcShopData = null, BaseNPC npc = null)
     {
-
-        // ✅ Early null check
         if (isNear && npc == null)
         {
-            Debug.LogError($"❌ CRITICAL: NPC is NULL but isNear=true for {npcName}");
+            Debug.LogError($"[ShopController] CRITICAL: NPC is NULL but isNear=true for {npcName}");
             return;
         }
 
         MainMenuViewModel.PendingDialogue = isNear;
-        currentInteractingNPC = npc;
+        _currentInteractingNPC = npc;
 
         if (isNear)
         {
@@ -473,313 +450,253 @@ public class ShopController : MonoBehaviour
             {
                 MainMenuViewModel.CurrentShopData = npcShopData;
                 UpdateShopHeaderPreview();
-                Debug.Log($"Loaded shop data: {npcShopData.shopName} for NPC: {npcName}");
+#if UNITY_EDITOR
+                GameLog.Info($"[ShopController] Loaded shop data: {npcShopData.shopName} for NPC: {npcName}");
+#endif
             }
             else
             {
-                Debug.LogWarning($"NPC {npcName} không có ShopData!");
+                GameLog.Warn($"[ShopController] NPC {npcName} không có ShopData!");
             }
         }
         else
         {
             MainMenuViewModel.CurrentShopData = null;
             MainMenuViewModel.CurrentNPCName = null;
-            Debug.Log("Cleared shop data when leaving NPC");
-            currentInteractingNPC = null;
-
+            _currentInteractingNPC = null;
+#if UNITY_EDITOR
+            GameLog.Info("[ShopController] Cleared shop data when leaving NPC");
+#endif
         }
 
         var multiChatManager = MainMenuView.Instance?.GetComponentInChildren<MultiChatManager>();
 
-        Debug.Log($"🔍 MultiChatManager found: {multiChatManager != null}");
-        Debug.Log($"🔍 NPC provided: {npc != null}");
-        Debug.Log($"🔍 Is near: {isNear}");
-
         if (multiChatManager != null && npc != null)
         {
-            var npcAdapter = npc.GetComponent<NPCChatAdapter>();
-            Debug.Log($"🔍 NPCChatAdapter found on {npc.name}: {npcAdapter != null}");
-
             if (isNear)
             {
                 if (npc is IChatParticipant chatParticipant)
                 {
                     multiChatManager.AddParticipant(chatParticipant);
-                    Debug.Log($"✅ Added {npc.name} directly as IChatParticipant");
+#if UNITY_EDITOR
+                    GameLog.Info($"[ShopController] Added {npc.name} as IChatParticipant");
+#endif
                 }
                 else
                 {
-                    Debug.LogError($"❌ {npc.name} does not implement IChatParticipant!");
+                    Debug.LogError($"[ShopController] {npc.name} does not implement IChatParticipant!");
                 }
             }
             else
             {
-
-
                 if (npc is IChatParticipant chatParticipant)
                     multiChatManager.RemoveParticipant(chatParticipant);
             }
         }
-        else
+        else if (multiChatManager == null)
         {
-            if (multiChatManager == null)
-                Debug.LogError("❌ MultiChatManager NOT FOUND!");
-            if (npc == null && isNear)
-                Debug.LogError("❌ NPC is NULL but isNear = true!");
+            Debug.LogError("[ShopController] MultiChatManager NOT FOUND!");
         }
     }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // POPULATE / CAROUSEL DISPLAY
+    // ═════════════════════════════════════════════════════════════════════════
+
     private void PopulateShopItems()
     {
         ClearShopItems();
         if (MainMenuViewModel.CurrentShopData == null)
         {
-            Debug.LogError("CurrentShopData is null!");
+            Debug.LogError("[ShopController] CurrentShopData is null!");
             return;
         }
 
-        var shopItems = new List<ShopItem>(MainMenuViewModel.CurrentShopData.ItemsDictionary.Values);
-        currentCarouselItems = shopItems;
-        carouselCenterIndex = 0;
-        Debug.Log($"Displaying shop: {MainMenuViewModel.CurrentShopData.shopName} with {shopItems.Count} items");
+        _currentCarouselItems.Clear();
+        _currentCarouselItems.AddRange(MainMenuViewModel.CurrentShopData.ItemsDictionary.Values);
+        _carouselCenterIndex = 0;
+
+#if UNITY_EDITOR
+        GameLog.Info($"[ShopController] Displaying shop: {MainMenuViewModel.CurrentShopData.shopName} with {_currentCarouselItems.Count} items");
+#endif
         UpdateShopHeader();
 
         if (useCarouselMode)
-        {
-            //SetupCarouselNavigation();
             UpdateCarouselDisplay();
-        }
         else
-        {
-            // Original grid display logic
             StartCoroutine(LoadItemsBatched());
-        }
+
+        UpdateArrowButtonsState();
     }
 
     private void PreviousCarouselItem()
     {
-        if (carouselCenterIndex > 0)
+        if (_carouselCenterIndex > 0)
         {
-            carouselCenterIndex--;
+            _carouselCenterIndex--;
             StartCoroutine(AnimateCarouselTransition(-1, 0.3f));
         }
     }
 
     private void NextCarouselItem()
     {
-        if (carouselCenterIndex < currentCarouselItems.Count - 1)
+        if (_carouselCenterIndex < _currentCarouselItems.Count - 1)
         {
-            carouselCenterIndex++;
+            _carouselCenterIndex++;
             StartCoroutine(AnimateCarouselTransition(1, 0.3f));
         }
     }
 
+    // Bật/tắt interactable của 2 nút mũi tên tùy theo vị trí hiện tại của carousel.
+    // O(1) — chỉ chạy khi index đổi hoặc khi populate, không nằm trong Update.
+    private void UpdateArrowButtonsState()
+    {
+        int total = _currentCarouselItems != null ? _currentCarouselItems.Count : 0;
+        bool hasMultiple = useCarouselMode && total > 1;
+
+        if (leftArrowButton != null)
+            leftArrowButton.interactable = hasMultiple && _carouselCenterIndex > 0;
+
+        if (rightArrowButton != null)
+            rightArrowButton.interactable = hasMultiple && _carouselCenterIndex < total - 1;
+    }
+
     private void InitializeFixedPositions()
     {
-        if (positionsInitialized) return;
+        if (_positionsInitialized) return;
 
-        fixedPositions.Clear();
+        _fixedPositions.Clear();
 
         // Single Center (Slot 4 - Topmost)
-        fixedPositions["single_center"] = new CarouselPosition(
+        _fixedPositions["single_center"] = new CarouselPosition(
             new Vector3(centerPosition_5, positionY_Center, 0f),
             centerScale, 1f, true, 4
         );
 
-        // ✅ PENTA LAYOUT - Update thứ tự Slot để render đúng lớp
-
+        // PENTA LAYOUT — Slot order theo lớp render
         // Slot 0: Far Left (Lớp dưới cùng)
-        fixedPositions["penta_left_far"] = new CarouselPosition(
+        _fixedPositions["penta_left_far"] = new CarouselPosition(
             new Vector3(leftPosition_1, positionY_first, 0f),
             sideScale * 0.8f, 1f, false, 0
         );
 
         // Slot 1: Far Right (Lớp dưới cùng)
-        fixedPositions["penta_right_far"] = new CarouselPosition(
+        _fixedPositions["penta_right_far"] = new CarouselPosition(
             new Vector3(rightPosition_2, positionY_first, 0f),
             sideScale * 0.8f, 1f, false, 1
         );
 
         // Slot 2: Near Left (Lớp giữa)
-        fixedPositions["penta_left_near"] = new CarouselPosition(
+        _fixedPositions["penta_left_near"] = new CarouselPosition(
             new Vector3(leftPosition_3, positionY_between, 0f),
             sideScale, 1f, false, 2
         );
 
         // Slot 3: Near Right (Lớp giữa)
-        fixedPositions["penta_right_near"] = new CarouselPosition(
+        _fixedPositions["penta_right_near"] = new CarouselPosition(
             new Vector3(rightPosition_4, positionY_between, 0f),
             sideScale, 1f, false, 3
         );
 
         // Slot 4: Center (Lớp trên cùng - Render cuối cùng)
-        fixedPositions["penta_center"] = new CarouselPosition(
+        _fixedPositions["penta_center"] = new CarouselPosition(
             new Vector3(centerPosition_5, positionY_Center, 0f),
             centerScale, 1f, true, 4
         );
 
-        positionsInitialized = true;
-        Debug.Log("✅ Fixed absolute positions initialized (Center on TOP)!");
+        _positionsInitialized = true;
+#if UNITY_EDITOR
+        GameLog.Info("[ShopController] Fixed absolute positions initialized (Center on TOP)");
+#endif
     }
 
-    private string GetPositionKey(int totalItems, int itemIndex, int centerIndex)
+    private static string GetPositionKey(int totalItems, int itemIndex, int centerIndex)
     {
+        if (totalItems == 1) return "single_center";
 
-        if (totalItems == 1)
-            return "single_center";
-
-        // Logic chung cho 2+ items (luôn dùng hệ 5 slot)
         int diff = itemIndex - centerIndex;
-
-        switch (diff)
+        return diff switch
         {
-            case 0: return  "penta_center";
-            case -1: return "penta_left_near";
-            case 1: return  "penta_right_near";
-            case -2: return "penta_left_far";
-            case 2: return  "penta_right_far";
-            default: return ""; // Should not happen if logic is correct
-        }
+            0  => "penta_center",
+            -1 => "penta_left_near",
+            1  => "penta_right_near",
+            -2 => "penta_left_far",
+            2  => "penta_right_far",
+            _  => ""
+        };
     }
 
-    // ✅ FIXED: Sử dụng RectTransform.anchoredPosition
-/*    private void SpawnObjectAtFixedPosition(ShopItem shopItem, int itemIndex, int totalItems, int centerIndex)
-    {
-        InitializeFixedPositions();
-
-        string positionKey = GetPositionKey(totalItems, itemIndex, centerIndex);
-        if (!fixedPositions.ContainsKey(positionKey))
-        {
-            Debug.LogError($"❌ Position key not found: {positionKey}");
-            return;
-        }
-
-        CarouselPosition fixedPos = fixedPositions[positionKey];
-
-        // ✅ SPAWN OBJECT
-        var itemUI = Instantiate(shopItemPrefab, shopItemsContainer);
-        var shopItemUI = itemUI.GetComponent<ShopItemUI>();
-
-        // Setup item data
-        if (globalDefaultSprite != null)
-            shopItemUI.SetDefaultSprite(globalDefaultSprite);
-        shopItemUI.Setup(shopItem, () => OnCarouselItemClicked(shopItem, itemIndex));
-        if (shopItem.GetAPIData() != null)
-            shopItemUI.SetAPIData(shopItem.GetAPIData());
-
-        // ✅ CRITICAL FIX: Sử dụng RectTransform.anchoredPosition
-        RectTransform rectTransform = itemUI.transform as RectTransform;
-        if (rectTransform != null)
-        {
-            rectTransform.anchoredPosition = new Vector2(fixedPos.position.x, fixedPos.position.y);
-            Debug.Log($"✅ Set anchoredPosition to: ({fixedPos.position.x}, {fixedPos.position.y}) for {shopItem.itemName}");
-        }
-        else
-        {
-            Debug.LogError($"❌ Could not get RectTransform from {itemUI.name}");
-        }
-
-        // Apply scale
-        itemUI.transform.localScale = Vector3.one * fixedPos.scale;
-
-        // Apply alpha
-        CanvasGroup canvasGroup = itemUI.GetComponent<CanvasGroup>();
-        if (canvasGroup == null)
-            canvasGroup = itemUI.AddComponent<CanvasGroup>();
-        canvasGroup.alpha = fixedPos.alpha;
-
-        // Configure carousel mode  
-        shopItemUI.SetCarouselMode(fixedPos.isCenter);
-
-        // Add center effects
-        if (fixedPos.isCenter)
-            AddCenterItemEffects(itemUI);
-
-        Debug.Log($"✅ Spawned {shopItem.itemName} at position X={fixedPos.position.x}");
-    }
-*/
-    private readonly List<GameObject> spawnedItems = new();
     private void EnsureItemCount(int count)
     {
-        // MAX 5 SLOTS
-        int maxSlots = 5;
-        while (spawnedItems.Count < Mathf.Min(count, maxSlots))
+        const int maxSlots = 5;
+        while (_spawnedItems.Count < Mathf.Min(count, maxSlots))
         {
             var go = Instantiate(shopItemPrefab, shopItemsContainer);
-            spawnedItems.Add(go);
+            _spawnedItems.Add(go);
         }
 
-        for (int i = 0; i < spawnedItems.Count; i++)
-        {
-            spawnedItems[i].SetActive(i < Mathf.Min(count, maxSlots));
-        }
+        for (int i = 0; i < _spawnedItems.Count; i++)
+            _spawnedItems[i].SetActive(i < Mathf.Min(count, maxSlots));
     }
 
-    // Cập nhật dữ liệu + vị trí thay vì Clear/Spawn:
+    // Cập nhật dữ liệu + vị trí thay vì Clear/Spawn
     private void UpdateCarouselDisplay()
     {
-        if (currentCarouselItems == null || currentCarouselItems.Count == 0) return;
+        if (_currentCarouselItems == null || _currentCarouselItems.Count == 0) return;
 
-        carouselCenterIndex = Mathf.Clamp(carouselCenterIndex, 0, currentCarouselItems.Count - 1);
-        int totalItems = currentCarouselItems.Count;
+        _carouselCenterIndex = Mathf.Clamp(_carouselCenterIndex, 0, _currentCarouselItems.Count - 1);
+        int totalItems = _currentCarouselItems.Count;
 
-        // Đảm bảo có đủ 5 slot vật lý (0,1,2,3,4)
+        // Đảm bảo có đủ 5 slot vật lý
         int requiredSlots = (totalItems >= 1) ? 5 : 0;
         EnsureItemCount(requiredSlots);
 
         // Tắt hết trước
-        for (int i = 0; i < spawnedItems.Count; i++)
-            spawnedItems[i].SetActive(false);
+        for (int i = 0; i < _spawnedItems.Count; i++)
+            _spawnedItems[i].SetActive(false);
 
         // Tính toán index dữ liệu
-        int farLeftIndex = carouselCenterIndex - 2;
-        int nearLeftIndex = carouselCenterIndex - 1;
-        int nearRightIndex = carouselCenterIndex + 1;
-        int farRightIndex = carouselCenterIndex + 2;
+        int farLeftIndex = _carouselCenterIndex - 2;
+        int nearLeftIndex = _carouselCenterIndex - 1;
+        int nearRightIndex = _carouselCenterIndex + 1;
+        int farRightIndex = _carouselCenterIndex + 2;
 
-        // --- CẤP PHÁT SLOT VẬT LÝ THEO THỨ TỰ RENDER (Dưới lên Trên) ---
+        // CẤP PHÁT SLOT VẬT LÝ THEO THỨ TỰ RENDER (Dưới lên Trên)
 
         // 1. Lớp xa nhất (Far) -> Slot 0 & 1
-        if (farLeftIndex >= 0 && totalItems >= 5)
-            SetupSlot(0, farLeftIndex); // Slot 0: Far Left
-
-        if (farRightIndex < totalItems && totalItems >= 5)
-            SetupSlot(1, farRightIndex); // Slot 1: Far Right
+        if (farLeftIndex >= 0 && totalItems >= 5) SetupSlot(0, farLeftIndex);
+        if (farRightIndex < totalItems && totalItems >= 5) SetupSlot(1, farRightIndex);
 
         // 2. Lớp gần (Near) -> Slot 2 & 3
-        if (nearLeftIndex >= 0 && totalItems >= 2)
-            SetupSlot(2, nearLeftIndex); // Slot 2: Near Left
+        if (nearLeftIndex >= 0 && totalItems >= 2) SetupSlot(2, nearLeftIndex);
+        if (nearRightIndex < totalItems && totalItems >= 2) SetupSlot(3, nearRightIndex);
 
-        if (nearRightIndex < totalItems && totalItems >= 2)
-            SetupSlot(3, nearRightIndex); // Slot 3: Near Right
+        // 3. Lớp Center (Topmost) -> Slot 4 — luôn cuối cùng để đè lên item khác
+        if (totalItems >= 1) SetupSlot(4, _carouselCenterIndex);
 
-        // 3. Lớp Center (Topmost) -> Slot 4
-        // Luôn luôn là slot cuối cùng để đè lên các item khác
-        if (totalItems >= 1)
-            SetupSlot(4, carouselCenterIndex); // Slot 4: Center
-
-        carouselIndicator?.UpdateDots(carouselCenterIndex, currentCarouselItems.Count);
-        // ✅ CHỈ UPDATE DOTS KHI INDEX THAY ĐỔI
-        if (carouselCenterIndex != lastCarouselIndex)
+        // ✅ FIX: Chỉ update dots khi index THAY ĐỔI (trước đây gọi 2 lần — 1 unconditional + 1 conditional)
+        if (_carouselCenterIndex != _lastCarouselIndex)
         {
-            lastCarouselIndex = carouselCenterIndex;
-            carouselIndicator?.UpdateDots(carouselCenterIndex, currentCarouselItems.Count);
+            _lastCarouselIndex = _carouselCenterIndex;
+            carouselIndicator?.UpdateDots(_carouselCenterIndex, _currentCarouselItems.Count);
+            UpdateArrowButtonsState();
         }
     }
 
     private void SetupSlot(int slot, int itemIndex)
     {
-        if (slot < 0 || slot >= spawnedItems.Count) return;
+        if (slot < 0 || slot >= _spawnedItems.Count) return;
 
-        var go = spawnedItems[slot];
+        var go = _spawnedItems[slot];
         var ui = go.GetComponent<ShopItemUI>();
-        var item = currentCarouselItems[itemIndex];
+        var item = _currentCarouselItems[itemIndex];
 
         go.SetActive(true);
 
         if (globalDefaultSprite != null)
             ui.SetDefaultSprite(globalDefaultSprite);
 
-        // ✅ Inject TRƯỚC ui.Setup() — chỉ inject cho center slot (slot 4)
+        // Inject TRƯỚC ui.Setup() — chỉ inject cho center slot (slot 4)
         if (slot == 4 && externalPriceText != null)
             ui.SetExternalPriceText(externalPriceText);
 
@@ -788,50 +705,14 @@ public class ShopController : MonoBehaviour
         if (item.GetAPIData() != null)
             ui.SetAPIData(item.GetAPIData());
 
-        ApplyFixedPosition(go, currentCarouselItems.Count, itemIndex, carouselCenterIndex);
+        ApplyFixedPosition(go, _currentCarouselItems.Count, itemIndex, _carouselCenterIndex);
     }
-
-    /* private void ApplyFixedPosition(GameObject go, int totalItems, int itemIndex, int centerIndex)
-     {
-         InitializeFixedPositions();
-         string key = GetPositionKey(totalItems, itemIndex, centerIndex);
-         if (!fixedPositions.TryGetValue(key, out var fp)) return;
-
-         // ✅ Kill tweens cũ TRƯỚC KHI set bất cứ gì
-         go.transform.DOKill(complete: false);
-
-         var rt = go.transform as RectTransform;
-         if (rt != null)
-             rt.anchoredPosition = new Vector2(fp.position.x, fp.position.y);
-
-         // ✅ Set scale — chỉ cho non-center, center sẽ được DOTween handle
-         if (!fp.isCenter)
-         {
-             go.transform.localScale = Vector3.one * fp.scale;
-         }
-
-         var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
-         cg.alpha = fp.alpha;
-
-         var ui = go.GetComponent<ShopItemUI>();
-         if (ui != null)
-             ui.SetCarouselMode(fp.isCenter);
-
-         SetRaycastTarget(go, fp.isCenter);
-
-         if (fp.isCenter)
-         {
-             AddCenterItemEffects(go);
-             PlayCenterPunchAnimation(go); // ← Chỉ center mới vào đây
-         }
-     }
- */
 
     private void ApplyFixedPosition(GameObject go, int totalItems, int itemIndex, int centerIndex)
     {
         InitializeFixedPositions();
         string key = GetPositionKey(totalItems, itemIndex, centerIndex);
-        if (!fixedPositions.TryGetValue(key, out var fp)) return;
+        if (!_fixedPositions.TryGetValue(key, out var fp)) return;
 
         go.transform.DOKill(complete: false);
 
@@ -840,9 +721,7 @@ public class ShopController : MonoBehaviour
             rt.anchoredPosition = new Vector2(fp.position.x, fp.position.y);
 
         if (!fp.isCenter)
-        {
             go.transform.localScale = Vector3.one * fp.scale;
-        }
 
         var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
         cg.alpha = 1f; // không dùng alpha để dim nữa
@@ -865,68 +744,33 @@ public class ShopController : MonoBehaviour
 
     private void SetRaycastTarget(GameObject itemGameObject, bool isCenter)
     {
-        // Find the button component in children
         Button button = itemGameObject.GetComponentInChildren<Button>();
         if (button == null)
         {
-            Debug.LogWarning($"No Button component found in children of {itemGameObject.name}");
+#if UNITY_EDITOR
+            GameLog.Warn($"[ShopController] No Button component found in children of {itemGameObject.name}");
+#endif
             return;
         }
 
-        // Enable/disable raycast target based on center position
-        // raycastTarget is a property of Graphic, not Button
+        // raycastTarget là property của Graphic, không phải Button
         Graphic graphic = button.GetComponent<Graphic>();
         if (graphic != null)
-        {
             graphic.raycastTarget = isCenter;
-        }
 
-        // Also manage CanvasGroup if you want to block raycasts for non-center items
         CanvasGroup canvasGroup = itemGameObject.GetComponent<CanvasGroup>();
         if (canvasGroup != null)
-        {
             canvasGroup.blocksRaycasts = isCenter;
-        }
 
+#if UNITY_EDITOR
         if (debugSwipe)
-            Debug.Log($"Raycast target set to {isCenter} for {itemGameObject.name}");
-    }
-    private List<int> GetDisplayIndices()
-    {
-        List<int> displayIndices = new List<int>();
-        int totalItems = currentCarouselItems.Count;
-        int leftIndex = carouselCenterIndex - 1;
-        int rightIndex = carouselCenterIndex + 1;
-
-        if (totalItems == 1)
-        {
-            // Only center item
-            displayIndices.Add(carouselCenterIndex);
-        }
-        else
-        {
-            // ✅ 2+ ITEMS: LUÔN CỐ GẮN 3 SLOT THEO THỨ TỰ left-center-right
-            // Slot 0 = left (nếu có), Slot 1 = center, Slot 2 = right (nếu có)
-
-            // LEFT SLOT (slot 0)
-            if (leftIndex >= 0)
-                displayIndices.Add(leftIndex);
-
-            // CENTER SLOT (slot 1) - LUÔN CÓ
-            displayIndices.Add(carouselCenterIndex);
-
-            // RIGHT SLOT (slot 2)
-            if (rightIndex < totalItems)
-                displayIndices.Add(rightIndex);
-        }
-
-        Debug.Log($"GetDisplayIndices: center={carouselCenterIndex}, total={totalItems}, display={string.Join(",", displayIndices)}");
-        return displayIndices;
+            GameLog.Info($"[ShopController] Raycast target set to {isCenter} for {itemGameObject.name}");
+#endif
     }
 
     private void AddCenterItemEffects(GameObject centerItem)
     {
-        // Add outline or shadow effect
+        // Cache outline trên center item
         var outline = centerItem.GetComponent<Outline>();
         if (outline == null)
         {
@@ -939,39 +783,30 @@ public class ShopController : MonoBehaviour
 
     private void PlayCenterPunchAnimation(GameObject centerItem)
     {
-        if (!enableCenterPunchAnimation) return;
-        if (centerItem == null) return;
+        if (!enableCenterPunchAnimation || centerItem == null) return;
 
         Transform t = centerItem.transform;
-
-        // ✅ Kill tất cả tweens đang chạy trên transform này
         t.DOKill(complete: false);
 
-        // ✅ Force set lại đúng scale của penta_center TRƯỚC KHI punch
-        // Không dùng centerScale trực tiếp mà đọc từ fixedPositions để nhất quán
-        float targetScale = fixedPositions.TryGetValue("penta_center", out var cp)
+        // Force set lại đúng scale của penta_center TRƯỚC KHI punch
+        float targetScale = _fixedPositions.TryGetValue("penta_center", out var cp)
             ? cp.scale
             : centerScale;
         t.localScale = Vector3.one * targetScale;
 
-        // ✅ Punch từ đúng scale gốc, chỉ trên object này
         t.DOPunchScale(
             punch: Vector3.one * centerPunchStrength,
             duration: centerPunchDuration,
             vibrato: centerPunchVibrato,
             elasticity: centerPunchElasticity
         )
-        .SetId("center_punch_" + centerItem.GetInstanceID()) // ← ID unique per object
-        .SetUpdate(true);  // ← Chạy kể cả khi Time.timeScale = 0 (UI safe)
+        .SetId("center_punch_" + centerItem.GetInstanceID())
+        .SetUpdate(true);  // chạy kể cả khi Time.timeScale = 0
     }
 
-
-
-
-    // ✅ THÊM: Handle carousel item clicks
     private void OnCarouselItemClicked(ShopItem shopItem, int itemIndex)
     {
-        if (itemIndex == carouselCenterIndex)
+        if (itemIndex == _carouselCenterIndex)
         {
             // Center item clicked - show detail
             MainMenuViewModel.OnBuyItemClicked(shopItem.itemID);
@@ -979,7 +814,7 @@ public class ShopController : MonoBehaviour
         else
         {
             // Side item clicked - move to center
-            carouselCenterIndex = itemIndex;
+            _carouselCenterIndex = itemIndex;
             StartCoroutine(AnimateCarouselTransition(1, 0.3f));
         }
     }
@@ -993,7 +828,7 @@ public class ShopController : MonoBehaviour
         // 2. Snap items về vị trí đúng
         UpdateCarouselDisplay();
 
-        // 3. Slide nhẹ: di chuyển từ offset → 0 (thay vì punch container)
+        // 3. Slide nhẹ: di chuyển từ offset → 0
         float offsetX = direction * -30f;
         shopItemsContainer.localPosition = new Vector3(offsetX, 0f, 0f);
         shopItemsContainer
@@ -1003,34 +838,30 @@ public class ShopController : MonoBehaviour
 
         yield return new WaitForSeconds(duration);
 
-        // 4. Đảm bảo về đúng origin sau animation
         shopItemsContainer.localPosition = Vector3.zero;
     }
 
     private enum SwipeDirection { Left, Right }
 
-    // ✅ THÊM: Show bounce effect when at carousel ends
     private IEnumerator ShowBounceEffect(SwipeDirection direction)
     {
-        float bounceDistance = 20f;
-        float duration = 0.3f;
+        const float bounceDistance = 20f;
+        const float duration = 0.3f;
 
         Vector3 originalPos = shopItemsContainer.localPosition;
-        Vector3 bouncePos = originalPos + (direction == SwipeDirection.Left ?
-            Vector3.left * bounceDistance : Vector3.right * bounceDistance);
+        Vector3 bouncePos = originalPos + (direction == SwipeDirection.Left
+            ? Vector3.left * bounceDistance
+            : Vector3.right * bounceDistance);
 
         // Bounce out
         yield return StartCoroutine(AnimatePosition(originalPos, bouncePos, duration * 0.4f));
-
         // Bounce back
         yield return StartCoroutine(AnimatePosition(bouncePos, originalPos, duration * 0.6f));
     }
 
-    // ✅ THÊM: Helper method for position animation
     private IEnumerator AnimatePosition(Vector3 from, Vector3 to, float duration)
     {
         float elapsed = 0f;
-
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
@@ -1038,11 +869,13 @@ public class ShopController : MonoBehaviour
             shopItemsContainer.localPosition = Vector3.Lerp(from, to, t);
             yield return null;
         }
-
         shopItemsContainer.localPosition = to;
     }
 
-    // ✅ Original methods remain unchanged
+    // ═════════════════════════════════════════════════════════════════════════
+    // GRID MODE (non-carousel fallback)
+    // ═════════════════════════════════════════════════════════════════════════
+
     private IEnumerator LoadItemsBatched()
     {
         var items = MainMenuViewModel.CurrentShopData.ItemsDictionary.Values;
@@ -1062,11 +895,7 @@ public class ShopController : MonoBehaviour
                 shopItemUI.SetAPIData(shopItem.GetAPIData());
 
             count++;
-
-            if (count % 3 == 0)
-            {
-                yield return null;
-            }
+            if (count % 3 == 0) yield return null;
         }
 
         if (shopScrollRect != null)
@@ -1083,73 +912,50 @@ public class ShopController : MonoBehaviour
         if (shopScrollRect != null)
         {
             shopScrollRect.verticalNormalizedPosition = 1f;
+#if UNITY_EDITOR
             var contentRect = shopItemsContainer.GetComponent<RectTransform>();
             var viewportRect = shopScrollRect.viewport;
-            Debug.Log($"Content height: {contentRect.sizeDelta.y}");
-            Debug.Log($"Viewport height: {viewportRect.rect.height}");
+            GameLog.Info($"[ShopController] Content height: {contentRect.sizeDelta.y}");
+            GameLog.Info($"[ShopController] Viewport height: {viewportRect.rect.height}");
+#endif
         }
         else
         {
-            Debug.LogError("shopScrollRect is null in UpdateScrollPositionDelayed!");
+            Debug.LogError("[ShopController] shopScrollRect is null in UpdateScrollPositionDelayed!");
         }
     }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // HEADER
+    // ═════════════════════════════════════════════════════════════════════════
 
     private void UpdateShopHeaderPreview()
     {
         if (shopHeaderText != null && MainMenuViewModel.CurrentShopData != null)
         {
             shopHeaderText.text = $"{MainMenuViewModel.CurrentShopData.shopName}";
-            Debug.Log($"Preview updated shop header to: {MainMenuViewModel.CurrentShopData.shopName}");
+#if UNITY_EDITOR
+            GameLog.Info($"[ShopController] Preview updated shop header to: {MainMenuViewModel.CurrentShopData.shopName}");
+#endif
         }
     }
 
     private void UpdateShopHeader()
     {
         if (shopHeaderText != null && MainMenuViewModel.CurrentShopData != null)
-        {
             shopHeaderText.text = $"{MainMenuViewModel.CurrentShopData.shopName}";
-            // {MainMenuViewModel.CurrentNPCName}
-        }
     }
 
-    /*    private void ClearShopItems()
-        {
-            foreach (Transform child in shopItemsContainer)
-            {
-                // Remove outline effects before destroying
-                var outline = child.GetComponent<Outline>();
-                if (outline != null)
-                    outline.enabled = false;
-                Destroy(child.gameObject);
-            }
-
-            spawnedItems.Clear();
-            if (MainMenuViewModel.CurrentShopData != null)
-            {
-                MainMenuViewModel.CurrentShopData.ClearCache();
-            }
-        }*/
+    // ═════════════════════════════════════════════════════════════════════════
+    // CLEAR — KHÔNG Destroy children, chỉ deactivate (reuse spawnedItems pool)
+    // ═════════════════════════════════════════════════════════════════════════
 
     private void ClearShopItems()
     {
-        /*  shopItemsContainer.DOKill(complete: false);
-          shopItemsContainer.localPosition = _containerOriginalPos;  // Hoặc dùng loop nếu muốn selective
-
-          foreach (Transform child in shopItemsContainer)
-          {
-              child.DOKill(complete: false); // defensive kill
-              var outline = child.GetComponent<Outline>();
-              if (outline != null) outline.enabled = false;
-              Destroy(child.gameObject);
-          }
-
-          spawnedItems.Clear();
-          if (MainMenuViewModel.CurrentShopData != null)
-              MainMenuViewModel.CurrentShopData.ClearCache();*/
         shopItemsContainer.DOKill(complete: false);
         shopItemsContainer.localPosition = _containerOriginalPos;
 
-        foreach (var go in spawnedItems)
+        foreach (var go in _spawnedItems)
         {
             if (go == null) continue;
             go.transform.DOKill(complete: false);
@@ -1167,28 +973,32 @@ public class ShopController : MonoBehaviour
             go.SetActive(false);
         }
 
-        // KHÔNG Destroy children, KHÔNG Clear spawnedItems
         if (MainMenuViewModel.CurrentShopData != null)
             MainMenuViewModel.CurrentShopData.ClearCache();
     }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // PUBLIC API
+    // ═════════════════════════════════════════════════════════════════════════
+
     public void Close_BT_Shop()
     {
-        shopButton.gameObject.SetActive(false);
+        if (shopButton != null) shopButton.gameObject.SetActive(false);
     }
 
-    // ✅ THÊM: Toggle between carousel and grid mode
     public void ToggleDisplayMode()
     {
         useCarouselMode = !useCarouselMode;
-        carouselCenterIndex = 0;
+        _carouselCenterIndex = 0;
         PopulateShopItems();
     }
 
-    // ✅ THÊM: Toggle swipe control
     public void ToggleSwipeControl()
     {
         enableSwipeControl = !enableSwipeControl;
-        Debug.Log($"Swipe control: {(enableSwipeControl ? "Enabled" : "Disabled")}");
+#if UNITY_EDITOR
+        GameLog.Info($"[ShopController] Swipe control: {(enableSwipeControl ? "Enabled" : "Disabled")}");
+#endif
     }
 
     public void OnViewModelChanged(string propertyName)
@@ -1207,6 +1017,11 @@ public class ShopController : MonoBehaviour
                 if (playerImage != null)
                     playerImage.gameObject.SetActive(MainMenuViewModel.IsShopVisible);
 
+                if (leftArrowButton != null)
+                    leftArrowButton.gameObject.SetActive(MainMenuViewModel.IsShopVisible);
+                if (rightArrowButton != null)
+                    rightArrowButton.gameObject.SetActive(MainMenuViewModel.IsShopVisible);
+
                 if (MainMenuViewModel.IsShopVisible)
                 {
                     UpdateShopHeader();
@@ -1215,88 +1030,70 @@ public class ShopController : MonoBehaviour
                 }
                 else
                 {
-
-                    StopAllCoroutines();        
-                    isSwipeActive = false;
-                    swipeProcessed = false;
+                    StopAllCoroutines();
+                    _isSwipeActive = false;
+                    _swipeProcessed = false;
                     ClearShopItems();
                     Close_BT_Shop();
-                    if (shopHeaderText != null)
-                    {
-                        shopHeaderText.text = " ";
-                    }
+                    if (shopHeaderText != null) shopHeaderText.text = " ";
                 }
                 break;
         }
     }
 
+#if UNITY_EDITOR
+    // Refactor: bọc OnGUI trong UNITY_EDITOR — debug-only, không cần ship build
     private void OnGUI()
     {
-        if (debugSwipe && useCarouselMode)
+        if (!debugSwipe || !useCarouselMode) return;
+
+        GUILayout.BeginArea(new Rect(10, 10, 300, 200));
+        GUILayout.Label($"Carousel Index: {_carouselCenterIndex}/{_currentCarouselItems.Count - 1}");
+        GUILayout.Label($"Swipe Active: {_isSwipeActive}");
+        GUILayout.Label($"Swipe Processed: {_swipeProcessed}");
+
+        if (_isSwipeActive)
         {
-            GUILayout.BeginArea(new Rect(10, 10, 300, 200));
-            GUILayout.Label($"Carousel Index: {carouselCenterIndex}/{currentCarouselItems.Count - 1}");
-            GUILayout.Label($"Swipe Active: {isSwipeActive}");
-            GUILayout.Label($"Swipe Processed: {swipeProcessed}");
-
-            if (isSwipeActive)
-            {
-                Vector2 currentPos = Input.mousePosition;
-                Vector2 delta = currentPos - swipeStartPos;
-                GUILayout.Label($"Swipe Delta: {delta}");
-                GUILayout.Label($"Swipe Distance: {delta.magnitude:F1}");
-            }
-
-            if (GUILayout.Button("Toggle Swipe Control"))
-            {
-                ToggleSwipeControl();
-            }
-
-            if (GUILayout.Button("Toggle Display Mode"))
-            {
-                ToggleDisplayMode();
-            }
-
-            GUILayout.EndArea();
+            Vector2 currentPos = Input.mousePosition;
+            Vector2 delta = currentPos - _swipeStartPos;
+            GUILayout.Label($"Swipe Delta: {delta}");
+            GUILayout.Label($"Swipe Distance: {delta.magnitude:F1}");
         }
-    }
 
-    // Hàm callback được gọi từ ChatMessageUI khi bấm vào link
+        if (GUILayout.Button("Toggle Swipe Control")) ToggleSwipeControl();
+        if (GUILayout.Button("Toggle Display Mode")) ToggleDisplayMode();
+
+        GUILayout.EndArea();
+    }
+#endif
+
+    // Callback từ ChatMessageUI khi bấm vào product link
     public void OnProductLinkCallback(string productID)
     {
         TutorialGamePlay.Instance?.OnPlayerTappedItem();
-        Debug.Log($"[ShopController] Received request to open product: {productID}");
+#if UNITY_EDITOR
+        GameLog.Info($"[ShopController] Received request to open product: {productID}");
+#endif
 
-        // 1. Tìm ShopItem tương ứng trong dữ liệu Shop hiện tại
-        if (MainMenuViewModel != null && MainMenuViewModel.CurrentShopData != null)
+        if (MainMenuViewModel == null || MainMenuViewModel.CurrentShopData == null) return;
+
+        if (!MainMenuViewModel.CurrentShopData.ItemsDictionary.TryGetValue(productID, out var shopItem))
         {
-            // Tìm item trong dictionary
-            if (MainMenuViewModel.CurrentShopData.ItemsDictionary.TryGetValue(productID, out var shopItem))
-            {
-                // 2. Gọi ProductDetailUI để hiển thị
-                if (productDetailUI != null)
-                {
-                    // Lấy customId từ APIData nếu có, hoặc dùng itemID làm fallback
-                    string customId = shopItem.GetAPIData()?.customId ?? shopItem.itemID;
-
-                    Debug.Log($"[ShopController] Opening detail for CustomID: {customId}");
-
-                    // Gọi hàm Show của ProductDetailUI
-                    // Lưu ý: Hàm ShowUnpaidProductDetail nhận customId và size (optional)
-                    productDetailUI.ShowUnpaidProductDetail(customId);
-                }
-                else
-                {
-                    Debug.LogError("[ShopController] ProductDetailUI reference is missing!");
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"[ShopController] Product ID {productID} not found in current shop data.");
-            }
+            GameLog.Warn($"[ShopController] Product ID {productID} not found in current shop data.");
+            return;
         }
+
+        if (productDetailUI == null)
+        {
+            Debug.LogError("[ShopController] ProductDetailUI reference is missing!");
+            return;
+        }
+
+        // Lấy customId từ APIData nếu có, fallback dùng itemID
+        string customId = shopItem.GetAPIData()?.customId ?? shopItem.itemID;
+#if UNITY_EDITOR
+        GameLog.Info($"[ShopController] Opening detail for CustomID: {customId}");
+#endif
+        productDetailUI.ShowUnpaidProductDetail(customId);
     }
-
 }
-
-
