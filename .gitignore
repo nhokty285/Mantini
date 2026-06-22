@@ -97,3 +97,6 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Chặn không cho push file cấu hình nhạy cảm lên GitHub
+Assets/appsettings.json

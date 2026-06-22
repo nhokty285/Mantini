@@ -99,14 +99,21 @@ using System.Threading.Tasks;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using UnityEngine;
+using System.IO;
+
 
 public class LoginController : MonoBehaviour
 {
+    public class GoogleConfig
+    {
+        public string clientId;
+        public string clientSecret;
+    }
     public event Action<PlayerProfile> OnSignedIn;
 
     [Header("Google OAuth Config")]
-    [SerializeField] private string clientId = "";
-    [SerializeField] private string clientSecret = "";
+    [SerializeField] private string clientId;
+    [SerializeField] private string clientSecret;
     private const string RedirectUri = "http://localhost:8080/";
 
     private PlayerInfo playerInfo;
@@ -135,6 +142,27 @@ public class LoginController : MonoBehaviour
     {
         // Khởi tạo dịch vụ Unity Services khi vào game
         await UnityServices.InitializeAsync();
+    }
+
+
+    void Start()
+    {
+        string filePath = Path.Combine(Application.dataPath, "appsettings.json");
+
+        if (File.Exists(filePath))
+        {
+            string jsonText = File.ReadAllText(filePath);
+            GoogleConfig config = JsonUtility.FromJson<GoogleConfig>(jsonText);
+
+            clientId = config.clientId;
+            clientSecret = config.clientSecret;
+
+            Debug.Log("Đã nạp Google API Keys thành công từ file cục bộ!");
+        }
+        else
+        {
+            Debug.LogError("Không tìm thấy file appsettings.json cấu hình!");
+        }
     }
 
     private void Update()

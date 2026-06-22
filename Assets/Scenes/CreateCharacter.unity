@@ -5018,8 +5018,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 574ff3a2bf4afc7418bc36e5d8c6b03c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clientId: 600744707529-ucug5hg40e2j1kbe8r1k26nphtegh2ct.apps.googleusercontent.com
-  clientSecret: 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
+  clientId: 
+  clientSecret: 
 --- !u!114 &771431210
 MonoBehaviour:
   m_ObjectHideFlags: 0
