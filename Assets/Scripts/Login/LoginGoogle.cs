@@ -105,8 +105,8 @@ public class LoginController : MonoBehaviour
     public event Action<PlayerProfile> OnSignedIn;
 
     [Header("Google OAuth Config")]
-    [SerializeField] private string clientId = "600744707529-ucug5hg40e2j1kbe8r1k26nphtegh2ct.apps.googleusercontent.com";
-    [SerializeField] private string clientSecret = "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";
+    [SerializeField] private string clientId = "";
+    [SerializeField] private string clientSecret = "";
     private const string RedirectUri = "http://localhost:8080/";
 
     private PlayerInfo playerInfo;
