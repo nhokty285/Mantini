@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,23 +12,22 @@ public class UILogin : MonoBehaviour
 
     [SerializeField] private Transform loginPanel, userPanel;
 
-    [SerializeField] private LoginController loginController;
+    [SerializeField] public LoginController loginController;
 
     private PlayerProfile playerProfile;
     [SerializeField] private Onboarding onboarding;
 
     private void OnEnable()
     {
+        loginButton.onClick.RemoveAllListeners();
         loginButton.onClick.AddListener(LoginButtonPressed);
         loginController.OnSignedIn += LoginController_OnSignedIn;
-        loginController.OnAvatarUpdate += LoginController_OnAvatarUpdate;
     }
 
     private void OnDisable()
     {
         loginButton.onClick.RemoveListener(LoginButtonPressed);
         loginController.OnSignedIn -= LoginController_OnSignedIn;
-        loginController.OnAvatarUpdate -= LoginController_OnAvatarUpdate;
     }
 
     private async void LoginButtonPressed()
@@ -42,9 +41,5 @@ public class UILogin : MonoBehaviour
 
         loginPanel.gameObject.SetActive(false);
         onboarding.StartOnboarding();
-    }
-    private void LoginController_OnAvatarUpdate(PlayerProfile profile)
-    {
-        playerProfile = profile;
     }
 }
