@@ -12,6 +12,12 @@ using static PlayerApiService;
 public class CartItem
 {
     public string customId;
+
+    // customId CẤP SẢN PHẨM GỐC (vd "23612") — KHÁC với customId (= variant customId, vd "200599").
+    // Dùng để ProductDetailUI.ShowUnpaidProductDetail gọi đúng endpoint và load lại ĐẦY ĐỦ gallery ảnh
+    // khi mở lại item từ giỏ (vì customId hiện tại đã đổi sang variant customId cho mục đích checkout).
+    public string parentCustomId;
+
     public string productId;
     public string productName;
     public string brandName;
@@ -111,10 +117,14 @@ public class ShoppingCart : MonoBehaviour
     public int UnpaidItemCount => _unpaidCount;
     public int PaidItemCount => _paidCount;
 
+    // Aggregate của các món unpaid ĐANG được chọn để thanh toán.
+    // SINGLE SOURCE OF TRUTH: chỉ được ghi trong NotifyInventoryUpdated() (tính lại từ cartItems).
+    // Không cập nhật incremental rải rác nữa để tránh lệch khi đổi số lượng / sau khi thanh toán.
     private float _currentSelectedTotal = 0f;
     private int _selectedItemCount = 0;
     public float TotalAmount => _currentSelectedTotal;
 
+    // Trả về TỔNG SỐ LƯỢNG (số chiếc) của các món đang chọn, không phải số dòng sản phẩm.
     public int GetSelectedCheckoutCount() => _selectedItemCount;
 
     private void Awake()
@@ -154,21 +164,6 @@ public class ShoppingCart : MonoBehaviour
     private static (string customId, string size) MakeKey(string customId, string size)
         => (customId ?? string.Empty, size ?? string.Empty);
 
-    private void RecalculateSelectionAggregates()
-    {
-        _currentSelectedTotal = 0f;
-        _selectedItemCount = 0;
-
-        foreach (var item in cartItems)
-        {
-            if (!item.isPaid && item.isSelectedForCheckout)
-            {
-                _selectedItemCount += 1;
-                _currentSelectedTotal += item.TotalPrice;
-            }
-        }
-    }
-
     // ═══════════════════════════════════════════════════════════════════════
     // GET ITEMS — dùng cached lists (O(n) copy thay vì O(n) FindAll + check)
     // ═══════════════════════════════════════════════════════════════════════
@@ -201,6 +196,8 @@ public class ShoppingCart : MonoBehaviour
             existingItem.quantity += newItem.quantity;
             if (string.IsNullOrEmpty(existingItem.customId) && !string.IsNullOrEmpty(newItem.customId))
                 existingItem.customId = newItem.customId;
+            if (string.IsNullOrEmpty(existingItem.parentCustomId) && !string.IsNullOrEmpty(newItem.parentCustomId))
+                existingItem.parentCustomId = newItem.parentCustomId;
 
             // Đảm bảo map trỏ về đúng instance unpaid hiện tại
             var key = MakeKey(existingItem.customId, existingItem.selectedSize);
@@ -227,6 +224,7 @@ public class ShoppingCart : MonoBehaviour
         foreach (var item in cartItems)
         {
             if (item.isPaid) continue;
+            item.isSelectedForCheckout = false; // bỏ cờ chọn khi chuyển sang paid
             item.MarkAsPaid();
 
             // Bỏ khỏi map unpaid khi chuyển sang paid
@@ -308,9 +306,7 @@ public class ShoppingCart : MonoBehaviour
         foreach (var it in cartItems)
             if (!it.isPaid) it.isSelectedForCheckout = false;
 
-        _selectedItemCount = 0;
-        _currentSelectedTotal = 0f;
-
+        // Aggregate tính lại trong NotifyInventoryUpdated.
         NotifyInventoryUpdated();
     }
 
@@ -322,20 +318,37 @@ public class ShoppingCart : MonoBehaviour
             it.isSelectedForCheckout = selectedSet.Contains(it);
         }
 
-        // Batch update -> tính lại từ đầu
-        RecalculateSelectionAggregates();
+        // Aggregate tính lại trong NotifyInventoryUpdated.
         NotifyInventoryUpdated();
     }
 
-    // ✅ Notify all tabs với cached lists
+    // ✅ Notify all tabs với cached lists.
+    // SINGLE SOURCE OF TRUTH cho aggregate chọn-thanh-toán: tính lại _selectedItemCount
+    // (theo SỐ LƯỢNG) và _currentSelectedTotal NGAY trong vòng lặp dựng cache (1 lần O(n), 0 alloc).
     private void NotifyInventoryUpdated()
     {
         _cachedUnpaid.Clear();
         _cachedPaid.Clear();
+
+        _currentSelectedTotal = 0f;
+        _selectedItemCount = 0;
+
         foreach (var it in cartItems)
         {
-            if (it.isPaid) _cachedPaid.Add(it);
-            else _cachedUnpaid.Add(it);
+            if (it.isPaid)
+            {
+                _cachedPaid.Add(it);
+            }
+            else
+            {
+                _cachedUnpaid.Add(it);
+
+                if (it.isSelectedForCheckout)
+                {
+                    _selectedItemCount += it.quantity;       // đếm theo SỐ LƯỢNG, không phải số dòng
+                    _currentSelectedTotal += it.TotalPrice;  // price * quantity
+                }
+            }
         }
 
         _unpaidCount = _cachedUnpaid.Count;
@@ -456,12 +469,15 @@ public class ShoppingCart : MonoBehaviour
         foreach (var it in _cachedUnpaid)
         {
             if (!it.isSelectedForCheckout) continue;
+            it.isSelectedForCheckout = false; // bỏ cờ chọn để aggregate reset về 0 sau thanh toán
             it.MarkAsPaid();
             var key = MakeKey(it.customId, it.selectedSize);
             _unpaidItemMap.Remove(key);
             paidNow.Add(it);
         }
 
+        // NotifyInventoryUpdated tính lại aggregate: các món vừa thanh toán đã thành paid
+        // nên bị loại khỏi tổng → tiền & số món tự reset về 0.
         NotifyInventoryUpdated();
         SaveOwnedItemsToBackend(paidNow);
     }
@@ -522,12 +538,7 @@ public class ShoppingCart : MonoBehaviour
         var key = MakeKey(item.customId, item.selectedSize);
         if (_unpaidItemMap.TryGetValue(key, out var inCart) && !inCart.isPaid)
         {
-            if (inCart.isSelectedForCheckout)
-            {
-                inCart.isSelectedForCheckout = false;
-                _selectedItemCount = Mathf.Max(0, _selectedItemCount - 1);
-                _currentSelectedTotal = Mathf.Max(0f, _currentSelectedTotal - inCart.TotalPrice);
-            }
+            inCart.isSelectedForCheckout = false; // bỏ cờ chọn; aggregate tính lại trong NotifyInventoryUpdated
             inCart.MarkAsPaid();
             _unpaidItemMap.Remove(key);
             SaveOwnedItemsToBackend(new List<CartItem> { inCart });
@@ -559,24 +570,9 @@ public class ShoppingCart : MonoBehaviour
         // Nếu state không đổi thì không làm gì
         if (it.isSelectedForCheckout == selected) return;
 
-        // Cập nhật aggregate incrementally TRƯỚC khi notify (O(1) thay vì O(n) recalc)
-        if (selected)
-        {
-            _selectedItemCount += 1;
-            _currentSelectedTotal += it.TotalPrice;
-        }
-        else
-        {
-            _selectedItemCount -= 1;
-            _currentSelectedTotal -= it.TotalPrice;
-        }
-
         it.isSelectedForCheckout = selected;
 
-        // Clamp an toàn nếu có case lệch state
-        if (_selectedItemCount < 0) _selectedItemCount = 0;
-        if (_currentSelectedTotal < 0f) _currentSelectedTotal = 0f;
-
+        // Aggregate tính lại tập trung trong NotifyInventoryUpdated (single source of truth).
         NotifyInventoryUpdated();
         TutorialGamePlay.Instance?.OnAddSelectedToCartSuccess();
     }
@@ -586,7 +582,7 @@ public class ShoppingCart : MonoBehaviour
         foreach (var it in _cachedUnpaid)
             it.isSelectedForCheckout = selected;
 
-        RecalculateSelectionAggregates();
+        // Aggregate tính lại trong NotifyInventoryUpdated.
         NotifyInventoryUpdated();
     }
 

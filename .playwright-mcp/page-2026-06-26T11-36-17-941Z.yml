@@ -1,0 +1,869 @@
+- generic [ref=e2]:
+  - generic [ref=e17]:
+    - iframe [ref=e18]:
+      - iframe [ref=f17e4]:
+        - generic [ref=f25e1]:
+          - generic [ref=f25e2]:
+            - iframe [ref=f25e5]:
+              
+            - generic [ref=f25e6]:
+              - generic:
+                - img [ref=f25e10] [cursor=pointer]
+                - button [ref=f25e12] [cursor=pointer]:
+                  - img [ref=f25e13]
+          - img "Advertisement" [ref=f25e20]
+    - link [ref=e19] [cursor=pointer]:
+      - /url: https://admatic.admicro.vn/?utm_source=Admicro&utm_medium=thanhnien.vn&utm_campaign=Admatic
+  - generic [ref=e21]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e27]: Thứ Sáu, 26/6/2026
+        - generic [ref=e30]:
+          - generic [ref=e32] [cursor=pointer]:
+            - generic [ref=e33]: Hồ Chí Minh
+            - img [ref=e34]
+            - generic [ref=e36]:
+              - text: "31"
+              - superscript [ref=e37]: o
+              - text: C
+            - img "Nhiều mây" [ref=e39]
+          - generic:
+            - textbox "Nhập tên tỉnh thành..." [ref=e40]
+            - list
+        - link "Bạn cần biết" [ref=e41] [cursor=pointer]:
+          - /url: /ban-can-biet.htm
+        - link "Tiện ích" [ref=e42] [cursor=pointer]:
+          - /url: /tien-ich/thoi-tiet.htm
+        - link "Liên hệ" [ref=e43] [cursor=pointer]:
+          - /url: /lien-he.htm
+      - generic [ref=e44]:
+        - generic [ref=e45]: Theo dõi báo trên
+        - generic [ref=e46]:
+          - link "Youtube" [ref=e47] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCIW9cGgoRuGJnky3K3tbzNg
+            - img "Youtube" [ref=e48]
+          - link "Facebook" [ref=e49] [cursor=pointer]:
+            - /url: https://www.facebook.com/thanhnien
+            - img "Facebook" [ref=e50]
+          - link "Tiktok" [ref=e51] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@baothanhnien.official
+            - img "Tiktok" [ref=e52]
+          - link "Zalo" [ref=e53] [cursor=pointer]:
+            - /url: https://zalo.me/2431025964363015388
+            - img "Zalo" [ref=e54]
+    - banner [ref=e56]:
+      - generic [ref=e58]:
+        - generic [ref=e59]:
+          - img [ref=e61] [cursor=pointer]
+          - generic [ref=e64]:
+            - search "Tìm kiếm" [ref=e65]
+            - generic "btn-search-a" [ref=e66]:
+              - img [ref=e67]
+        - heading "Báo thanh niên" [level=1] [ref=e69]:
+          - link "Báo thanh niên" [ref=e70] [cursor=pointer]:
+            - /url: /
+            - img "Báo thanh niên" [ref=e71]
+        - generic [ref=e72]:
+          - link "Quảng cáo" [ref=e73] [cursor=pointer]:
+            - /url: https://banggia.thanhnien.vn/
+            - generic [ref=e74]: Quảng cáo
+            - img [ref=e76]
+          - link "Đặt báo" [ref=e78] [cursor=pointer]:
+            - /url: https://datbao.thanhnien.vn/
+            - generic [ref=e79]: Đặt báo
+            - img [ref=e81]
+          - link "Đăng nhập" [ref=e83] [cursor=pointer]:
+            - /url: https://my.thanhnien.vn/page/login.html?redirect_url=https://thanhnien.vn/
+            - generic [ref=e84]: Đăng nhập
+            - img [ref=e86]
+  - navigation [ref=e91]:
+    - list [ref=e92]:
+      - listitem [ref=e93]:
+        - link "Trang chủ" [ref=e94] [cursor=pointer]:
+          - /url: /
+          - img [ref=e95]
+      - listitem [ref=e97]:
+        - link "Chính trị" [ref=e98] [cursor=pointer]:
+          - /url: /chinh-tri.htm
+      - listitem [ref=e99]:
+        - link "Thời sự" [ref=e100] [cursor=pointer]:
+          - /url: /thoi-su.htm
+      - listitem [ref=e101]:
+        - link "Thế giới" [ref=e102] [cursor=pointer]:
+          - /url: /the-gioi.htm
+      - listitem [ref=e103]:
+        - link "Kinh tế" [ref=e104] [cursor=pointer]:
+          - /url: /kinh-te.htm
+      - listitem [ref=e105]:
+        - link "Đời sống" [ref=e106] [cursor=pointer]:
+          - /url: /doi-song.htm
+      - listitem [ref=e107]:
+        - link "Sức khỏe" [ref=e108] [cursor=pointer]:
+          - /url: /suc-khoe.htm
+      - listitem [ref=e109]:
+        - link "Giới trẻ" [ref=e110] [cursor=pointer]:
+          - /url: /gioi-tre.htm
+      - listitem [ref=e111]:
+        - link "Giáo dục" [ref=e112] [cursor=pointer]:
+          - /url: /giao-duc.htm
+      - listitem [ref=e113]:
+        - link "Du lịch" [ref=e114] [cursor=pointer]:
+          - /url: /du-lich.htm
+      - listitem [ref=e115]:
+        - link "Văn hóa" [ref=e116] [cursor=pointer]:
+          - /url: /van-hoa.htm
+      - listitem [ref=e117]:
+        - link "Giải trí" [ref=e118] [cursor=pointer]:
+          - /url: /giai-tri.htm
+      - listitem [ref=e119]:
+        - link "Thể thao" [ref=e120] [cursor=pointer]:
+          - /url: /the-thao.htm
+      - listitem [ref=e121]:
+        - link "Công nghệ" [ref=e122] [cursor=pointer]:
+          - /url: /cong-nghe.htm
+      - listitem [ref=e123]:
+        - link "Xe" [ref=e124] [cursor=pointer]:
+          - /url: /xe.htm
+      - listitem [ref=e125]:
+        - link "Video" [ref=e126] [cursor=pointer]:
+          - /url: /video.htm
+      - listitem [ref=e127]:
+        - link "Tiêu dùng" [ref=e128] [cursor=pointer]:
+          - /url: /tieu-dung-thong-minh.htm
+      - listitem [ref=e129]:
+        - link "Thời trang trẻ" [ref=e130] [cursor=pointer]:
+          - /url: /thoi-trang-tre.htm
+  - main [ref=e131]:
+    - generic [ref=e132]:
+      - generic [ref=e149]:
+        - iframe [ref=e150]:
+          - iframe [ref=f16e2]:
+            
+        - link [ref=e151] [cursor=pointer]:
+          - /url: http://adx.admicro.vn/?utm_source=Admicro&utm_medium=thanhnien.vn&utm_campaign=adxzone
+      - generic [ref=e154]:
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - link "Ký ức bình dị về Anh hùng La Văn Cầu" [ref=e160] [cursor=pointer]:
+              - /url: /ky-uc-binh-di-ve-anh-hung-la-van-cau-185260626160534437.htm
+              - img "Ký ức bình dị về Anh hùng La Văn Cầu" [ref=e161]
+            - generic [ref=e162]:
+              - heading "Ký ức bình dị về Anh hùng La Văn Cầu" [level=2] [ref=e163]:
+                - link "Ký ức bình dị về Anh hùng La Văn Cầu" [ref=e164] [cursor=pointer]:
+                  - /url: /ky-uc-binh-di-ve-anh-hung-la-van-cau-185260626160534437.htm
+              - link "Trong ký ức của những người ở lại, Anh hùng La Văn Cầu mãi là biểu tượng của lòng dũng cảm, tấm gương sáng cho các thế hệ trẻ học tập, noi theo, một người..." [ref=e165] [cursor=pointer]:
+                - /url: /ky-uc-binh-di-ve-anh-hung-la-van-cau-185260626160534437.htm
+          - generic [ref=e166]:
+            - generic [ref=e168]:
+              - heading "Sớm xếp lương nhà giáo ở mức cao nhất trong thang bậc lương sự nghiệp" [level=3] [ref=e169]:
+                - link "Sớm xếp lương nhà giáo ở mức cao nhất trong thang bậc lương sự nghiệp" [ref=e170] [cursor=pointer]:
+                  - /url: /som-xep-luong-nha-giao-o-muc-cao-nhat-trong-thang-bac-luong-su-nghiep-185260626112234526.htm
+              - link "Kết luận của Tổng Bí thư, Chủ tịch nước nêu rõ, Bộ GD-ĐT phối hợp với cơ quan liên quan hoàn thiện hồ sơ báo cáo cấp có thẩm quyền cho ý kiến đối..." [ref=e171] [cursor=pointer]:
+                - /url: /som-xep-luong-nha-giao-o-muc-cao-nhat-trong-thang-bac-luong-su-nghiep-185260626112234526.htm
+            - generic [ref=e173]:
+              - heading "Tây Ninh xin chủ trương xây trung tâm hành chính mới 8.000 tỉ ở Đức Hòa" [level=3] [ref=e174]:
+                - link "Tây Ninh xin chủ trương xây trung tâm hành chính mới 8.000 tỉ ở Đức Hòa" [ref=e175] [cursor=pointer]:
+                  - /url: /tay-ninh-xin-chu-truong-xay-trung-tam-hanh-chinh-moi-8000-ti-o-duc-hoa-185260626120513213.htm
+              - link "Tỉnh Tây Ninh kiến nghị Thủ tướng Chính phủ xem xét, cho chủ trương để tỉnh thực hiện các thủ tục đầu tư xây dựng Trung tâm hành chính - chính..." [ref=e176] [cursor=pointer]:
+                - /url: /tay-ninh-xin-chu-truong-xay-trung-tam-hanh-chinh-moi-8000-ti-o-duc-hoa-185260626120513213.htm
+            - generic [ref=e178]:
+              - heading "Từ 1.7, mỗi người dân TP.HCM chính thức có hồ sơ sức khỏe điện tử" [level=3] [ref=e179]:
+                - link "Từ 1.7, mỗi người dân TP.HCM chính thức có hồ sơ sức khỏe điện tử" [ref=e180] [cursor=pointer]:
+                  - /url: /tu-17-moi-nguoi-dan-tphcm-chinh-thuc-co-ho-so-suc-khoe-dien-tu-185260626141314321.htm
+              - link "Từ ngày 1.7, TP.HCM vận hành hồ sơ sức khỏe điện tử, mỗi người dân đều có một hồ sơ thống nhất." [ref=e181] [cursor=pointer]:
+                - /url: /tu-17-moi-nguoi-dan-tphcm-chinh-thuc-co-ho-so-suc-khoe-dien-tu-185260626141314321.htm
+          - link "arf" [ref=e187] [cursor=pointer]:
+            - /url: https://lg1.logging.admicro.vn/cpx_cms?dmn=https%3A%2F%2Fthanhnien.vn%2F&zid=live7odp&pli=mgwa2lt4&cmpg=mgwa028u&items=mgwa2m0i&cat=%2Fhome%2F&cov=1&pgid=1782473773050126067&uid=1782473773050126067&re=https%3A%2F%2Fdaihoidoan2026.thanhnien.vn%2F&lc=
+          - generic [ref=e188]:
+            - paragraph [ref=e189]:
+              - img [ref=e191]
+              - text: Tiêu điểm
+            - generic [ref=e193]:
+              - generic [ref=e196]:
+                - group "1 / 10" [ref=e197]:
+                  - link "World Cup 2026" [ref=e198] [cursor=pointer]:
+                    - /url: /world-cup-2026-tags486068.html
+                - group "2 / 10" [ref=e199]:
+                  - link "Iran" [ref=e200] [cursor=pointer]:
+                    - /url: /iran-tags485723.html
+                - group "3 / 10" [ref=e201]:
+                  - link "Xăng E10" [ref=e202] [cursor=pointer]:
+                    - /url: /xang-e10-tags505524.html
+                - group "4 / 10" [ref=e203]:
+                  - link "giá vàng" [ref=e204] [cursor=pointer]:
+                    - /url: /gia-vang-tags487771.html
+                - group "5 / 10" [ref=e205]:
+                  - link "hộ kinh doanh" [ref=e206] [cursor=pointer]:
+                    - /url: /ho-kinh-doanh-tags1176881.html
+                - group "6 / 10" [ref=e207]:
+                  - link "đường sắt cao tốc Bắc - Nam" [ref=e208] [cursor=pointer]:
+                    - /url: /duong-sat-cao-toc-bac-nam-tags592436.html
+                - group "7 / 10" [ref=e209]:
+                  - link "Thuế thu nhập cá nhân" [ref=e210] [cursor=pointer]:
+                    - /url: /thue-thu-nhap-ca-nhan-tags494390.html
+                - group "8 / 10" [ref=e211]:
+                  - link "Sân bay Long Thành" [ref=e212] [cursor=pointer]:
+                    - /url: /san-bay-long-thanh-tags506375.html
+                - group "9 / 10" [ref=e213]:
+                  - link "U.23 Việt Nam" [ref=e214] [cursor=pointer]:
+                    - /url: /u23-viet-nam-tags498155.html
+                - group "10 / 10" [ref=e215]:
+                  - link "U.17 Việt Nam" [ref=e216] [cursor=pointer]:
+                    - /url: /u17-viet-nam-tags497907.html
+              - generic [ref=e217]:
+                - button "Previous slide" [disabled] [ref=e218] [cursor=pointer]:
+                  - img [ref=e219]
+                - button "Next slide" [ref=e221] [cursor=pointer]:
+                  - img [ref=e222]
+          - generic [ref=e224]:
+            - generic [ref=e225]:
+              - 'link "Ông Lê Quốc Phong: Hạn chế xung đột dòng xe để giảm ùn tắc, tai nạn" [ref=e226] [cursor=pointer]':
+                - /url: /ong-le-quoc-phong-han-che-xung-dot-dong-xe-de-giam-un-tac-tai-nan-18526062615125137.htm
+                - 'img "Ông Lê Quốc Phong: Hạn chế xung đột dòng xe để giảm ùn tắc, tai nạn" [ref=e227]'
+              - 'heading "Ông Lê Quốc Phong: Hạn chế xung đột dòng xe để giảm ùn tắc, tai nạn" [level=3] [ref=e228]':
+                - 'link "Ông Lê Quốc Phong: Hạn chế xung đột dòng xe để giảm ùn tắc, tai nạn" [ref=e229] [cursor=pointer]':
+                  - /url: /ong-le-quoc-phong-han-che-xung-dot-dong-xe-de-giam-un-tac-tai-nan-18526062615125137.htm
+            - generic [ref=e230]:
+              - link "Đề xuất áp giá điện sinh hoạt theo khung giờ" [ref=e231] [cursor=pointer]:
+                - /url: /de-xuat-ap-gia-dien-sinh-hoat-theo-khung-gio-185260626135013275.htm
+                - img "Đề xuất áp giá điện sinh hoạt theo khung giờ" [ref=e232]
+              - heading "Đề xuất áp giá điện sinh hoạt theo khung giờ" [level=3] [ref=e233]:
+                - link "Đề xuất áp giá điện sinh hoạt theo khung giờ" [ref=e234] [cursor=pointer]:
+                  - /url: /de-xuat-ap-gia-dien-sinh-hoat-theo-khung-gio-185260626135013275.htm
+            - generic [ref=e235]:
+              - 'link "70.000 người dự lễ tuyên phong Chân phước cha Trương Bửu Diệp: Vì sao không bố trí xe trung chuyển?" [ref=e236] [cursor=pointer]':
+                - /url: /70000-nguoi-du-le-tuyen-phong-chan-phuoc-cha-truong-buu-diep-vi-sao-khong-bo-tri-xe-trung-chuyen-185260625105004566.htm
+                - 'img "70.000 người dự lễ tuyên phong Chân phước cha Trương Bửu Diệp: Vì sao không bố trí xe trung chuyển?" [ref=e237]'
+              - 'heading "70.000 người dự lễ tuyên phong Chân phước cha Trương Bửu Diệp: Vì sao không..." [level=3] [ref=e238]':
+                - 'link "70.000 người dự lễ tuyên phong Chân phước cha Trương Bửu Diệp: Vì sao không..." [ref=e239] [cursor=pointer]':
+                  - /url: /70000-nguoi-du-le-tuyen-phong-chan-phuoc-cha-truong-buu-diep-vi-sao-khong-bo-tri-xe-trung-chuyen-185260625105004566.htm
+            - generic [ref=e240]:
+              - link "Chuyển đổi xanh đừng bỏ quên doanh nghiệp vừa và nhỏ" [ref=e241] [cursor=pointer]:
+                - /url: /chuyen-doi-xanh-dung-bo-quen-doanh-nghiep-vua-va-nho-185260626152940097.htm
+                - img "Chuyển đổi xanh đừng bỏ quên doanh nghiệp vừa và nhỏ" [ref=e242]
+              - heading "Chuyển đổi xanh đừng bỏ quên doanh nghiệp vừa và nhỏ" [level=3] [ref=e243]:
+                - link "Chuyển đổi xanh đừng bỏ quên doanh nghiệp vừa và nhỏ" [ref=e244] [cursor=pointer]:
+                  - /url: /chuyen-doi-xanh-dung-bo-quen-doanh-nghiep-vua-va-nho-185260626152940097.htm
+            - generic [ref=e245]:
+              - link "Chỉ 3 ngày nữa Việt Nam sẽ khai trương sàn giao dịch carbon" [ref=e246] [cursor=pointer]:
+                - /url: /chi-3-ngay-nua-viet-nam-se-khai-truong-san-giao-dich-carbon-185260626175833342.htm
+                - img "Chỉ 3 ngày nữa Việt Nam sẽ khai trương sàn giao dịch carbon" [ref=e247]
+              - heading "Chỉ 3 ngày nữa Việt Nam sẽ khai trương sàn giao dịch carbon" [level=3] [ref=e248]:
+                - link "Chỉ 3 ngày nữa Việt Nam sẽ khai trương sàn giao dịch carbon" [ref=e249] [cursor=pointer]:
+                  - /url: /chi-3-ngay-nua-viet-nam-se-khai-truong-san-giao-dich-carbon-185260626175833342.htm
+            - generic [ref=e250]:
+              - link "Taxi kêu khó vì phải lập hóa đơn điện tử từng chuyến xe" [ref=e251] [cursor=pointer]:
+                - /url: /taxi-keu-kho-vi-phai-lap-hoa-don-dien-tu-tung-chuyen-xe-185260626155108938.htm
+                - img "Taxi kêu khó vì phải lập hóa đơn điện tử từng chuyến xe" [ref=e252]
+              - heading "Taxi kêu khó vì phải lập hóa đơn điện tử từng chuyến xe" [level=3] [ref=e253]:
+                - link "Taxi kêu khó vì phải lập hóa đơn điện tử từng chuyến xe" [ref=e254] [cursor=pointer]:
+                  - /url: /taxi-keu-kho-vi-phai-lap-hoa-don-dien-tu-tung-chuyen-xe-185260626155108938.htm
+            - generic [ref=e255]:
+              - link "Hình ảnh HLV Hàn Quốc 'bị cấm cửa' gây chú ý, làn sóng chỉ trích tăng cao" [ref=e256] [cursor=pointer]:
+                - /url: /hinh-anh-hlv-han-quoc-bi-cam-cua-gay-chu-y-lan-song-chi-trich-tang-cao-185260626173219686.htm
+                - img "Hình ảnh HLV Hàn Quốc 'bị cấm cửa' gây chú ý, làn sóng chỉ trích tăng cao" [ref=e257]
+              - heading "Hình ảnh HLV Hàn Quốc 'bị cấm cửa' gây chú ý, làn sóng chỉ trích tăng cao" [level=3] [ref=e258]:
+                - link "Hình ảnh HLV Hàn Quốc 'bị cấm cửa' gây chú ý, làn sóng chỉ trích tăng cao" [ref=e259] [cursor=pointer]:
+                  - /url: /hinh-anh-hlv-han-quoc-bi-cam-cua-gay-chu-y-lan-song-chi-trich-tang-cao-185260626173219686.htm
+            - generic [ref=e260]:
+              - link "Khởi tố tài xế ô tô tông xe máy dừng chờ đèn đỏ làm 2 người tử vong" [ref=e261] [cursor=pointer]:
+                - /url: /khoi-to-tai-xe-o-to-tong-xe-may-dung-cho-den-do-lam-2-nguoi-tu-vong-185260626140318243.htm
+                - img "Khởi tố tài xế ô tô tông xe máy dừng chờ đèn đỏ làm 2 người tử vong" [ref=e262]
+              - heading "Khởi tố tài xế ô tô tông xe máy dừng chờ đèn đỏ làm 2 người tử vong" [level=3] [ref=e263]:
+                - link "Khởi tố tài xế ô tô tông xe máy dừng chờ đèn đỏ làm 2 người tử vong" [ref=e264] [cursor=pointer]:
+                  - /url: /khoi-to-tai-xe-o-to-tong-xe-may-dung-cho-den-do-lam-2-nguoi-tu-vong-185260626140318243.htm
+        - generic [ref=e265]:
+          - generic [ref=e266]:
+            - generic [ref=e267]:
+              - link "Tin mới" [ref=e268] [cursor=pointer]:
+                - /url: "#nr-new"
+              - link "Đọc nhiều" [ref=e269] [cursor=pointer]:
+                - /url: "#nr-read"
+            - generic [ref=e271]:
+              - generic [ref=e273]:
+                - heading "Hoàng tử William hiện là tỉ phú và giàu hơn cả Vua Charles III" [level=3] [ref=e276]:
+                  - link "Hoàng tử William hiện là tỉ phú và giàu hơn cả Vua Charles III" [ref=e277] [cursor=pointer]:
+                    - /url: /hoang-tu-william-hien-la-ti-phu-va-giau-hon-ca-vua-charles-iii-185260626152951454.htm
+                - 'heading "Nhận định bóng đá Uruguay vs Tây Ban Nha: Yamal lên tiếng đưa La Roja vượt ải" [level=3] [ref=e279]':
+                  - 'link "Nhận định bóng đá Uruguay vs Tây Ban Nha: Yamal lên tiếng đưa La Roja vượt ải" [ref=e280] [cursor=pointer]':
+                    - /url: /nhan-dinh-bong-da-uruguay-vs-tay-ban-nha-yamal-len-tieng-dua-la-roja-vuot-ai-185260626174759478.htm
+                - 'heading "TP.HCM: Định vị hàng trăm ha đất ''vàng'' chờ đánh thức ở phường Tam Thắng" [level=3] [ref=e282]':
+                  - 'link "TP.HCM: Định vị hàng trăm ha đất ''vàng'' chờ đánh thức ở phường Tam Thắng" [ref=e283] [cursor=pointer]':
+                    - /url: /tphcm-dinh-vi-hang-tram-ha-dat-vang-cho-danh-thuc-o-phuong-tam-thang-185260626172334032.htm
+                - heading "Ca sĩ Mỹ Tâm đính chính" [level=3] [ref=e285]:
+                  - link "Ca sĩ Mỹ Tâm đính chính" [ref=e286] [cursor=pointer]:
+                    - /url: /ca-si-my-tam-dinh-chinh-185260626180740702.htm
+                - heading "Bị 'cấm sóng', Phạm Băng Băng thành công rực rỡ với vai trò doanh nhân" [level=3] [ref=e288]:
+                  - link "Bị 'cấm sóng', Phạm Băng Băng thành công rực rỡ với vai trò doanh nhân" [ref=e289] [cursor=pointer]:
+                    - /url: /bi-cam-song-pham-bang-bang-thanh-cong-ruc-ro-voi-vai-tro-doanh-nhan-185260626164708374.htm
+                - 'heading "Xổ số miền Nam ngày 26 tháng 6: Vé trúng đài Trà Vinh lộ diện sớm" [level=3] [ref=e291]':
+                  - 'link "Xổ số miền Nam ngày 26 tháng 6: Vé trúng đài Trà Vinh lộ diện sớm" [ref=e292] [cursor=pointer]':
+                    - /url: /xo-so-mien-nam-ngay-26-thang-6-ve-trung-dai-tra-vinh-lo-dien-som-185260626150332044.htm
+              - link "Xem thêm" [ref=e293] [cursor=pointer]:
+                - /url: /tin-moi.htm
+          - generic [ref=e296]:
+            - generic [ref=e297]:
+              - group "1 / 3" [ref=e298]:
+                - generic [ref=e299]:
+                  - link "Chào ngày mới" [ref=e300] [cursor=pointer]:
+                    - /url: /chao-ngay-moi.htm
+                    - paragraph [ref=e301]: Chào ngày mới
+                  - link "Bước tiến lịch sử trong quản lý giáo dục" [ref=e302] [cursor=pointer]:
+                    - /url: /buoc-tien-lich-su-trong-quan-ly-giao-duc-185260625182710093.htm
+                    - paragraph [ref=e303]: Bước tiến lịch sử trong quản lý giáo dục
+                  - generic [ref=e304]:
+                    - link "Hồ Sỹ Anh" [ref=e305] [cursor=pointer]:
+                      - /url: /author/ho-sy-anh-1852945.htm
+                      - img "Hồ Sỹ Anh" [ref=e306]
+                    - generic [ref=e307]:
+                      - paragraph [ref=e308]: Tác giả
+                      - link "Hồ Sỹ Anh" [ref=e309] [cursor=pointer]:
+                        - /url: /author/ho-sy-anh-1852945.htm
+              - group "2 / 3" [ref=e310]:
+                - generic [ref=e311]:
+                  - link "Blog phóng viên" [ref=e312] [cursor=pointer]:
+                    - /url: /blog-phong-vien.htm
+                    - paragraph [ref=e313]: Blog phóng viên
+                  - link "Giúp thanh niên xuất ngũ tìm việc" [ref=e314] [cursor=pointer]:
+                    - /url: /giup-thanh-nien-xuat-ngu-tim-viec-185260622161754867.htm
+                    - paragraph [ref=e315]: Giúp thanh niên xuất ngũ tìm việc
+                  - generic [ref=e316]:
+                    - link "Bảo Huy" [ref=e317] [cursor=pointer]:
+                      - /url: /author/bao-huy-185594.htm
+                      - img "Bảo Huy" [ref=e318]
+                    - generic [ref=e319]:
+                      - paragraph [ref=e320]: Tác giả
+                      - link "Bảo Huy" [ref=e321] [cursor=pointer]:
+                        - /url: /author/bao-huy-185594.htm
+              - group "3 / 3" [ref=e322]:
+                - generic [ref=e323]:
+                  - link "Thời luận" [ref=e324] [cursor=pointer]:
+                    - /url: /chinh-tri/thoi-luan.htm
+                    - paragraph [ref=e325]: Thời luận
+                  - link "Giải pháp cốt lõi nâng cao chất lượng công tác dư luận xã hội trong thời đại số" [ref=e326] [cursor=pointer]:
+                    - /url: /giai-phap-cot-loi-nang-cao-chat-luong-cong-tac-du-luan-xa-hoi-trong-thoi-dai-so-185260626155146007.htm
+                    - paragraph [ref=e327]: Giải pháp cốt lõi nâng cao chất lượng công tác dư luận xã hội trong thời đại số
+                  - generic [ref=e328]:
+                    - link "TS Nguyễn Minh Chung" [ref=e329] [cursor=pointer]:
+                      - /url: javascript:;
+                      - img "TS Nguyễn Minh Chung" [ref=e330]
+                    - generic [ref=e331]:
+                      - paragraph [ref=e332]: Tác giả
+                      - link "TS Nguyễn Minh Chung" [ref=e333] [cursor=pointer]:
+                        - /url: javascript:;
+            - generic [ref=e334]:
+              - button "Go to slide 1" [ref=e335] [cursor=pointer]
+              - button "Go to slide 2" [ref=e336] [cursor=pointer]
+              - button "Go to slide 3" [ref=e337] [cursor=pointer]
+          - generic [ref=e339]:
+            - link "HÀNH TRÌNH TỪ TRÁI TIM!" [ref=e340] [cursor=pointer]:
+              - /url: /trung-nguyen-legend.html
+              - generic [ref=e341]: HÀNH TRÌNH TỪ TRÁI TIM!
+            - generic [ref=e343]:
+              - group "1 / 3" [ref=e344]:
+                - generic [ref=e345]:
+                  - link "Trung Nguyên Legend khởi công hệ thống nhà máy cà phê quy mô bậc nhất" [ref=e346] [cursor=pointer]:
+                    - /url: /trung-nguyen-legend-khoi-cong-he-thong-nha-may-ca-phe-quy-mo-bac-nhat-18526062516243067.htm
+                    - img "Trung Nguyên Legend khởi công hệ thống nhà máy cà phê quy mô bậc nhất" [ref=e347]
+                  - link "Trung Nguyên Legend khởi công hệ thống nhà máy cà phê quy mô bậc nhất" [ref=e348] [cursor=pointer]:
+                    - /url: /trung-nguyen-legend-khoi-cong-he-thong-nha-may-ca-phe-quy-mo-bac-nhat-18526062516243067.htm
+                    - heading "Trung Nguyên Legend khởi công hệ thống nhà máy cà phê quy mô bậc nhất" [level=3] [ref=e349]
+                - heading "Trung Nguyên Legend - Hành trình 30 năm sáng tạo và phụng sự bằng khát vọng lớn" [level=3] [ref=e352]:
+                  - link "Trung Nguyên Legend - Hành trình 30 năm sáng tạo và phụng sự bằng khát vọng lớn" [ref=e353] [cursor=pointer]:
+                    - /url: /trung-nguyen-legend-hanh-trinh-30-nam-sang-tao-va-phung-su-bang-khat-vong-lon-185260617174331234.htm
+              - group "2 / 3" [ref=e354]:
+                - generic [ref=e355]:
+                  - link "Trung Nguyên Legend tiếp tục lan tỏa văn hóa ngoại giao cà phê trên toàn cầu" [ref=e356] [cursor=pointer]:
+                    - /url: /trung-nguyen-legend-tiep-tuc-lan-toa-van-hoa-ngoai-giao-ca-phe-tren-toan-cau-185260611154917902.htm
+                    - img "Trung Nguyên Legend tiếp tục lan tỏa văn hóa ngoại giao cà phê trên toàn cầu" [ref=e357]
+                  - link "Trung Nguyên Legend tiếp tục lan tỏa văn hóa ngoại giao cà phê trên toàn cầu" [ref=e358] [cursor=pointer]:
+                    - /url: /trung-nguyen-legend-tiep-tuc-lan-toa-van-hoa-ngoai-giao-ca-phe-tren-toan-cau-185260611154917902.htm
+                    - heading "Trung Nguyên Legend tiếp tục lan tỏa văn hóa ngoại giao cà phê trên toàn cầu" [level=3] [ref=e359]
+                - heading "Trung Nguyên Legend đẩy mạnh quảng bá văn hóa cà phê Việt Nam trên toàn cầu" [level=3] [ref=e362]:
+                  - link "Trung Nguyên Legend đẩy mạnh quảng bá văn hóa cà phê Việt Nam trên toàn cầu" [ref=e363] [cursor=pointer]:
+                    - /url: /trung-nguyen-legend-day-manh-quang-ba-van-hoa-ca-phe-viet-nam-tren-toan-cau-185260606234250512.htm
+              - group "3 / 3" [ref=e364]:
+                - generic [ref=e365]:
+                  - link "Tạp chí danh tiếng Mỹ vinh danh Buôn Ma Thuột điểm đến tuyệt vời trên thế giới" [ref=e366] [cursor=pointer]:
+                    - /url: /tap-chi-danh-tieng-my-vinh-danh-buon-ma-thuot-diem-den-tuyet-voi-tren-the-gioi-185260602150349741.htm
+                    - img "Tạp chí danh tiếng Mỹ vinh danh Buôn Ma Thuột điểm đến tuyệt vời trên thế giới" [ref=e367]
+                  - link "Tạp chí danh tiếng Mỹ vinh danh Buôn Ma Thuột điểm đến tuyệt vời trên thế giới" [ref=e368] [cursor=pointer]:
+                    - /url: /tap-chi-danh-tieng-my-vinh-danh-buon-ma-thuot-diem-den-tuyet-voi-tren-the-gioi-185260602150349741.htm
+                    - heading "Tạp chí danh tiếng Mỹ vinh danh Buôn Ma Thuột điểm đến tuyệt vời trên thế giới" [level=3] [ref=e369]
+                - 'heading "‘21 Bài Học Cho Thế Kỷ 21’: Thế giới trong thời đại bất định" [level=3] [ref=e372]':
+                  - 'link "‘21 Bài Học Cho Thế Kỷ 21’: Thế giới trong thời đại bất định" [ref=e373] [cursor=pointer]':
+                    - /url: /21-bai-hoc-cho-the-ky-21-the-gioi-trong-thoi-dai-bat-dinh-185260526135714235.htm
+      - generic [ref=e375]:
+        - iframe [ref=e390]:
+          - generic [ref=f22e3]:
+            - img [ref=f22e6] [cursor=pointer]
+            - generic [ref=f22e8]:
+              - generic [ref=f22e10]: Chinh phục bằng Đại học London ngay tại Việt Nam
+              - generic [ref=f22e13]:
+                - text: Xem chi tiết
+                - img [ref=f22e14]: Sorry, your browser does not support inline SVG.
+        - generic [ref=e404]:
+          - link [ref=e405] [cursor=pointer]:
+            - /url: //lg1.logging.admicro.vn/adn?dmn=https%3A%2F%2Fthanhnien.vn%2F&rid=011a61r5qo66g0e&sspb=8510&sspr=8510&lsn=1782473773254&ce=1&lc=5&cr=&ui=&dg=016a3e642df2da66e916fdea95e73c49&uuid=&profileID=&bi=0&cmpg=72159&items=350237&zid=511957&pr=35095332673&cid=-1&tp=11&tpn=4&alg=1111&dg=016a3e642df2da66e916fdea95e73c49&xtr=eyJhc2lkIjo2MjEzLCJwcm9maWxlaWQiOiIifQ%3D%3D&sspz=2014931&adc_cpa=1&cov=1&re=https%3A%2F%2Fsenvoi.vn%2Fsen-cay%2Fbo-sen-cay-4in1.html%3Futm_source%3DAdmicro_AdX%26utm_campaign%3DAdX%26utm_content%3Dthanhnien.vn
+            - img [ref=e406]
+          - link [ref=e407] [cursor=pointer]:
+            - /url: http://adx.admicro.vn/?utm_source=Admicro&utm_medium=thanhnien.vn&utm_campaign=adxzone
+        - iframe [ref=e414]:
+          - generic [ref=f6e2]:
+            - iframe [ref=f6e4]:
+              
+            - link [ref=f6e6] [cursor=pointer]:
+              - /url: https://lg1.logging.admicro.vn/cpx_cms?dmn=https%3A%2F%2Fthanhnien.vn%2F&zid=lbor76y4&pli=mp91r7kp&cmpg=mp91jkje&items=mp91r7um&cat=%2Fhome%2F&cov=1&pgid=1782473773050126067&uid=1782473773050126067&re=https%3A%2F%2Fthanhnien.vn%2Fthe-le-cuoc-thi-phim-ngan-viet-nam-vietnamese-2026-185260512160901619.htm&lc=
+      - generic [ref=e416]:
+        - generic [ref=e417]:
+          - generic [ref=e418]:
+            - generic [ref=e420]:
+              - heading "Tin 24h" [level=2] [ref=e422]:
+                - link "Tin 24h" [ref=e423] [cursor=pointer]:
+                  - /url: /tin-24h.htm
+              - generic [ref=e424]:
+                - generic [ref=e425]:
+                  - link "Từ 'đại hội không hoa' đến trồng 1 triệu cây cà phê cho đồng bào Xơ Đăng" [ref=e426] [cursor=pointer]:
+                    - /url: /tu-dai-hoi-khong-hoa-den-trong-1-trieu-cay-ca-phe-cho-dong-bao-xo-dang-185260626163144149.htm
+                    - img "Từ 'đại hội không hoa' đến trồng 1 triệu cây cà phê cho đồng bào Xơ Đăng" [ref=e427]
+                  - heading "Từ 'đại hội không hoa' đến trồng 1 triệu cây cà phê cho đồng bào Xơ Đăng" [level=3] [ref=e429]:
+                    - link "Từ 'đại hội không hoa' đến trồng 1 triệu cây cà phê cho đồng bào Xơ Đăng" [ref=e430] [cursor=pointer]:
+                      - /url: /tu-dai-hoi-khong-hoa-den-trong-1-trieu-cay-ca-phe-cho-dong-bao-xo-dang-185260626163144149.htm
+                - generic [ref=e431]:
+                  - link "Danh sách Ban Bí thư, Ban Thường vụ, Ban Chấp hành T.Ư Đoàn khóa XIII" [ref=e432] [cursor=pointer]:
+                    - /url: /danh-sach-ban-bi-thu-ban-thuong-vu-ban-chap-hanh-tu-doan-khoa-xiii-185260625111809816.htm
+                    - img "Danh sách Ban Bí thư, Ban Thường vụ, Ban Chấp hành T.Ư Đoàn khóa XIII" [ref=e433]
+                  - heading "Danh sách Ban Bí thư, Ban Thường vụ, Ban Chấp hành T.Ư..." [level=3] [ref=e435]:
+                    - link "Danh sách Ban Bí thư, Ban Thường vụ, Ban Chấp hành T.Ư..." [ref=e436] [cursor=pointer]:
+                      - /url: /danh-sach-ban-bi-thu-ban-thuong-vu-ban-chap-hanh-tu-doan-khoa-xiii-185260625111809816.htm
+                - generic [ref=e437]:
+                  - link "Đột quỵ, tử vong khi đang leo cây rừng cao 40 m để lấy mật ong" [ref=e438] [cursor=pointer]:
+                    - /url: /dot-quy-tu-vong-khi-dang-leo-cay-rung-cao-40-m-de-lay-mat-ong-185260626152255036.htm
+                    - img "Đột quỵ, tử vong khi đang leo cây rừng cao 40 m để lấy mật ong" [ref=e439]
+                  - heading "Đột quỵ, tử vong khi đang leo cây rừng cao 40 m để lấy mật ong" [level=3] [ref=e441]:
+                    - link "Đột quỵ, tử vong khi đang leo cây rừng cao 40 m để lấy mật ong" [ref=e442] [cursor=pointer]:
+                      - /url: /dot-quy-tu-vong-khi-dang-leo-cay-rung-cao-40-m-de-lay-mat-ong-185260626152255036.htm
+                - generic [ref=e443]:
+                  - 'link "Chiến sự Ukraine ngày 1.583: Ông Zelensky tiết lộ ''tính toán cẩn thận'' về Crimea" [ref=e444] [cursor=pointer]':
+                    - /url: /chien-su-ukraine-ngay-1583-ong-zelensky-tiet-lo-tinh-toan-can-than-ve-crimea-185260625220727055.htm
+                    - 'img "Chiến sự Ukraine ngày 1.583: Ông Zelensky tiết lộ ''tính toán cẩn thận'' về Crimea" [ref=e445]'
+                  - 'heading "Chiến sự Ukraine ngày 1.583: Ông Zelensky tiết lộ ''tính toán cẩn thận'' về Crimea" [level=3] [ref=e447]':
+                    - 'link "Chiến sự Ukraine ngày 1.583: Ông Zelensky tiết lộ ''tính toán cẩn thận'' về Crimea" [ref=e448] [cursor=pointer]':
+                      - /url: /chien-su-ukraine-ngay-1583-ong-zelensky-tiet-lo-tinh-toan-can-than-ve-crimea-185260625220727055.htm
+                - generic [ref=e449]:
+                  - link "Căng thẳng giữa Tổng thống Trump và nội bộ đảng Cộng hòa" [ref=e450] [cursor=pointer]:
+                    - /url: /cang-thang-giua-tong-thong-trump-va-noi-bo-dang-cong-hoa-185260625204644025.htm
+                    - img "Căng thẳng giữa Tổng thống Trump và nội bộ đảng Cộng hòa" [ref=e451]
+                  - heading "Căng thẳng giữa Tổng thống Trump và nội bộ đảng Cộng hòa" [level=3] [ref=e453]:
+                    - link "Căng thẳng giữa Tổng thống Trump và nội bộ đảng Cộng hòa" [ref=e454] [cursor=pointer]:
+                      - /url: /cang-thang-giua-tong-thong-trump-va-noi-bo-dang-cong-hoa-185260625204644025.htm
+                - generic [ref=e455]:
+                  - link "Cụ ông, cụ bà rút sạch sổ tiết kiệm, nộp hết vàng cho kẻ lừa đảo" [ref=e456] [cursor=pointer]:
+                    - /url: /cu-ong-cu-ba-rut-sach-so-tiet-kiem-nop-het-vang-cho-ke-lua-dao-185260625193848022.htm
+                    - img "Cụ ông, cụ bà rút sạch sổ tiết kiệm, nộp hết vàng cho kẻ lừa đảo" [ref=e457]
+                  - heading "Cụ ông, cụ bà rút sạch sổ tiết kiệm, nộp hết vàng cho kẻ lừa đảo" [level=3] [ref=e459]:
+                    - link "Cụ ông, cụ bà rút sạch sổ tiết kiệm, nộp hết vàng cho kẻ lừa đảo" [ref=e460] [cursor=pointer]:
+                      - /url: /cu-ong-cu-ba-rut-sach-so-tiet-kiem-nop-het-vang-cho-ke-lua-dao-185260625193848022.htm
+                - generic [ref=e461]:
+                  - link "Tàu chở hàng bị tấn công tại eo biển Hormuz" [ref=e462] [cursor=pointer]:
+                    - /url: /tau-cho-hang-bi-tan-cong-tai-eo-bien-hormuz-185260626065251429.htm
+                    - img "Tàu chở hàng bị tấn công tại eo biển Hormuz" [ref=e463]
+                  - heading "Tàu chở hàng bị tấn công tại eo biển Hormuz" [level=3] [ref=e465]:
+                    - link "Tàu chở hàng bị tấn công tại eo biển Hormuz" [ref=e466] [cursor=pointer]:
+                      - /url: /tau-cho-hang-bi-tan-cong-tai-eo-bien-hormuz-185260626065251429.htm
+                - generic [ref=e467]:
+                  - link "Xử phạt người tung tin giả 'cá sấu xuất hiện trên kênh Vịnh Tre'" [ref=e468] [cursor=pointer]:
+                    - /url: /xu-phat-nguoi-tung-tin-gia-ca-sau-xuat-hien-tren-kenh-vinh-tre-185260626173054889.htm
+                    - img "Xử phạt người tung tin giả 'cá sấu xuất hiện trên kênh Vịnh Tre'" [ref=e469]
+                  - heading "Xử phạt người tung tin giả 'cá sấu xuất hiện trên kênh Vịnh Tre'" [level=3] [ref=e471]:
+                    - link "Xử phạt người tung tin giả 'cá sấu xuất hiện trên kênh Vịnh Tre'" [ref=e472] [cursor=pointer]:
+                      - /url: /xu-phat-nguoi-tung-tin-gia-ca-sau-xuat-hien-tren-kenh-vinh-tre-185260626173054889.htm
+            - generic [ref=e474]:
+              - heading "Tin nhanh 360" [level=2] [ref=e476]:
+                - link "Tin nhanh 360" [ref=e477] [cursor=pointer]:
+                  - /url: /tin-nhanh-360.htm
+              - generic [ref=e478]:
+                - generic [ref=e479]:
+                  - generic [ref=e480]:
+                    - 'link "Nhận định bóng đá Uruguay vs Tây Ban Nha: Yamal lên tiếng đưa La Roja vượt ải" [ref=e481] [cursor=pointer]':
+                      - /url: https://thanhnien.vn/nhan-dinh-bong-da-uruguay-vs-tay-ban-nha-yamal-len-tieng-dua-la-roja-vuot-ai-185260626174759478.htm
+                      - 'img "Nhận định bóng đá Uruguay vs Tây Ban Nha: Yamal lên tiếng đưa La Roja vượt ải" [ref=e482]'
+                    - generic [ref=e483]:
+                      - link "World Cup 2026" [ref=e484] [cursor=pointer]:
+                        - /url: /the-thao/world-cup-2026.htm
+                      - 'heading "Nhận định bóng đá Uruguay vs Tây Ban Nha: Yamal lên tiếng đưa La Roja vượt ải" [level=3] [ref=e485]':
+                        - 'link "Nhận định bóng đá Uruguay vs Tây Ban Nha: Yamal lên tiếng đưa La Roja vượt ải" [ref=e486] [cursor=pointer]':
+                          - /url: https://thanhnien.vn/nhan-dinh-bong-da-uruguay-vs-tay-ban-nha-yamal-len-tieng-dua-la-roja-vuot-ai-185260626174759478.htm
+                  - generic [ref=e487]:
+                    - link "Hoa hậu Mai Phương Thúy đáp trả" [ref=e488] [cursor=pointer]:
+                      - /url: /hoa-hau-mai-phuong-thuy-dap-tra-185260625215312507.htm
+                      - img "Hoa hậu Mai Phương Thúy đáp trả" [ref=e489]
+                    - generic [ref=e490]:
+                      - link "Đời nghệ sĩ" [ref=e491] [cursor=pointer]:
+                        - /url: /giai-tri/doi-nghe-si.htm
+                      - heading "Hoa hậu Mai Phương Thúy đáp trả" [level=3] [ref=e492]:
+                        - link "Hoa hậu Mai Phương Thúy đáp trả" [ref=e493] [cursor=pointer]:
+                          - /url: /hoa-hau-mai-phuong-thuy-dap-tra-185260625215312507.htm
+                - generic [ref=e494]:
+                  - generic [ref=e495]:
+                    - link "Bóng đá châu Á vẫn ‘chới với’ ở World Cup, may có Nhật Bản ‘gỡ gạc thể diện’" [ref=e496] [cursor=pointer]:
+                      - /url: /bong-da-chau-a-van-choi-voi-o-world-cup-may-co-nhat-ban-go-gac-the-dien-185260626120019565.htm
+                      - img "Bóng đá châu Á vẫn ‘chới với’ ở World Cup, may có Nhật Bản ‘gỡ gạc thể diện’" [ref=e497]
+                    - generic [ref=e498]:
+                      - link "World Cup 2026" [ref=e499] [cursor=pointer]:
+                        - /url: /the-thao/world-cup-2026.htm
+                      - heading "Bóng đá châu Á vẫn ‘chới với’ ở World Cup, may có Nhật Bản ‘gỡ gạc thể diện’" [level=3] [ref=e500]:
+                        - link "Bóng đá châu Á vẫn ‘chới với’ ở World Cup, may có Nhật Bản ‘gỡ gạc thể diện’" [ref=e501] [cursor=pointer]:
+                          - /url: /bong-da-chau-a-van-choi-voi-o-world-cup-may-co-nhat-ban-go-gac-the-dien-185260626120019565.htm
+                  - generic [ref=e502]:
+                    - 'link "Bảng xếp hạng đội hạng ba World Cup: Hàn Quốc sắp bị loại, 2 đội đã vào vòng knock-out" [ref=e503] [cursor=pointer]':
+                      - /url: /bang-xep-hang-doi-hang-ba-world-cup-han-quoc-sap-bi-loai-2-doi-da-vao-vong-knock-out-18526062611265492.htm
+                      - 'img "Bảng xếp hạng đội hạng ba World Cup: Hàn Quốc sắp bị loại, 2 đội đã vào vòng knock-out" [ref=e504]'
+                    - generic [ref=e505]:
+                      - link "World Cup 2026" [ref=e506] [cursor=pointer]:
+                        - /url: /the-thao/world-cup-2026.htm
+                      - 'heading "Bảng xếp hạng đội hạng ba World Cup: Hàn Quốc sắp bị loại, 2 đội đã vào vòng knock-out" [level=3] [ref=e507]':
+                        - 'link "Bảng xếp hạng đội hạng ba World Cup: Hàn Quốc sắp bị loại, 2 đội đã vào vòng knock-out" [ref=e508] [cursor=pointer]':
+                          - /url: /bang-xep-hang-doi-hang-ba-world-cup-han-quoc-sap-bi-loai-2-doi-da-vao-vong-knock-out-18526062611265492.htm
+                - generic [ref=e509]:
+                  - generic [ref=e510]:
+                    - link "Hủy cuốc xe lúc 2 giờ sáng, hành động của khách khiến tài xế taxi TP.HCM bất ngờ" [ref=e511] [cursor=pointer]:
+                      - /url: /huy-cuoc-xe-luc-2-gio-sang-hanh-dong-cua-khach-khien-tai-xe-taxi-tphcm-bat-ngo-185260625173030142.htm
+                      - img "Hủy cuốc xe lúc 2 giờ sáng, hành động của khách khiến tài xế taxi TP.HCM bất ngờ" [ref=e512]
+                    - generic [ref=e513]:
+                      - link "Cộng đồng" [ref=e514] [cursor=pointer]:
+                        - /url: /doi-song/cong-dong.htm
+                      - heading "Hủy cuốc xe lúc 2 giờ sáng, hành động của khách khiến tài xế taxi TP.HCM bất ngờ" [level=3] [ref=e515]:
+                        - link "Hủy cuốc xe lúc 2 giờ sáng, hành động của khách khiến tài xế taxi TP.HCM bất ngờ" [ref=e516] [cursor=pointer]:
+                          - /url: /huy-cuoc-xe-luc-2-gio-sang-hanh-dong-cua-khach-khien-tai-xe-taxi-tphcm-bat-ngo-185260625173030142.htm
+                  - generic [ref=e517]:
+                    - link "Chàng trai miền Tây làm 'đảo điên' làng nhạc Việt" [ref=e518] [cursor=pointer]:
+                      - /url: /chang-trai-mien-tay-lam-dao-dien-lang-nhac-viet-185260626150304467.htm
+                      - img "Chàng trai miền Tây làm 'đảo điên' làng nhạc Việt" [ref=e519]
+                    - generic [ref=e520]:
+                      - link "Giới trẻ" [ref=e521] [cursor=pointer]:
+                        - /url: /gioi-tre.htm
+                      - heading "Chàng trai miền Tây làm 'đảo điên' làng nhạc Việt" [level=3] [ref=e522]:
+                        - link "Chàng trai miền Tây làm 'đảo điên' làng nhạc Việt" [ref=e523] [cursor=pointer]:
+                          - /url: /chang-trai-mien-tay-lam-dao-dien-lang-nhac-viet-185260626150304467.htm
+          - generic [ref=e524]:
+            - generic [ref=e526]:
+              - heading "Giới trẻ" [level=2] [ref=e528]:
+                - link "Giới trẻ" [ref=e529] [cursor=pointer]:
+                  - /url: /gioi-tre.htm
+              - generic [ref=e530]:
+                - generic [ref=e531]:
+                  - 'link "Thủ khoa báo chí xuất sắc 22 tuổi: ‘Có hôm em vừa khóc vừa viết bài’" [ref=e532] [cursor=pointer]':
+                    - /url: /thu-khoa-bao-chi-xuat-sac-22-tuoi-co-hom-em-vua-khoc-vua-viet-bai-185260626085746465.htm
+                    - 'img "Thủ khoa báo chí xuất sắc 22 tuổi: ‘Có hôm em vừa khóc vừa viết bài’" [ref=e533]'
+                  - 'heading "Thủ khoa báo chí xuất sắc 22 tuổi: ‘Có hôm em vừa khóc vừa viết bài’" [level=3] [ref=e535]':
+                    - 'link "Thủ khoa báo chí xuất sắc 22 tuổi: ‘Có hôm em vừa khóc vừa viết bài’" [ref=e536] [cursor=pointer]':
+                      - /url: /thu-khoa-bao-chi-xuat-sac-22-tuoi-co-hom-em-vua-khoc-vua-viet-bai-185260626085746465.htm
+                - generic [ref=e537]:
+                  - generic [ref=e538]:
+                    - link "Từ cử nhân ngôn ngữ Anh đến lồng tiếng cho những bộ phim ăn khách" [ref=e539] [cursor=pointer]:
+                      - /url: /tu-cu-nhan-ngon-ngu-anh-den-long-tieng-cho-nhung-bo-phim-an-khach-185260625150957945.htm
+                      - img "Từ cử nhân ngôn ngữ Anh đến lồng tiếng cho những bộ phim ăn khách" [ref=e540]
+                    - heading "Từ cử nhân ngôn ngữ Anh đến lồng tiếng cho những bộ phim ăn khách" [level=3] [ref=e542]:
+                      - link "Từ cử nhân ngôn ngữ Anh đến lồng tiếng cho những bộ phim ăn khách" [ref=e543] [cursor=pointer]:
+                        - /url: /tu-cu-nhan-ngon-ngu-anh-den-long-tieng-cho-nhung-bo-phim-an-khach-185260625150957945.htm
+                  - generic [ref=e544]:
+                    - 'link "Ngày 2.7 TP.HCM bắn pháo hoa 16 điểm: Xem ở đâu đẹp nhất?" [ref=e545] [cursor=pointer]':
+                      - /url: /ngay-27-tphcm-ban-phao-hoa-16-diem-xem-o-dau-dep-nhat-185260625152745361.htm
+                      - 'img "Ngày 2.7 TP.HCM bắn pháo hoa 16 điểm: Xem ở đâu đẹp nhất?" [ref=e546]'
+                    - 'heading "Ngày 2.7 TP.HCM bắn pháo hoa 16 điểm: Xem ở đâu đẹp nhất?" [level=3] [ref=e548]':
+                      - 'link "Ngày 2.7 TP.HCM bắn pháo hoa 16 điểm: Xem ở đâu đẹp nhất?" [ref=e549] [cursor=pointer]':
+                        - /url: /ngay-27-tphcm-ban-phao-hoa-16-diem-xem-o-dau-dep-nhat-185260625152745361.htm
+                  - generic [ref=e550]:
+                    - link "Lấy người trẻ truyền cảm hứng cho người trẻ" [ref=e551] [cursor=pointer]:
+                      - /url: /lay-nguoi-tre-truyen-cam-hung-cho-nguoi-tre-185260625212619337.htm
+                      - img "Lấy người trẻ truyền cảm hứng cho người trẻ" [ref=e552]
+                    - heading "Lấy người trẻ truyền cảm hứng cho người trẻ" [level=3] [ref=e554]:
+                      - link "Lấy người trẻ truyền cảm hứng cho người trẻ" [ref=e555] [cursor=pointer]:
+                        - /url: /lay-nguoi-tre-truyen-cam-hung-cho-nguoi-tre-185260625212619337.htm
+            - generic [ref=e557]:
+              - heading "Đời sống" [level=2] [ref=e559]:
+                - link "Đời sống" [ref=e560] [cursor=pointer]:
+                  - /url: /doi-song.htm
+              - generic [ref=e561]:
+                - generic [ref=e562]:
+                  - 'link "Xe hỏng dừng trên cao tốc vẫn có thể bị phạt: Nhiều tài xế không biết điều này" [ref=e563] [cursor=pointer]':
+                    - /url: /xe-hong-dung-tren-cao-toc-van-co-the-bi-phat-nhieu-tai-xe-khong-biet-dieu-nay-185260625212313835.htm
+                    - 'img "Xe hỏng dừng trên cao tốc vẫn có thể bị phạt: Nhiều tài xế không biết điều này" [ref=e564]'
+                  - 'heading "Xe hỏng dừng trên cao tốc vẫn có thể bị phạt: Nhiều tài xế không biết điều này" [level=3] [ref=e566]':
+                    - 'link "Xe hỏng dừng trên cao tốc vẫn có thể bị phạt: Nhiều tài xế không biết điều này" [ref=e567] [cursor=pointer]':
+                      - /url: /xe-hong-dung-tren-cao-toc-van-co-the-bi-phat-nhieu-tai-xe-khong-biet-dieu-nay-185260625212313835.htm
+                - generic [ref=e568]:
+                  - generic [ref=e569]:
+                    - link "CSGT TP.HCM cảnh báo những lỗi công nhân thường mắc sau giờ tan ca" [ref=e570] [cursor=pointer]:
+                      - /url: /csgt-tphcm-canh-bao-nhung-loi-cong-nhan-thuong-mac-sau-gio-tan-ca-185260625204348244.htm
+                      - img "CSGT TP.HCM cảnh báo những lỗi công nhân thường mắc sau giờ tan ca" [ref=e571]
+                    - heading "CSGT TP.HCM cảnh báo những lỗi công nhân thường mắc sau giờ tan ca" [level=3] [ref=e573]:
+                      - link "CSGT TP.HCM cảnh báo những lỗi công nhân thường mắc sau giờ tan ca" [ref=e574] [cursor=pointer]:
+                        - /url: /csgt-tphcm-canh-bao-nhung-loi-cong-nhan-thuong-mac-sau-gio-tan-ca-185260625204348244.htm
+                  - generic [ref=e575]:
+                    - link "Shipper, xe ôm công nghệ đeo tai nghe chỉ đường Google Maps có bị phạt?" [ref=e576] [cursor=pointer]:
+                      - /url: /shipper-xe-om-cong-nghe-deo-tai-nghe-chi-duong-google-maps-co-bi-phat-185260625092941276.htm
+                      - img "Shipper, xe ôm công nghệ đeo tai nghe chỉ đường Google Maps có bị phạt?" [ref=e577]
+                    - heading "Shipper, xe ôm công nghệ đeo tai nghe chỉ đường Google Maps có bị phạt?" [level=3] [ref=e579]:
+                      - link "Shipper, xe ôm công nghệ đeo tai nghe chỉ đường Google Maps có bị phạt?" [ref=e580] [cursor=pointer]:
+                        - /url: /shipper-xe-om-cong-nghe-deo-tai-nghe-chi-duong-google-maps-co-bi-phat-185260625092941276.htm
+                  - generic [ref=e581]:
+                    - 'link "Ô tô đậu kín đường quanh chung cư ở TP.HCM: Người dân bức xúc vì cản trở giao thông" [ref=e582] [cursor=pointer]':
+                      - /url: /o-to-dau-kin-duong-quanh-chung-cu-o-tphcm-nguoi-dan-buc-xuc-vi-can-tro-giao-thong-185260625133456393.htm
+                      - 'img "Ô tô đậu kín đường quanh chung cư ở TP.HCM: Người dân bức xúc vì cản trở giao thông" [ref=e583]'
+                    - 'heading "Ô tô đậu kín đường quanh chung cư ở TP.HCM: Người dân bức xúc vì cản trở giao..." [level=3] [ref=e585]':
+                      - 'link "Ô tô đậu kín đường quanh chung cư ở TP.HCM: Người dân bức xúc vì cản trở giao..." [ref=e586] [cursor=pointer]':
+                        - /url: /o-to-dau-kin-duong-quanh-chung-cu-o-tphcm-nguoi-dan-buc-xuc-vi-can-tro-giao-thong-185260625133456393.htm
+        - generic [ref=e600]:
+          - iframe [ref=e601]:
+            - iframe [ref=f15e2]:
+              
+          - link [ref=e602] [cursor=pointer]:
+            - /url: http://adx.admicro.vn/?utm_source=Admicro&utm_medium=thanhnien.vn&utm_campaign=adxzone
+        - generic [ref=e603]:
+          - generic [ref=e606]:
+            - heading "Tin thị trường" [level=2] [ref=e608]:
+              - link "Tin thị trường" [ref=e609] [cursor=pointer]:
+                - /url: /thi-truong.htm
+            - generic [ref=e610]:
+              - generic [ref=e612]:
+                - link "Ra mắt dự án 'Hành trình nâng tầm sức khỏe Việt'" [ref=e613] [cursor=pointer]:
+                  - /url: /ra-mat-du-an-hanh-trinh-nang-tam-suc-khoe-viet-185260626172910411.htm
+                  - img "Ra mắt dự án 'Hành trình nâng tầm sức khỏe Việt'" [ref=e614]
+                - generic [ref=e615]:
+                  - link "Doanh nghiệp" [ref=e616] [cursor=pointer]:
+                    - /url: /kinh-te/doanh-nghiep.htm
+                  - heading "Ra mắt dự án 'Hành trình nâng tầm sức khỏe Việt'" [level=3] [ref=e617]:
+                    - link "Ra mắt dự án 'Hành trình nâng tầm sức khỏe Việt'" [ref=e618] [cursor=pointer]:
+                      - /url: /ra-mat-du-an-hanh-trinh-nang-tam-suc-khoe-viet-185260626172910411.htm
+              - generic [ref=e619]:
+                - link "Phân biệt biển báo viền đỏ, chữ đen, nền trắng khác nhau chữ 'ZONE' thế nào?" [ref=e620] [cursor=pointer]:
+                  - /url: /phan-biet-bien-bao-vien-do-chu-den-nen-trang-khac-nhau-chu-zone-the-nao-185260625111349113.htm
+                  - img "Phân biệt biển báo viền đỏ, chữ đen, nền trắng khác nhau chữ 'ZONE' thế nào?" [ref=e621]
+                - generic [ref=e622]:
+                  - link "Xe - Giao thông" [ref=e623] [cursor=pointer]:
+                    - /url: /xe/xe-giao-thong.htm
+                  - heading "Phân biệt biển báo viền đỏ, chữ đen, nền trắng khác nhau chữ 'ZONE' thế nào?" [level=3] [ref=e624]:
+                    - link "Phân biệt biển báo viền đỏ, chữ đen, nền trắng khác nhau chữ 'ZONE' thế nào?" [ref=e625] [cursor=pointer]:
+                      - /url: /phan-biet-bien-bao-vien-do-chu-den-nen-trang-khac-nhau-chu-zone-the-nao-185260625111349113.htm
+              - generic [ref=e626]:
+                - link "Danh sách loạt điện thoại Galaxy không được cập nhật One UI 9" [ref=e627] [cursor=pointer]:
+                  - /url: /danh-sach-loat-dien-thoai-galaxy-khong-duoc-cap-nhat-one-ui-9-18526062614080279.htm
+                  - img "Danh sách loạt điện thoại Galaxy không được cập nhật One UI 9" [ref=e628]
+                - generic [ref=e629]:
+                  - link "Tin tức công nghệ" [ref=e630] [cursor=pointer]:
+                    - /url: /cong-nghe/tin-tuc-cong-nghe.htm
+                  - heading "Danh sách loạt điện thoại Galaxy không được cập nhật One UI 9" [level=3] [ref=e631]:
+                    - link "Danh sách loạt điện thoại Galaxy không được cập nhật One UI 9" [ref=e632] [cursor=pointer]:
+                      - /url: /danh-sach-loat-dien-thoai-galaxy-khong-duoc-cap-nhat-one-ui-9-18526062614080279.htm
+              - generic [ref=e633]:
+                - link "Những việc hộ kinh doanh phải làm chậm nhất ngày 31.7 để tránh bị phạt" [ref=e634] [cursor=pointer]:
+                  - /url: /nhung-viec-ho-kinh-doanh-phai-lam-cham-nhat-ngay-317-de-tranh-bi-phat-185260626093530071.htm
+                  - img "Những việc hộ kinh doanh phải làm chậm nhất ngày 31.7 để tránh bị phạt" [ref=e635]
+                - generic [ref=e636]:
+                  - link "Kinh tế" [ref=e637] [cursor=pointer]:
+                    - /url: /kinh-te.htm
+                  - heading "Những việc hộ kinh doanh phải làm chậm nhất ngày 31.7 để tránh bị phạt" [level=3] [ref=e638]:
+                    - link "Những việc hộ kinh doanh phải làm chậm nhất ngày 31.7 để tránh bị phạt" [ref=e639] [cursor=pointer]:
+                      - /url: /nhung-viec-ho-kinh-doanh-phai-lam-cham-nhat-ngay-317-de-tranh-bi-phat-185260626093530071.htm
+              - generic [ref=e640]:
+                - link "Những điều không nên làm khi dùng điện thoại Samsung" [ref=e641] [cursor=pointer]:
+                  - /url: /nhung-dieu-khong-nen-lam-khi-dung-dien-thoai-samsung-185260624142827539.htm
+                  - img "Những điều không nên làm khi dùng điện thoại Samsung" [ref=e642]
+                - generic [ref=e643]:
+                  - link "Thủ thuật" [ref=e644] [cursor=pointer]:
+                    - /url: /cong-nghe/thu-thuat.htm
+                  - heading "Những điều không nên làm khi dùng điện thoại Samsung" [level=3] [ref=e645]:
+                    - link "Những điều không nên làm khi dùng điện thoại Samsung" [ref=e646] [cursor=pointer]:
+                      - /url: /nhung-dieu-khong-nen-lam-khi-dung-dien-thoai-samsung-185260624142827539.htm
+              - generic [ref=e647]:
+                - link "Chọn pin mặt trời nào để đạt hiệu quả cao nhất?" [ref=e648] [cursor=pointer]:
+                  - /url: /chon-pin-mat-troi-nao-de-dat-hieu-qua-cao-nhat-185260623223708375.htm
+                  - img "Chọn pin mặt trời nào để đạt hiệu quả cao nhất?" [ref=e649]
+                - generic [ref=e650]:
+                  - link "Tin tức công nghệ" [ref=e651] [cursor=pointer]:
+                    - /url: /cong-nghe/tin-tuc-cong-nghe.htm
+                  - heading "Chọn pin mặt trời nào để đạt hiệu quả cao nhất?" [level=3] [ref=e652]:
+                    - link "Chọn pin mặt trời nào để đạt hiệu quả cao nhất?" [ref=e653] [cursor=pointer]:
+                      - /url: /chon-pin-mat-troi-nao-de-dat-hieu-qua-cao-nhat-185260623223708375.htm
+              - generic [ref=e654]:
+                - link "Apple tăng giá hàng loạt sản phẩm tại Việt Nam" [ref=e655] [cursor=pointer]:
+                  - /url: /apple-tang-gia-hang-loat-san-pham-tai-viet-nam-18526062608445393.htm
+                  - img "Apple tăng giá hàng loạt sản phẩm tại Việt Nam" [ref=e656]
+                - generic [ref=e657]:
+                  - link "Sản phẩm" [ref=e658] [cursor=pointer]:
+                    - /url: /cong-nghe/san-pham.htm
+                  - heading "Apple tăng giá hàng loạt sản phẩm tại Việt Nam" [level=3] [ref=e659]:
+                    - link "Apple tăng giá hàng loạt sản phẩm tại Việt Nam" [ref=e660] [cursor=pointer]:
+                      - /url: /apple-tang-gia-hang-loat-san-pham-tai-viet-nam-18526062608445393.htm
+              - generic [ref=e661]:
+                - link "Vì sao nâng cấp card đồ họa không còn hấp dẫn như 10 năm trước?" [ref=e662] [cursor=pointer]:
+                  - /url: /vi-sao-nang-cap-card-do-hoa-khong-con-hap-dan-nhu-10-nam-truoc-185260624233009764.htm
+                  - img "Vì sao nâng cấp card đồ họa không còn hấp dẫn như 10 năm trước?" [ref=e663]
+                - generic [ref=e664]:
+                  - link "Tin tức công nghệ" [ref=e665] [cursor=pointer]:
+                    - /url: /cong-nghe/tin-tuc-cong-nghe.htm
+                  - heading "Vì sao nâng cấp card đồ họa không còn hấp dẫn như 10 năm trước?" [level=3] [ref=e666]:
+                    - link "Vì sao nâng cấp card đồ họa không còn hấp dẫn như 10 năm trước?" [ref=e667] [cursor=pointer]:
+                      - /url: /vi-sao-nang-cap-card-do-hoa-khong-con-hap-dan-nhu-10-nam-truoc-185260624233009764.htm
+          - generic [ref=e682]:
+            - iframe [ref=e683]:
+              - iframe [ref=f18e2]:
+                
+            - link [ref=e684] [cursor=pointer]:
+              - /url: http://adx.admicro.vn/?utm_source=Admicro&utm_medium=thanhnien.vn&utm_campaign=adxzone
+      - generic [ref=e687]:
+        - generic [ref=e688]:
+          - heading "Multimedia" [level=2] [ref=e689]:
+            - paragraph [ref=e690]: Multimedia
+          - generic [ref=e691]:
+            - link "Video" [ref=e692] [cursor=pointer]:
+              - /url: /video.htm
+            - link "Ảnh" [ref=e693] [cursor=pointer]:
+              - /url: /anh.htm
+            - link "Magazine" [ref=e694] [cursor=pointer]:
+              - /url: /magazine.htm
+            - link "Infographic" [ref=e695] [cursor=pointer]:
+              - /url: /infographic.htm
+        - generic [ref=e696]:
+          - generic [ref=e697]:
+            - 'link "Toàn cảnh 17h: Cái giá của kẻ truy sát gia đình người tình | Cháy nhà ở TP.HCM, 1 người chết" [ref=e698] [cursor=pointer]':
+              - /url: /toan-canh-17h-cai-gia-cua-ke-truy-sat-gia-dinh-nguoi-tinh-chay-nha-o-tphcm-1-nguoi-chet-18526062615394384.htm
+            - generic [ref=e699]:
+              - 'heading "Toàn cảnh 17h: Cái giá của kẻ truy sát gia đình người tình | Cháy nhà ở TP.HCM, 1 người chết" [level=3] [ref=e700]':
+                - 'link "Toàn cảnh 17h: Cái giá của kẻ truy sát gia đình người tình | Cháy nhà ở TP.HCM, 1 người chết" [ref=e701] [cursor=pointer]':
+                  - /url: /toan-canh-17h-cai-gia-cua-ke-truy-sat-gia-dinh-nguoi-tinh-chay-nha-o-tphcm-1-nguoi-chet-18526062615394384.htm
+              - link "Bản tin Toàn cảnh 17h cập nhật tin tức thời sự nóng nhất trong ngày, các câu chuyện đang thu hút sự quan tâm trên mạng xã hội." [ref=e702] [cursor=pointer]:
+                - /url: /toan-canh-17h-cai-gia-cua-ke-truy-sat-gia-dinh-nguoi-tinh-chay-nha-o-tphcm-1-nguoi-chet-18526062615394384.htm
+          - generic [ref=e703]:
+            - generic [ref=e704]:
+              - link "Nhật Bản bị dịch chuyển trong thảm họa động đất" [ref=e705] [cursor=pointer]:
+                - /url: /nhat-ban-bi-dich-chuyen-trong-tham-hoa-dong-dat-185260626125241174.htm
+                - img "Nhật Bản bị dịch chuyển trong thảm họa động đất" [ref=e706]
+              - heading "Nhật Bản bị dịch chuyển trong thảm họa động đất" [level=3] [ref=e708]:
+                - link "Nhật Bản bị dịch chuyển trong thảm họa động đất" [ref=e709] [cursor=pointer]:
+                  - /url: /nhat-ban-bi-dich-chuyen-trong-tham-hoa-dong-dat-185260626125241174.htm
+            - generic [ref=e710]:
+              - link "Tiếp tục hoãn phiên tòa xét xử cựu lãnh đạo SJC" [ref=e711] [cursor=pointer]:
+                - /url: /tiep-tuc-hoan-phien-toa-xet-xu-cuu-lanh-dao-sjc-185260626103154933.htm
+                - img "Tiếp tục hoãn phiên tòa xét xử cựu lãnh đạo SJC" [ref=e712]
+              - heading "Tiếp tục hoãn phiên tòa xét xử cựu lãnh đạo SJC" [level=3] [ref=e714]:
+                - link "Tiếp tục hoãn phiên tòa xét xử cựu lãnh đạo SJC" [ref=e715] [cursor=pointer]:
+                  - /url: /tiep-tuc-hoan-phien-toa-xet-xu-cuu-lanh-dao-sjc-185260626103154933.htm
+            - generic [ref=e716]:
+              - 'link "Chuyển động 12h: Đề xuất tăng mức phạt không lập biên bản | Đeo tai nghe chỉ đường có bị phạt?" [ref=e717] [cursor=pointer]':
+                - /url: /chuyen-dong-12h-de-xuat-tang-muc-phat-khong-lap-bien-ban-deo-tai-nghe-chi-duong-co-bi-phat-185260626112127742.htm
+                - 'img "Chuyển động 12h: Đề xuất tăng mức phạt không lập biên bản | Đeo tai nghe chỉ đường có bị phạt?" [ref=e718]'
+              - 'heading "Chuyển động 12h: Đề xuất tăng mức phạt không lập biên bản | Đeo tai nghe chỉ đường có bị..." [level=3] [ref=e720]':
+                - 'link "Chuyển động 12h: Đề xuất tăng mức phạt không lập biên bản | Đeo tai nghe chỉ đường có bị..." [ref=e721] [cursor=pointer]':
+                  - /url: /chuyen-dong-12h-de-xuat-tang-muc-phat-khong-lap-bien-ban-deo-tai-nghe-chi-duong-co-bi-phat-185260626112127742.htm
+            - generic [ref=e722]:
+              - link "Di dời Trung tâm hỏa táng Bình Hưng Hòa, người dân hỏa táng ở đâu?" [ref=e723] [cursor=pointer]:
+                - /url: /di-doi-trung-tam-hoa-tang-binh-hung-hoa-nguoi-dan-hoa-tang-o-dau-185260625222957088.htm
+                - img "Di dời Trung tâm hỏa táng Bình Hưng Hòa, người dân hỏa táng ở đâu?" [ref=e724]
+              - heading "Di dời Trung tâm hỏa táng Bình Hưng Hòa, người dân hỏa táng ở đâu?" [level=3] [ref=e726]:
+                - link "Di dời Trung tâm hỏa táng Bình Hưng Hòa, người dân hỏa táng ở đâu?" [ref=e727] [cursor=pointer]:
+                  - /url: /di-doi-trung-tam-hoa-tang-binh-hung-hoa-nguoi-dan-hoa-tang-o-dau-185260625222957088.htm
+            - generic [ref=e728]:
+              - 'link "Chỉnh trang khu Mả Lạng, chợ Gà - Gạo: Phường Bến Thành hỗ trợ tạm cư đến 24 triệu đồng/tháng" [ref=e729] [cursor=pointer]':
+                - /url: /chinh-trang-khu-ma-lang-cho-ga-gao-phuong-ben-thanh-ho-tro-tam-cu-den-24-trieu-dong-thang-185260625222549828.htm
+                - 'img "Chỉnh trang khu Mả Lạng, chợ Gà - Gạo: Phường Bến Thành hỗ trợ tạm cư đến 24 triệu đồng/tháng" [ref=e730]'
+              - 'heading "Chỉnh trang khu Mả Lạng, chợ Gà - Gạo: Phường Bến Thành hỗ trợ tạm cư đến 24 triệu..." [level=3] [ref=e732]':
+                - 'link "Chỉnh trang khu Mả Lạng, chợ Gà - Gạo: Phường Bến Thành hỗ trợ tạm cư đến 24 triệu..." [ref=e733] [cursor=pointer]':
+                  - /url: /chinh-trang-khu-ma-lang-cho-ga-gao-phuong-ben-thanh-ho-tro-tam-cu-den-24-trieu-dong-thang-185260625222549828.htm
+            - generic [ref=e734]:
+              - link "Từ quần shorts trắng đến denim, dấu ấn cá tính cho ngày nắng" [ref=e735] [cursor=pointer]:
+                - /url: /thoi-trang-tre/tu-quan-shorts-trang-den-denim-dau-an-ca-tinh-cho-ngay-nang-185260623160621063.htm
+                - img "Từ quần shorts trắng đến denim, dấu ấn cá tính cho ngày nắng" [ref=e736]
+              - heading "Từ quần shorts trắng đến denim, dấu ấn cá tính cho ngày nắng" [level=3] [ref=e738]:
+                - link "Từ quần shorts trắng đến denim, dấu ấn cá tính cho ngày nắng" [ref=e739] [cursor=pointer]:
+                  - /url: /thoi-trang-tre/tu-quan-shorts-trang-den-denim-dau-an-ca-tinh-cho-ngay-nang-185260623160621063.htm
+  - contentinfo [ref=e740]:
+    - generic [ref=e743]:
+      - generic [ref=e744]:
+        - link "Chính trị" [ref=e745] [cursor=pointer]:
+          - /url: https://thanhnien.vn/chinh-tri.htm
+        - link "Thời sự" [ref=e746] [cursor=pointer]:
+          - /url: https://thanhnien.vn/thoi-su.htm
+        - link "Thế giới" [ref=e747] [cursor=pointer]:
+          - /url: https://thanhnien.vn/the-gioi.htm
+        - link "Kinh tế" [ref=e748] [cursor=pointer]:
+          - /url: https://thanhnien.vn/kinh-te.htm
+      - generic [ref=e749]:
+        - link "Đời sống" [ref=e750] [cursor=pointer]:
+          - /url: https://thanhnien.vn/doi-song.htm
+        - link "Sức khoẻ" [ref=e751] [cursor=pointer]:
+          - /url: https://thanhnien.vn/suc-khoe.htm
+        - link "Giới trẻ" [ref=e752] [cursor=pointer]:
+          - /url: https://thanhnien.vn/gioi-tre.htm
+        - link "Giáo dục" [ref=e753] [cursor=pointer]:
+          - /url: https://thanhnien.vn/giao-duc.htm
+      - generic [ref=e754]:
+        - link "Du lịch" [ref=e755] [cursor=pointer]:
+          - /url: https://thanhnien.vn/du-lich.htm
+        - link "Văn hoá" [ref=e756] [cursor=pointer]:
+          - /url: https://thanhnien.vn/van-hoa.htm
+        - link "Giải trí" [ref=e757] [cursor=pointer]:
+          - /url: https://thanhnien.vn/giai-tri.htm
+        - link "Thể thao" [ref=e758] [cursor=pointer]:
+          - /url: https://thanhnien.vn/the-thao.htm
+      - generic [ref=e759]:
+        - link "Công nghệ" [ref=e760] [cursor=pointer]:
+          - /url: https://thanhnien.vn/cong-nghe.htm
+        - link "Xe" [ref=e761] [cursor=pointer]:
+          - /url: https://thanhnien.vn/xe.htm
+        - link "Thời trang trẻ" [ref=e762] [cursor=pointer]:
+          - /url: /thoi-trang-tre.htm
+        - link "Video" [ref=e763] [cursor=pointer]:
+          - /url: https://thanhnien.vn/video.htm
+      - generic [ref=e764]:
+        - link "Bạn đọc" [ref=e765] [cursor=pointer]:
+          - /url: https://thanhnien.vn/ban-doc.htm
+        - link "Rao vặt" [ref=e766] [cursor=pointer]:
+          - /url: https://raovat.thanhnien.vn/
+    - generic [ref=e769]:
+      - link "footer__logo" [ref=e770] [cursor=pointer]:
+        - /url: https://thanhnien.vn/
+        - img "footer__logo" [ref=e771]
+      - generic [ref=e772]:
+        - generic [ref=e773]:
+          - link "Đặt báo" [ref=e774] [cursor=pointer]:
+            - /url: https://datbao.thanhnien.vn/
+          - link "Quảng cáo" [ref=e775] [cursor=pointer]:
+            - /url: https://banggia.thanhnien.vn/
+          - link "RSS" [ref=e776] [cursor=pointer]:
+            - /url: https://thanhnien.vn/rss.html
+          - link "Tòa soạn" [ref=e777] [cursor=pointer]:
+            - /url: https://thanhnien.vn/thong-tin-toa-soan.html
+          - link "Chính sách bảo mật" [ref=e778] [cursor=pointer]:
+            - /url: https://thanhnien.vn/policy.html
+        - generic [ref=e779]:
+          - generic [ref=e780]: Theo dõi báo trên
+          - generic [ref=e781]:
+            - link "Facebook" [ref=e782] [cursor=pointer]:
+              - /url: https://www.facebook.com/thanhnien
+              - img [ref=e783]
+            - link "Zalo" [ref=e786] [cursor=pointer]:
+              - /url: https://zalo.me/2431025964363015388
+              - img [ref=e787]
+            - link "Youtube" [ref=e793] [cursor=pointer]:
+              - /url: https://www.youtube.com/channel/UCIW9cGgoRuGJnky3K3tbzNg
+              - img [ref=e794]
+    - generic [ref=e799]:
+      - generic [ref=e800]:
+        - paragraph [ref=e801]: Hotline
+        - paragraph [ref=e802]: 0906 645 777
+        - paragraph [ref=e803]: Liên hệ quảng cáo
+        - paragraph [ref=e804]: 0908 780 404
+      - generic [ref=e805]:
+        - paragraph [ref=e806]: "Tổng biên tập: Nguyễn Ngọc Toàn"
+        - paragraph [ref=e807]: "Phó tổng biên tập thường trực: Hải Thành"
+        - paragraph [ref=e808]: "Phó tổng biên tập: Lâm Hiếu Dũng"
+        - paragraph [ref=e809]: "Phó tổng biên tập: Trần Việt Hưng"
+        - paragraph [ref=e810]: "Tổng thư ký tòa soạn: Đức Trung"
+      - generic [ref=e811]:
+        - text: Giấy phép xuất bản số 110/GP - BTTTT cấp ngày 24.3.2020 © 2003-2026 Bản quyền thuộc về Báo Thanh Niên. Cấm sao chép dưới mọi hình thức nếu không có sự chấp thuận bằng văn bản.
+        - link "Chứng nhận tín nhiệm mạng" [ref=e812] [cursor=pointer]:
+          - /url: https://tinnhiemmang.vn/danh-ba-tin-nhiem/thanhnienvn-1625711824
+          - img "Chứng nhận tín nhiệm mạng" [ref=e813]

@@ -5,9 +5,16 @@ public class PlayerDataManager : MonoBehaviour
 {
     public static PlayerDataManager Instance { get; private set; }
 
-    // Nguồn dữ liệu trung tâm - CharacterData thay vì GameObject[]
+    [Header("Bootstrap Catalog")]
+    [SerializeField] private CharacterCatalog catalog;
+
+    // Nguồn dữ liệu trung tâm - nạp từ CharacterCatalog (single source of truth)
     private CharacterData[] _characterDataArray;
     private CharacterData[] _companionDataArray;
+
+    // Read-only accessor cho các scene chọn nhân vật (không giữ mảng riêng nữa)
+    public CharacterData[] PlayerCharacters => _characterDataArray;
+    public CharacterData[] Companions => _companionDataArray;
 
     const string KEY_CHAR = "SelectedPlayerCharacter";
     const string KEY_COMP = "SelectedCompanion";
@@ -17,11 +24,19 @@ public class PlayerDataManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }
 
-    // Đăng ký CharacterData thay vì GameObject[]
-    public void RegisterCharacterData(CharacterData[] data) => _characterDataArray = data;
-    public void RegisterCompanionData(CharacterData[] data) => _companionDataArray = data;
+        // Bootstrap: đăng ký data ngay khi app khởi động, độc lập scene chọn NV.
+        // Cho phép returning player vào thẳng MapTest2 mà arrays vẫn sẵn sàng.
+        if (catalog != null)
+        {
+            if (catalog.playerCharacters != null) _characterDataArray = catalog.playerCharacters;
+            if (catalog.companions != null)       _companionDataArray = catalog.companions;
+        }
+        else
+        {
+            Debug.LogError("[PlayerDataManager] CharacterCatalog chưa được gán!");
+        }
+    }
 
     // Lưu lựa chọn
     public void SaveCharacterIndex(int idx)
@@ -34,6 +49,37 @@ public class PlayerDataManager : MonoBehaviour
     {
         PlayerPrefs.SetInt(KEY_COMP, idx);
         PlayerPrefs.Save();
+    }
+
+    // Khôi phục lựa chọn từ server (theo characterName). O(n) trên mảng nhỏ, không GC.
+    public void SetSelectedCharacterByName(string characterName)
+    {
+        int idx = IndexOfByName(_characterDataArray, characterName);
+        if (idx < 0)
+        {
+            GameLog.Warn($"[PlayerDataManager] Character '{characterName}' not in catalog");
+            return;
+        }
+        SaveCharacterIndex(idx);
+    }
+
+    public void SetSelectedCompanionByName(string companionName)
+    {
+        int idx = IndexOfByName(_companionDataArray, companionName);
+        if (idx < 0)
+        {
+            GameLog.Warn($"[PlayerDataManager] Companion '{companionName}' not in catalog");
+            return;
+        }
+        SaveCompanionIndex(idx);
+    }
+
+    private static int IndexOfByName(CharacterData[] arr, string name)
+    {
+        if (arr == null) return -1;
+        for (int i = 0; i < arr.Length; i++)
+            if (arr[i] != null && arr[i].characterName == name) return i;
+        return -1;
     }
 
     public CharacterData GetSelectedCharacterData()

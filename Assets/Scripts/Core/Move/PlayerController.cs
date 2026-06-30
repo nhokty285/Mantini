@@ -151,7 +151,7 @@ public class PlayerController : MonoBehaviour
         GameLog.Info($"[PlayerController] CinemachineInputAxisController.enabled = {enabled} on {validCount} controllers (lockCount={_lockCount})");
     }
 
-    void LateUpdate()
+    void Update()
     {
         if (canMove && cameraTransform != null)
             _cachedInputDirection = CalculateCameraRelativeMovement();
@@ -186,8 +186,6 @@ public class PlayerController : MonoBehaviour
 
         // Tính lực cần thêm để đạt targetVelocity (ForceMode.VelocityChange bỏ qua mass)
         rb.AddForce(targetVelocity - rb.linearVelocity, ForceMode.VelocityChange);
-
-
     }
 
     // Tìm camera theo tag
@@ -220,25 +218,6 @@ public class PlayerController : MonoBehaviour
     // Quản lý animation idle với biến thể
     void HandleIdleAnimations(bool isMoving)
     {
-        /*  anim.SetBool("isMoving", isMoving);
-
-          if (!isMoving)
-          {
-              if (wasMoving)
-              {
-                  lastIdleTime = Time.time;
-                  anim.SetInteger("idleState", 0);
-              }
-              else if (Time.time - lastIdleTime >= idleVariationTime)
-              {
-                  int currentIdle = anim.GetInteger("idleState");
-                  int nextIdle = (currentIdle == 0) ? 1 : 0;
-                  anim.SetInteger("idleState", nextIdle);
-                  lastIdleTime = Time.time;
-              }
-          }
-
-          wasMoving = isMoving;*/
 
         if (!isMoving)
         {

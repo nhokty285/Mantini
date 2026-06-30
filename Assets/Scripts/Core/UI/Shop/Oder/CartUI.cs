@@ -268,7 +268,11 @@ public class CartUI : MonoBehaviour
         if (bankButton != null)
         {
             bankButton.onClick.RemoveAllListeners();
-            bankButton.onClick.AddListener(() => SetPaymentMethod("BANK_TRANSFER"));
+            // bankButton.onClick.AddListener(() => SetPaymentMethod("BANK_TRANSFER"));
+            backButton.onClick.AddListener(() =>
+            {
+                PopupManager.Instance?.ShowPopup("Thông báo", "Chức năng thanh toán qua Bank đang được phát triển. Vui lòng chọn COD.", null, "Đóng");
+            });
         }
         if (changePaymentButton != null)
         {
@@ -714,9 +718,17 @@ public class CartUI : MonoBehaviour
         }
         else
         {
-            // CASE 2: Hàng CHƯA MUA -> Gọi logic cũ (API Shop) dùng customId
-            if (!string.IsNullOrEmpty(item.customId))
-                ProductDetailUI.Instance.ShowUnpaidProductDetail(item.customId, item.selectedSize);
+            // CASE 2: Hàng CHƯA MUA -> Gọi logic cũ (API Shop) dùng customId CẤP SẢN PHẨM GỐC
+            // (item.parentCustomId, vd "23612"). KHÔNG dùng item.customId nữa vì đó là customId
+            // CẤP VARIANT (vd "200599") — gọi sai endpoint và mất toàn bộ gallery ảnh.
+            // Fallback về item.customId cho item cũ đã lưu trước khi có field parentCustomId
+            // (vd hàng nạp từ PlayerPrefs/server cũ) để không bị lỗi null.
+            string detailCustomId = !string.IsNullOrEmpty(item.parentCustomId)
+                ? item.parentCustomId
+                : item.customId;
+
+            if (!string.IsNullOrEmpty(detailCustomId))
+                ProductDetailUI.Instance.ShowUnpaidProductDetail(detailCustomId, item.selectedSize);
             else
                 Debug.LogError("[CartUI] Unpaid item missing CustomID, cannot load shop detail.");
         }

@@ -1034,6 +1034,11 @@ public class ShopController : MonoBehaviour
                     _isSwipeActive = false;
                     _swipeProcessed = false;
                     ClearShopItems();
+
+                    // Giải phóng texture sản phẩm đã cache khi rời shop -> trả RAM về trạng thái trước khi mở shop,
+                    // tránh texture nằm lì trong cache 48MB gây GC dày + pacing xấu khi đi ngoài map.
+                    if (ImageDownloadManager.Instance != null)
+                        ImageDownloadManager.Instance.ClearCache();
                     Close_BT_Shop();
                     if (shopHeaderText != null) shopHeaderText.text = " ";
                 }

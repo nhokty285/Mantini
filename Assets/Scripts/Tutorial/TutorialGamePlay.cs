@@ -12,6 +12,8 @@ using DG.Tweening;
 ///    OpenBag, Cart, Checkout, Reward): chỉ hiện companion dialogue + spotlight
 ///    LẦN ĐẦU khi player tự mở; KHÔNG khóa button, KHÔNG chặn thao tác.
 ///  • Đã thấy section → không hiện lại (lưu PlayerPrefs).
+///  • Khi đã thấy TOÀN BỘ section → giải phóng UI tutorial (Hướng 1) để giảm RAM,
+///    nhưng GIỮ component sống vì QuestNavigator đọc CurrentSection từ đây.
 ///
 /// HOOKS Ở CÁC FILE KHÁC — GIỮ NGUYÊN TÊN, KHÔNG CẦN SỬA:
 ///   VendorNPC.OnPlayerEnterRange()      → TutorialGamePlay.Instance?.OnPlayerEnterNPCRange()
@@ -34,6 +36,7 @@ public class TutorialGamePlay : MonoBehaviour
     /// Section hiện tại player đang ở (= section đầu tiên CHƯA seen).
     /// Dùng cho các script ngoài (như QuestNavigator) — nguồn truth duy nhất
     /// để xác định quest step, không cần đọc PlayerPrefs trực tiếp.
+    /// LƯU Ý: chỉ đọc _seenSections (không đụng UI) → vẫn hoạt động sau khi UI đã được giải phóng.
     /// </summary>
     public TutorialSection CurrentSection
     {
@@ -79,6 +82,7 @@ public class TutorialGamePlay : MonoBehaviour
     private bool _isTutorialEnabled = true;
     private bool _continuePressed = false;
     private bool _introFlowDone = false;
+    private bool _uiReleased = false; // Hướng 1: đã giải phóng UI tutorial chưa
 
     // ════════════════════════════════════════════════════════════════════════
     // INSPECTOR — SETTINGS
@@ -229,6 +233,20 @@ public class TutorialGamePlay : MonoBehaviour
         _isTutorialEnabled = PlayerPrefs.GetInt(KEY_ENABLED, tutorialEnabled ? 1 : 0) == 1;
         LoadSeenSections();
 
+        // ── Hướng 1: player đã hoàn thành TOÀN BỘ tutorial ──
+        // Giải phóng UI tutorial để giảm RAM, NHƯNG giữ component sống vì
+        // QuestNavigator còn đọc CurrentSection (chỉ đọc _seenSections, không đụng UI).
+        if (_seenSections.Count == AllSections.Length)
+        {
+            _introFlowDone = true;
+            ReleaseTutorialUI();
+            RestoreAllShopUI();
+            ActivateContextualTooltips();
+            UpdateDebugUI(); // an toàn: field UI đã được gán null
+            DebugLog("Tutorial đã hoàn thành hết — bỏ qua mọi flow, đã giải phóng UI.");
+            return;
+        }
+
         if (companionContinueButton != null)
         {
             companionContinueButton.onClick.RemoveAllListeners();
@@ -359,6 +377,7 @@ public class TutorialGamePlay : MonoBehaviour
         bool waitContinue = true)
     {
         if (!_isTutorialEnabled) return;
+        if (_uiReleased) return; // UI đã giải phóng (tutorial xong) → không còn gì để hiện
         if (HasSeen(section))
         {
             DebugLog($"Section {section} đã thấy — bỏ qua.");
@@ -706,6 +725,54 @@ public class TutorialGamePlay : MonoBehaviour
         // không bao giờ được start từ bất kỳ đâu trong file, là dead code.
     }
 
+    /// <summary>
+    /// HƯỚNG 1 — Giải phóng UI tutorial khi player đã hoàn thành TOÀN BỘ.
+    /// Mục tiêu: trả lại RAM của panel/sprite/audio tutorial nhưng GIỮ component sống
+    /// để QuestNavigator còn đọc được CurrentSection.
+    ///
+    /// QUAN TRỌNG (Unity fake-null trap): sau Destroy phải gán field = null.
+    /// Toán tử '?.' (null-conditional) KHÔNG tôn trọng '==' override của UnityEngine.Object,
+    /// nên nếu object bị Destroy mà field chưa null → 'field?.X()' sẽ ném
+    /// MissingReferenceException. Gán null xong thì mọi '?.' / '!= null' đều an toàn.
+    ///
+    /// Chỉ Destroy UI RIÊNG của tutorial — KHÔNG đụng tới ref shop UI (companionPanel vs
+    /// quickCartButton…), KHÔNG đụng audioSync (shared, tìm qua FindAnyObjectByType).
+    /// </summary>
+    private void ReleaseTutorialUI()
+    {
+        if (_uiReleased) return;
+        _uiReleased = true;
+
+        // Companion panel + các con của nó (image/text/continueButton/progress)
+        if (companionPanel != null) Destroy(companionPanel);
+        companionPanel = null;
+        companionImage = null;
+        companionChatText = null;
+        companionContinueButton = null;
+        progressText = null;
+        tutorialCompanionSprite = null; // bỏ ref Sprite để UnloadUnusedAssets thu hồi texture
+
+        // Spotlight overlay (spotlightHole là con → chết theo)
+        if (spotlightOverlay != null) Destroy(spotlightOverlay);
+        spotlightOverlay = null;
+        spotlightHole = null;
+
+        // Spotlight effect dẫn đường (scene object)
+        if (spotlightEffectPrefab != null) Destroy(spotlightEffectPrefab);
+        spotlightEffectPrefab = null;
+
+        // Debug panel + các text con
+        if (debugPanelUI != null) Destroy(debugPanelUI);
+        debugPanelUI = null;
+        debugStepText = null;
+        debugStatusText = null;
+
+        // Thu hồi sprite/audio không còn tham chiếu (1 lần lúc load scene — chấp nhận hitch nhỏ).
+        Resources.UnloadUnusedAssets();
+
+        DebugLog("Đã giải phóng UI tutorial (giữ coordinator cho QuestNavigator).");
+    }
+
     public void SkipTutorial()
     {
         StopAllCoroutines();
@@ -718,6 +785,9 @@ public class TutorialGamePlay : MonoBehaviour
 
         ActivateContextualTooltips();
         DebugLog("Tutorial bị SKIP — đánh dấu toàn bộ section đã thấy.");
+
+        // Đã xong hết → giải phóng UI luôn (giữ coordinator cho QuestNavigator).
+        ReleaseTutorialUI();
     }
 
     #endregion

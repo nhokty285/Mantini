@@ -31,7 +31,7 @@ public class PlayerApiService : MonoBehaviour
         public string mail;
         public string phone;
         public string avatar_url;
-        public string[] companion_ids; // Mảng chứa cả character + companions đã chọn
+        public string[] companion_ids; // Mảng companions đã chọn
         public string avatar_id;
     }
 
@@ -74,7 +74,7 @@ public class PlayerApiService : MonoBehaviour
                 phone = current.phone,
                 avatar_url = current.avatar_url,
                 companion_ids = new[] { companionData.characterName },
-                avatar_id = current.avatar_id
+                avatar_id = characterData.characterName // Lưu nhân vật chính để restore khi đăng nhập lại
             };
 
             APIClient.Instance.PutJsonFull(playerMeUrl, JsonUtility.ToJson(payload),

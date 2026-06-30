@@ -4,9 +4,6 @@ using UnityEngine.UI;
 
 public class CharacterSelection : MonoBehaviour
 {
-    [Header("Character Data")]
-    public CharacterData[] characterDataArray;
-
     [Header("Character Display")]
     public Transform[] characterPositions; // 0=trái, 1=giữa, 2=phải
 
@@ -18,6 +15,8 @@ public class CharacterSelection : MonoBehaviour
     public GameObject companionSelectionPanel;
     public GameObject playerCharacterPanel;
 
+    // Nguồn dữ liệu lấy từ PlayerDataManager (đã nạp từ CharacterCatalog) — không giữ mảng riêng
+    private CharacterData[] _characterDataArray;
     private GameObject[] _instantiatedCharacters;
     private int _currentCharacterIndex = 1;
     private Vector2 _startTouchPosition;
@@ -25,7 +24,19 @@ public class CharacterSelection : MonoBehaviour
 
     private void Start()
     {
-        PlayerDataManager.Instance.RegisterCharacterData(characterDataArray);
+        if (PlayerDataManager.Instance == null)
+        {
+            Debug.LogError("[CharacterSelection] PlayerDataManager.Instance null!");
+            return;
+        }
+
+        _characterDataArray = PlayerDataManager.Instance.PlayerCharacters;
+        if (_characterDataArray == null || _characterDataArray.Length == 0)
+        {
+            Debug.LogError("[CharacterSelection] Không có dữ liệu nhân vật (kiểm tra CharacterCatalog đã gán vào PlayerDataManager chưa).");
+            return;
+        }
+
         InitializeCharacters();
         UpdateCharacterPositions();
 
@@ -41,9 +52,9 @@ public class CharacterSelection : MonoBehaviour
     {
         _instantiatedCharacters = new GameObject[2];
 
-        for (int i = 0; i < _instantiatedCharacters.Length && i < characterDataArray.Length; i++)
+        for (int i = 0; i < _instantiatedCharacters.Length && i < _characterDataArray.Length; i++)
         {
-            GameObject previewPrefab = characterDataArray[i].previewPrefab;
+            GameObject previewPrefab = _characterDataArray[i].previewPrefab;
             _instantiatedCharacters[i] = Instantiate(previewPrefab);
             _instantiatedCharacters[i].transform.localPosition = Vector3.zero;
         }
@@ -95,7 +106,7 @@ public class CharacterSelection : MonoBehaviour
 
     private void SwitchToNextCharacter()
     {
-        if (_currentCharacterIndex >= characterDataArray.Length - 1) return;
+        if (_currentCharacterIndex >= _characterDataArray.Length - 1) return;
 
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlaySFXOneShot("Swipe");
@@ -205,12 +216,12 @@ public class CharacterSelection : MonoBehaviour
 
     private void UpdateCharacterInfo()
     {
-        if (characterNameText != null && _currentCharacterIndex < characterDataArray.Length)
-            characterNameText.text = characterDataArray[_currentCharacterIndex].characterName;
+        if (characterNameText != null && _currentCharacterIndex < _characterDataArray.Length)
+            characterNameText.text = _characterDataArray[_currentCharacterIndex].characterName;
 
         if (characterDetailText != null)
         {
-            var desc = characterDataArray[_currentCharacterIndex].description;
+            var desc = _characterDataArray[_currentCharacterIndex].description;
             characterDetailText.text = (desc != null && desc.Length > 0) ? desc[0] : "";
         }
         UpdateCharacterPositions();
@@ -220,7 +231,7 @@ public class CharacterSelection : MonoBehaviour
     {
         PlayerDataManager.Instance.SaveCharacterIndex(_currentCharacterIndex);
 #if UNITY_EDITOR
-        GameLog.Info($"[CharacterSelection] Player đã chọn character: {characterDataArray[_currentCharacterIndex].characterName}");
+        GameLog.Info($"[CharacterSelection] Player đã chọn character: {_characterDataArray[_currentCharacterIndex].characterName}");
 #endif
         TransitionToCompanionSelection();
     }

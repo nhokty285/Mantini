@@ -121,8 +121,48 @@ public class CacheEntry<T> : ICacheEntry
 
     private long EstimateMemorySize(T value)
     {
+        /*if (value is Texture2D texture)
+            return texture.width * texture.height * 4; // RGBA*/
         if (value is Texture2D texture)
-            return texture.width * texture.height * 4; // RGBA
+        {
+            int width = texture.width;
+            int height = texture.height;
+            float bpp = 32f; // Mặc định: 32 bits per pixel (RGBA 32bit)
+
+            // Phân loại định dạng nén thực tế dựa trên định dạng của Texture
+            switch (texture.format)
+            {
+                case TextureFormat.RGBA32:
+                case TextureFormat.ARGB32:
+                    bpp = 32f; // 4 Bytes / pixel
+                    break;
+                case TextureFormat.RGB24:
+                    bpp = 24f; // 3 Bytes / pixel
+                    break;
+                case TextureFormat.ETC2_RGBA8:
+                case TextureFormat.ASTC_4x4:
+                    bpp = 8f;  // 1 Byte / pixel
+                    break;
+                case TextureFormat.ASTC_6x6:
+                    bpp = 3.56f; // ~0.44 Byte / pixel
+                    break;
+                case TextureFormat.ASTC_8x8:
+                    bpp = 2f;  // 0.25 Byte / pixel
+                    break;
+                    // Bạn có thể thêm các định dạng khác đang dùng trong project vào đây
+            }
+
+            // Tính dung lượng base (đơn vị: Byte)
+            long baseSize = Mathf.CeilToInt((width * height * bpp) / 8f);
+
+            // 💡 Mẹo Mobile: Nếu ảnh có bật Mipmaps, Unity sẽ tạo thêm các bản thu nhỏ ngầm, tốn thêm ~33% bộ nhớ
+            if (texture.mipmapCount > 1)
+            {
+                baseSize = Mathf.CeilToInt(baseSize * 1.333f);
+            }
+
+            return baseSize;
+        }
         if (value is string str)
             return str.Length * 2; // Unicode
         if (value is List<ShopItem> list)

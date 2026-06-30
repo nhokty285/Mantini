@@ -6,20 +6,9 @@ using UnityEngine.Rendering.Universal;
 /// Tự động chọn quality tier (URP Asset + target FPS) theo phần cứng máy.
 /// Đặt trong scene bootstrap/login đầu tiên. DontDestroyOnLoad.
 ///
-/// CÁCH SETUP (1 lần trong Editor):
-///  1. Duplicate URP Asset hiện tại thành 3 bản: URP_Low / URP_Mid / URP_High.
-///     - URP_Low : Render Scale 0.75, Shadows OFF (hoặc distance 15m, no cascades),
-///                 MSAA Disabled, HDR OFF, Additional Lights = Disabled.
-///     - URP_Mid : Render Scale 0.9, Shadow distance 25m, MSAA Disabled, HDR OFF.
-///     - URP_High: Render Scale 1.0, shadow/quality như bạn đang dùng.
-///  2. Kéo 3 asset vào Inspector của script này.
-///  3. (Khuyến nghị) Trong Project Settings > Quality cũng tạo 3 level
-///     Low/Mid/High gán đúng 3 asset trên — script sẽ sync cả 2 đường.
-///
-/// Tại sao swap asset thay vì sửa renderScale runtime?
-///  - Sửa property của ScriptableObject lúc Play trong Editor sẽ LƯU VĨNH VIỄN
-///    vào asset → dễ "mất" config gốc mà không hiểu vì sao.
-///  - 3 asset baked sẵn = dữ liệu rõ ràng, dễ tune, dễ QA từng tier.
+/// Pacing: dùng vSyncCount (khóa theo vblank) để nhịp frame ĐỀU thay vì timer.
+///   - Panel 120Hz: 60fps -> vSync=2, 30fps -> vSync=4 (đều tăm tắp).
+///   - Panel lẻ (90/144Hz) không chia chẵn -> fallback Application.targetFrameRate.
 ///
 /// Complexity: toàn bộ logic chạy 1 LẦN trong Awake — zero cost per frame.
 /// </summary>
@@ -45,10 +34,55 @@ public class QualityAutoDetect : MonoBehaviour
     [SerializeField] private int lowGpuMemMB = 1024;
 
     [Header("Target FPS theo tier")]
-    [SerializeField] private int lowTierFps = 30;     // 30 ổn định > 45 giật
-    [SerializeField] private int defaultFps = 60;
+    [Tooltip("Máy yếu: 30fps ổn định mượt hơn 40-50fps giật")]
+    [SerializeField] private int lowTierFps = 30;
+    [Tooltip("Máy tầm trung: 30fps ổn định (đổi 60 nếu muốn)")]
+    [SerializeField] private int midTierFps = 30;
+    [Tooltip("Máy mạnh: 60fps (Adaptive Performance sẽ hạ động khi nóng)")]
+    [SerializeField] private int highTierFps = 60;
 
     private const string PREF_OVERRIDE = "Mantini_QualityTierOverride"; // -1 = auto
+
+    // ═════════════════════ FRAME CAP (bulletproof) ═════════════════════
+    /// <summary>
+    /// Baseline cap chạy TRƯỚC mọi scene (kể cả vào thẳng gameplay). Dùng timer
+    /// đơn giản vì Screen.refreshRate có thể chưa sẵn ở BeforeSceneLoad.
+    /// Awake() sau đó áp pacing vSync chính xác theo tier qua ApplyFrameRate().
+    /// </summary>
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void EnforceFrameCapEarly()
+    {
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60; // baseline an toàn cho mọi máy/entry scene
+    }
+
+    /// <summary>
+    /// Cap FPS với pacing ĐỀU: nếu refresh panel chia chẵn cho targetFps thì dùng
+    /// vSyncCount (khóa vblank → nhịp đều), ngược lại fallback timer.
+    /// VD panel 120Hz: 60→vSync=2, 30→vSync=4.
+    /// </summary>
+    private static void ApplyFrameRate(int targetFps)
+    {
+        if (targetFps <= 0) targetFps = 60;
+
+        float refresh = 60f;
+        try { refresh = (float)Screen.currentResolution.refreshRateRatio.value; } catch { }
+        if (refresh < 1f) refresh = 60f;
+
+        int divisor = Mathf.Max(1, Mathf.RoundToInt(refresh / targetFps));
+        bool clean = Mathf.Abs(refresh / divisor - targetFps) < 1.5f;
+
+        if (clean)
+        {
+            QualitySettings.vSyncCount = divisor;     // pacing đều theo vblank
+            Application.targetFrameRate = targetFps;  // fallback nếu engine bỏ qua vSync
+        }
+        else
+        {
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = targetFps;  // panel lẻ (90/144Hz) → timer
+        }
+    }
 
     private void Awake()
     {
@@ -114,10 +148,14 @@ public class QualityAutoDetect : MonoBehaviour
         if (QualitySettings.names.Length > (int)tier)
             QualitySettings.SetQualityLevel((int)tier, applyExpensiveChanges: true);
 
-        // 3. FPS: máy yếu chạy 30 FPS ổn định mượt hơn 40-50 FPS giật cục,
-        //    đồng thời mát máy + đỡ tụt pin → ít bị thermal throttle về sau.
-        QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = tier == QualityTier.Low ? lowTierFps : defaultFps;
+        // 3. FPS + pacing đều theo tier (vSync divisor nếu panel chia chẵn).
+        int targetFps = tier switch
+        {
+            QualityTier.Low => lowTierFps,
+            QualityTier.Medium => midTierFps,
+            _ => highTierFps,
+        };
+        ApplyFrameRate(targetFps);
 
         if (save)
         {
@@ -127,7 +165,7 @@ public class QualityAutoDetect : MonoBehaviour
 
         GameLog.Info($"[QualityAutoDetect] Tier={tier} | RAM={SystemInfo.systemMemorySize}MB " +
                   $"| VRAM={SystemInfo.graphicsMemorySize}MB | GPU={SystemInfo.graphicsDeviceName} " +
-                  $"| API={SystemInfo.graphicsDeviceType} | FPS={Application.targetFrameRate}");
+                  $"| API={SystemInfo.graphicsDeviceType} | FPS={targetFps} | vSync={QualitySettings.vSyncCount}");
     }
 
     /// <summary>Trở về chế độ auto-detect (gọi từ nút "Auto" trong Settings).</summary>

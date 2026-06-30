@@ -82,6 +82,12 @@ public class NameplateManager : MonoBehaviour
     // --- CORE LOGIC (Chạy 1 vòng lặp duy nhất) ---
     void LateUpdate()
     {
+        if (_mainCam == null) return;
+
+        // Cache rotation camera 1 lần/frame -> thay cho Billboard trên từng nameplate.
+        // Mọi nameplate screen-aligned theo camera, position + rotation ghi cùng lúc.
+        Quaternion camRotation = _mainCam.transform.rotation;
+
         for (int i = 0; i < _activeList.Count; i++)
         {
             var item = _activeList[i];
@@ -105,8 +111,8 @@ public class NameplateManager : MonoBehaviour
             if (isInFrontOfCamera)
             {
                 if (!item.UI.gameObject.activeSelf) item.UI.gameObject.SetActive(true);
-                // Đặt vị trí trực tiếp trong world space
-                item.UI.transform.position = worldPos;
+                // Ghi position + rotation trong 1 lần -> chỉ 1 lần canvas dirty/frame
+                item.UI.transform.SetPositionAndRotation(worldPos, camRotation);
             }
             else
             {

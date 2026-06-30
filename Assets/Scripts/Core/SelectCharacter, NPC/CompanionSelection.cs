@@ -4,9 +4,6 @@ using UnityEngine.UI;
 
 public class CompanionSelection : MonoBehaviour
 {
-    [Header("Companion Data")]
-    public CharacterData[] companionDataArray;
-
     [Header("Display Parents")]
     public Transform selectionDisplayParent;
     public Transform infoDisplayParent;
@@ -45,6 +42,8 @@ public class CompanionSelection : MonoBehaviour
     public Sprite selectedSprite;
 
     // ── State ─────────────────────────────────────────────────────────────────
+    // Nguồn dữ liệu lấy từ PlayerDataManager (đã nạp từ CharacterCatalog) — không giữ mảng riêng
+    private CharacterData[] _companionDataArray;
     private int _selectedIndex = 0;
     private GameObject _currentSelectionInstance;
     private GameObject _currentInfoInstance;
@@ -56,7 +55,18 @@ public class CompanionSelection : MonoBehaviour
 
     private void Start()
     {
-        PlayerDataManager.Instance.RegisterCompanionData(companionDataArray);
+        if (PlayerDataManager.Instance == null)
+        {
+            Debug.LogError("[CompanionSelection] PlayerDataManager.Instance null!");
+            return;
+        }
+
+        _companionDataArray = PlayerDataManager.Instance.Companions;
+        if (_companionDataArray == null || _companionDataArray.Length == 0)
+        {
+            Debug.LogError("[CompanionSelection] Không có dữ liệu companion (kiểm tra CharacterCatalog đã gán vào PlayerDataManager chưa).");
+            return;
+        }
 
         SetupInfoListeners();
         SetupSelectionListeners();
@@ -98,7 +108,7 @@ public class CompanionSelection : MonoBehaviour
 
     private void SetupSelectionListeners()
     {
-        for (int i = 0; i < selectionButtons.Length && i < companionDataArray.Length; i++)
+        for (int i = 0; i < selectionButtons.Length && i < _companionDataArray.Length; i++)
         {
             int index = i; // capture
             selectionButtons[i].onClick.RemoveAllListeners();
@@ -114,7 +124,7 @@ public class CompanionSelection : MonoBehaviour
 
     private void OnSelectCompanion(int index)
     {
-        if (index < 0 || index >= companionDataArray.Length)
+        if (index < 0 || index >= _companionDataArray.Length)
         {
             GameLog.Warn($"[CompanionSelection] Invalid index {index}");
             return;
@@ -125,14 +135,14 @@ public class CompanionSelection : MonoBehaviour
         PlayerPrefs.Save();
 
         SpawnPreviewAt(ref _currentSelectionInstance, selectionDisplayParent,
-                       companionDataArray[_selectedIndex].previewPrefab);
+                       _companionDataArray[_selectedIndex].previewPrefab);
 
         if (selectionNameText != null)
-            selectionNameText.text = companionDataArray[_selectedIndex].characterName;
+            selectionNameText.text = _companionDataArray[_selectedIndex].characterName;
 
         UpdateSelectionButtonStates();
 #if UNITY_EDITOR
-        GameLog.Info($"[CompanionSelection] Selected: {companionDataArray[_selectedIndex].characterName}");
+        GameLog.Info($"[CompanionSelection] Selected: {_companionDataArray[_selectedIndex].characterName}");
 #endif
     }
 
@@ -140,7 +150,7 @@ public class CompanionSelection : MonoBehaviour
     {
         for (int i = 0; i < selectionButtons.Length; i++)
         {
-            if (i >= companionDataArray.Length) continue;
+            if (i >= _companionDataArray.Length) continue;
 
             var button = selectionButtons[i];
             bool isSelected = (i == _selectedIndex);
@@ -180,10 +190,10 @@ public class CompanionSelection : MonoBehaviour
         _selectedIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, _selectedIndex);
 
         SpawnPreviewAt(ref _currentSelectionInstance, selectionDisplayParent,
-                       companionDataArray[_selectedIndex].previewPrefab);
+                       _companionDataArray[_selectedIndex].previewPrefab);
 
         if (selectionNameText != null)
-            selectionNameText.text = companionDataArray[_selectedIndex].characterName;
+            selectionNameText.text = _companionDataArray[_selectedIndex].characterName;
 
         UpdateSelectionButtonStates();
     }
@@ -220,7 +230,7 @@ public class CompanionSelection : MonoBehaviour
         _selectedIndex = PlayerPrefs.GetInt(KEY_SELECTED_COMPANION, _selectedIndex);
 
         SpawnPreviewAt(ref _currentInfoInstance, infoDisplayParent,
-                       companionDataArray[_selectedIndex].previewPrefab);
+                       _companionDataArray[_selectedIndex].previewPrefab);
 
         // Reset description sequence
         _currentDescriptionIndex = 0;
@@ -238,13 +248,13 @@ public class CompanionSelection : MonoBehaviour
 
     private void UpdateInfoTexts()
     {
-        var companionData = companionDataArray[_selectedIndex];
+        var companionData = _companionDataArray[_selectedIndex];
         if (infoNameText != null) infoNameText.text = companionData.characterName;
     }
 
     private void ShowDescription(int index)
     {
-        var companionData = companionDataArray[_selectedIndex];
+        var companionData = _companionDataArray[_selectedIndex];
 
         if (companionData.description == null || companionData.description.Length == 0)
         {
@@ -270,7 +280,7 @@ public class CompanionSelection : MonoBehaviour
 
     private void OnDescriptionTypewriterFinished()
     {
-        var companionData = companionDataArray[_selectedIndex];
+        var companionData = _companionDataArray[_selectedIndex];
         int lastIndex = (companionData.description != null)
             ? companionData.description.Length - 1
             : -1;
@@ -297,7 +307,7 @@ public class CompanionSelection : MonoBehaviour
             dialogueAudioSync.StopTypewriter();
 
             // StopTypewriter cancel coroutine → OnTypewriterComplete không tự gọi → check thủ công
-            var companionData = companionDataArray[_selectedIndex];
+            var companionData = _companionDataArray[_selectedIndex];
             int lastIndex = (companionData.description != null)
                 ? companionData.description.Length - 1
                 : -1;
@@ -313,7 +323,7 @@ public class CompanionSelection : MonoBehaviour
         }
 
         // Bước 2: typewriter đã xong → sang đoạn tiếp theo
-        var data = companionDataArray[_selectedIndex];
+        var data = _companionDataArray[_selectedIndex];
         int last = (data.description != null) ? data.description.Length - 1 : -1;
 
         if (_currentDescriptionIndex >= last)
@@ -344,7 +354,7 @@ public class CompanionSelection : MonoBehaviour
     {
         PlayerDataManager.Instance.SaveCompanionIndex(_selectedIndex);
 #if UNITY_EDITOR
-        GameLog.Info($"[CompanionSelection] Starting game with companion: {companionDataArray[_selectedIndex].characterName}");
+        GameLog.Info($"[CompanionSelection] Starting game with companion: {_companionDataArray[_selectedIndex].characterName}");
 #endif
 
         if (dialogueAudioSync != null)

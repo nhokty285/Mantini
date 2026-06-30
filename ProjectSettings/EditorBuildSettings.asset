@@ -12,5 +12,9 @@ EditorBuildSettings:
     path: Assets/Scenes/MapTest2.unity
     guid: 4a1f8a23388e9274ea893f3f9aa2bf1c
   m_configObjects:
+    com.unity.adaptiveperformance.google.android.provider_settings: {fileID: 11400000, guid: 82cc8540094e3a64f99118a410b214e3, type: 2}
+    com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: 608ac1d31170a1348b9796f1fa1cb488, type: 2}
+    com.unity.adaptiveperformance.samsung.android.provider_settings: {fileID: 11400000, guid: 37b8e376ed70eba478bcd2119a41e853, type: 2}
+    com.unity.adaptiveperformance.simulator.provider_settings: {fileID: 11400000, guid: 11e22000afd996f44870491b356229ae, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

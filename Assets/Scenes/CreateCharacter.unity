@@ -266,7 +266,7 @@ GameObject:
   - component: {fileID: 11377281}
   - component: {fileID: 11377282}
   m_Layer: 5
-  m_Name: PlayerDataManager
+  m_Name: GO_PlayerDataManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -303,6 +303,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d93f85fa1b273046bc51e21754dd0d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  catalog: {fileID: 11400000, guid: 1bc1fc221d9d3a640a5677fadb11635f, type: 2}
 --- !u!1 &41110238
 GameObject:
   m_ObjectHideFlags: 0
@@ -446,7 +447,7 @@ GameObject:
   m_Component:
   - component: {fileID: 57373791}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: FirebaseLoginManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2668,7 +2669,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Nh\u1EADp t\xEAn..."
+  m_text: "Nh\u1EADp t\xEAn"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 357182578ff8c4d4c95b3175c24a003f, type: 2}
   m_sharedMaterial: {fileID: -3983038306120055800, guid: 357182578ff8c4d4c95b3175c24a003f, type: 2}
@@ -4280,7 +4281,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &682663091
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4980,6 +4981,7 @@ GameObject:
   - component: {fileID: 771431210}
   - component: {fileID: 771431211}
   - component: {fileID: 771431212}
+  - component: {fileID: 771431213}
   m_Layer: 5
   m_Name: LoginWithGoogle
   m_TagString: Untagged
@@ -5020,6 +5022,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clientId: 
   clientSecret: 
+  androidClientId: 600744707529-q6pkvqgpg41ekroqortlvlkfboq0g7aq.apps.googleusercontent.com
+  androidRedirectUri: cm.googlesignin.com.unity.template.urpblanko:/oauth2redirect
 --- !u!114 &771431210
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5039,6 +5043,7 @@ MonoBehaviour:
   userPanel: {fileID: 1395315229}
   loginController: {fileID: 771431209}
   onboarding: {fileID: 771431211}
+  playerApiService: {fileID: 1707675874}
 --- !u!114 &771431211
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5086,6 +5091,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23b27eb545882ec4a84cf82e5302406b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &771431213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 771431207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8e5c6df4de9f384ca6fe270b07d59e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _isFirebaseReady: 1
 --- !u!1 &796998419
 GameObject:
   m_ObjectHideFlags: 0
@@ -9718,7 +9736,7 @@ MonoBehaviour:
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -10864,6 +10882,7 @@ GameObject:
   - component: {fileID: 1707675881}
   - component: {fileID: 1707675882}
   - component: {fileID: 1707675883}
+  - component: {fileID: 1707675884}
   m_Layer: 0
   m_Name: API Client
   m_TagString: Untagged
@@ -11024,7 +11043,24 @@ MonoBehaviour:
   highRamMB: 6500
   lowGpuMemMB: 1024
   lowTierFps: 30
-  defaultFps: 60
+  midTierFps: 30
+  highTierFps: 60
+--- !u!114 &1707675884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1707675873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1016cfd3dc19bc44afee3061b68f8c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableFpsThrottle: 1
+  warmFps: 45
+  hotFps: 30
+  automaticCpuGpuControl: 1
 --- !u!1 &1725646895
 GameObject:
   m_ObjectHideFlags: 0

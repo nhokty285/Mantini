@@ -66,7 +66,7 @@ public class QuestNavigator : MonoBehaviour
     // ════════════════════════════════════════════════════════════════════════
     [Header("══════ NavMeshAgent Settings ══════")]
     [Tooltip("Tốc độ di chuyển (m/s) — sẽ set cho NavMeshAgent.speed.")]
-    [SerializeField] private float autoMoveSpeed = 6f;
+    [SerializeField] private float autoMoveSpeed = 3f;
     [Tooltip("Gia tốc (m/s²).")]
     [SerializeField] private float acceleration = 50f; // cao = ramp tốc độ tức thì, bớt khựng đầu
     [Tooltip("Tốc độ xoay (deg/s) — cho NavMeshAgent internal (không dùng khi tự nội suy).")]
@@ -111,7 +111,7 @@ public class QuestNavigator : MonoBehaviour
 
         // Auto-bind button trên cùng GameObject
         if (questButton == null) questButton = GetComponent<Button>();
-
+        statusTextObject.gameObject.SetActive(false);
         BuildStepActions();
     }
 

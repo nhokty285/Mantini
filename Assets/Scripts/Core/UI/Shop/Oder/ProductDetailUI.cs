@@ -724,6 +724,9 @@ public class ProductDetailUI : MonoBehaviour
             customId = !string.IsNullOrEmpty(_currentVariantCustomId)
                 ? _currentVariantCustomId
                 : _currentDetail.customId,
+            // parentCustomId = customId cấp sản phẩm gốc (vd "23612") — dùng để ProductDetailUI
+            // mở lại ĐÚNG endpoint + load đủ gallery ảnh khi xem lại từ giỏ (CartUI long-press).
+            parentCustomId = _currentDetail.customId,
             productId = _currentProductId, // = variant.id (UUID thật) sau resolve
             productName = _currentDetail.title,
             brandName = _currentDetail.brandName,
@@ -771,6 +774,8 @@ public class ProductDetailUI : MonoBehaviour
             customId = !string.IsNullOrEmpty(_currentVariantCustomId)
                 ? _currentVariantCustomId
                 : _currentDetail.customId,
+            // parentCustomId = customId cấp sản phẩm gốc — đồng bộ với OnAddToCartClicked
+            parentCustomId = _currentDetail.customId,
             productId = _currentProductId, // = variant.id (UUID thật) sau resolve
             productName = _currentDetail.title,
             brandName = _currentDetail.brandName,
